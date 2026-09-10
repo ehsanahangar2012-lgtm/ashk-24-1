@@ -1,0 +1,4578 @@
+[
+  {
+    "id": "log_1788609860170_920",
+    "timestamp": "2026-09-05T12:04:20.170Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788609860064_138",
+    "timestamp": "2026-09-05T12:04:20.064Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 34)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های سراسری ایران (divar.ir)",
+        "ویرگول - شبکه اجتماعی محتوایی (virgool.io)",
+        "شیپور - نیازمندی‌های آنلاین (sheypoor.com)",
+        "باما - دایرکتوری تخصصی صنعتی و خودرو (bama.ir)",
+        "ایران تجارت - نیازمندی‌های صنعتی و تجاری (iran-tejarat.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788609856999_32",
+    "timestamp": "2026-09-05T12:04:16.999Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788609856833_62",
+    "timestamp": "2026-09-05T12:04:16.833Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788609853815_731",
+    "timestamp": "2026-09-05T12:04:13.815Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788609559923_14",
+    "timestamp": "2026-09-05T11:59:19.923Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788609559815_802",
+    "timestamp": "2026-09-05T11:59:19.815Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 34)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های آنلاین ایران (divar.ir)",
+        "ویرگول - شبکه اجتماعی محتوا (virgool.io)",
+        "شیپور - نیازمندی‌های سراسری (sheypoor.com)",
+        "آگهی۲۴ - بانک مشاغل و خدمات (agahi24.com)",
+        "باسلام - بازار آنلاین کسب‌وکارهای ایرانی (basalam.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788609557276_484",
+    "timestamp": "2026-09-05T11:59:17.276Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788609557107_65",
+    "timestamp": "2026-09-05T11:59:17.107Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788609554084_114",
+    "timestamp": "2026-09-05T11:59:14.084Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788609244599_72",
+    "timestamp": "2026-09-05T11:54:04.599Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788609244495_794",
+    "timestamp": "2026-09-05T11:54:04.495Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 34)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - پلتفرم انتشار محتوا (virgool.io)",
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "ویترین‌نت - بازار تجارت B2B (vitrinnet.com)",
+        "شیپور - نیازمندی‌های آنلاین (sheypoor.com)",
+        "ایستگاه - دایرکتوری مشاغل صنعتی (istgah.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788609233372_158",
+    "timestamp": "2026-09-05T11:53:53.372Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788609233040_480",
+    "timestamp": "2026-09-05T11:53:53.040Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788609230020_491",
+    "timestamp": "2026-09-05T11:53:50.020Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788608560599_403",
+    "timestamp": "2026-09-05T11:42:40.599Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788608560483_362",
+    "timestamp": "2026-09-05T11:42:40.483Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 34)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - پلتفرم انتشار محتوا (virgool.io)",
+        "شیپور - نیازمندی‌های سراسری (sheypoor.com)",
+        "ایستگاه - دایرکتوری مشاغل (istgah.com)",
+        "باسلام - بازار اجتماعی (basalam.com)",
+        "دیوار - پلتفرم نیازمندی‌ها (divar.ir)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788608558371_216",
+    "timestamp": "2026-09-05T11:42:38.371Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788608558185_568",
+    "timestamp": "2026-09-05T11:42:38.185Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788608555164_557",
+    "timestamp": "2026-09-05T11:42:35.164Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788608212999_412",
+    "timestamp": "2026-09-05T11:36:52.999Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788608212901_504",
+    "timestamp": "2026-09-05T11:36:52.901Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverOfflinePlatforms",
+    "message": "استخراج و ثبت 12 رسانه تخصصی از موتور آفلاین اشک ۲۴ برای کلمات (چاپ و بسته‌بندی اشک قلم جعبه‌سازی سفارشی چاپ افست حرفه‌ای کارتن‌سازی مشهد طراحی زینک اختصاصی طراحی و چاپ لیبل صنعتی شهرک صنعتی کلات). کل دیتابیس: 34",
+    "details": {
+      "count": 12,
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788608212897_603",
+    "timestamp": "2026-09-05T11:36:52.897Z",
+    "level": "WARN",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "عدم پاسخگویی سرویس آنلاین پس از 1 تلاش. تغییر مسیر به موتور آفلاین محلی.",
+    "details": {
+      "model": "gemini-2.5-flash",
+      "attempt": 1,
+      "status": 404,
+      "errStr": "{\"name\":\"ApiError\",\"status\":404}"
+    },
+    "stack": "ApiError: {\"error\":{\"code\":404,\"message\":\"This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.6-flash for the latest features and improvements. We recommend you to use the Interactions API.\",\"status\":\"NOT_FOUND\"}}\n    at throwErrorIfNotOK (/app/applet/node_modules/@google/genai/src/_api_client.ts:1091:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async <anonymous> (/app/applet/node_modules/@google/genai/src/_api_client.ts:643:9)\n    at async Models.Models.generateContent (/app/applet/node_modules/@google/genai/src/models.ts:132:14)\n    at async generateWithRetry (/app/applet/src/server/ai/geminiClient.ts:68:24)\n    at async discoverTargetPlatforms (/app/applet/src/server/ai/discoveryEngine.ts:65:22)\n    at async runAutonomousCycleNow (/app/applet/src/server/ai/autonomousDaemon.ts:33:26)\n    at async Timeout._onTimeout (/app/applet/src/server/ai/autonomousDaemon.ts:280:9)"
+  },
+  {
+    "id": "log_1788608212441_978",
+    "timestamp": "2026-09-05T11:36:52.441Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.1-flash-lite به مدل gemini-2.5-flash به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.1-flash-lite",
+      "newModel": "gemini-2.5-flash",
+      "status": 503,
+      "errStr": "{\"name\":\"ApiError\",\"status\":503}"
+    }
+  },
+  {
+    "id": "log_1788608157229_284",
+    "timestamp": "2026-09-05T11:35:57.229Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788608157044_258",
+    "timestamp": "2026-09-05T11:35:57.045Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788608154027_106",
+    "timestamp": "2026-09-05T11:35:54.027Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788607343558_521",
+    "timestamp": "2026-09-05T11:22:23.558Z",
+    "level": "WARN",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "عدم پاسخگویی سرویس آنلاین پس از 1 تلاش. تغییر مسیر به موتور آفلاین محلی.",
+    "details": {
+      "model": "gemini-2.5-flash",
+      "attempt": 1,
+      "status": 404,
+      "errStr": "{\"name\":\"ApiError\",\"status\":404}"
+    },
+    "stack": "ApiError: {\"error\":{\"code\":404,\"message\":\"This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.6-flash for the latest features and improvements. We recommend you to use the Interactions API.\",\"status\":\"NOT_FOUND\"}}\n    at throwErrorIfNotOK (/app/applet/node_modules/@google/genai/src/_api_client.ts:1091:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async <anonymous> (/app/applet/node_modules/@google/genai/src/_api_client.ts:643:9)\n    at async Models.Models.generateContent (/app/applet/node_modules/@google/genai/src/models.ts:132:14)\n    at async generateWithRetry (/app/applet/src/server/ai/geminiClient.ts:68:24)\n    at async generateMarketingContent (/app/applet/src/server/ai/contentEngine.ts:36:22)\n    at async runAutonomousCycleNow (/app/applet/src/server/ai/autonomousDaemon.ts:57:26)\n    at async Timeout._onTimeout (/app/applet/src/server/ai/autonomousDaemon.ts:280:9)"
+  },
+  {
+    "id": "log_1788607343114_98",
+    "timestamp": "2026-09-05T11:22:23.114Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.1-flash-lite به مدل gemini-2.5-flash به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.1-flash-lite",
+      "newModel": "gemini-2.5-flash",
+      "status": 503,
+      "errStr": "{\"name\":\"ApiError\",\"status\":503}"
+    }
+  },
+  {
+    "id": "log_1788607283175_453",
+    "timestamp": "2026-09-05T11:21:23.175Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788607283067_778",
+    "timestamp": "2026-09-05T11:21:23.067Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 34)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - شبکه اجتماعی محتوا (virgool.io)",
+        "دیوار - نیازمندی‌های آنلاین (divar.ir)",
+        "شیپور - نیازمندی‌های صنعتی (sheypoor.com)",
+        "ایران نیاز - دایرکتوری مشاغل (iranniyaz.com)",
+        "آگهی ۲۴ - مرجع تبلیغات (agahi24.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788607279326_75",
+    "timestamp": "2026-09-05T11:21:19.326Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788607278928_824",
+    "timestamp": "2026-09-05T11:21:18.928Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788607275842_428",
+    "timestamp": "2026-09-05T11:21:15.842Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788606755602_686",
+    "timestamp": "2026-09-05T11:12:35.602Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788606755481_791",
+    "timestamp": "2026-09-05T11:12:35.481Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 33)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های آنلاین ایران (divar.ir)",
+        "ویرگول - پلتفرم انتشار محتوا (virgool.io)",
+        "شیپور - نیازمندی‌های سراسری (sheypoor.com)",
+        "باسلام - بازار آنلاین کسب‌وکارهای ایرانی (basalam.com)",
+        "ایستگاه - دایرکتوری تخصصی آگهی (istgah.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788606753015_93",
+    "timestamp": "2026-09-05T11:12:33.015Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788606752878_154",
+    "timestamp": "2026-09-05T11:12:32.878Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788605797915_27",
+    "timestamp": "2026-09-05T10:56:37.915Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788605797810_986",
+    "timestamp": "2026-09-05T10:56:37.810Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 33)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - بزرگترین نیازمندی‌های آنلاین ایران (divar.ir)",
+        "ویرگول - پلتفرم انتشار محتوای تخصصی (virgool.io)",
+        "شیپور - بازار خرید و فروش کالا و خدمات (sheypoor.com)",
+        "نیازچی - دایرکتوری کسب و کارهای صنعتی (niazchi.com)",
+        "آگهی ۲۴ - پایگاه ثبت آگهی‌های صنعتی و خدماتی (agahi24.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788605793006_261",
+    "timestamp": "2026-09-05T10:56:33.006Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788605792867_985",
+    "timestamp": "2026-09-05T10:56:32.867Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788604835655_220",
+    "timestamp": "2026-09-05T10:40:35.655Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788604835553_463",
+    "timestamp": "2026-09-05T10:40:35.553Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 33)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - شبکه اجتماعی محتوایی (virgool.io)",
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "شیپور - نیازمندی‌های آنلاین (sheypoor.com)",
+        "ایستگاه - دایرکتوری نیازمندی‌های صنعتی (e-estekhdam.com)",
+        "باسلام - بازار اجتماعی ایران (basalam.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788604833002_222",
+    "timestamp": "2026-09-05T10:40:33.002Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788604832855_918",
+    "timestamp": "2026-09-05T10:40:32.855Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788603930136_998",
+    "timestamp": "2026-09-05T10:25:30.136Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788603930036_911",
+    "timestamp": "2026-09-05T10:25:30.036Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverOfflinePlatforms",
+    "message": "استخراج و ثبت 12 رسانه تخصصی از موتور آفلاین اشک ۲۴ برای کلمات (چاپ و بسته‌بندی اشک قلم جعبه‌سازی سفارشی چاپ افست حرفه‌ای کارتن‌سازی مشهد طراحی زینک اختصاصی طراحی و چاپ لیبل صنعتی شهرک صنعتی کلات). کل دیتابیس: 32",
+    "details": {
+      "count": 12,
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788603930031_668",
+    "timestamp": "2026-09-05T10:25:30.031Z",
+    "level": "WARN",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "عدم پاسخگویی سرویس آنلاین پس از 1 تلاش. تغییر مسیر به موتور آفلاین محلی.",
+    "details": {
+      "model": "gemini-2.5-flash",
+      "attempt": 1,
+      "status": 404,
+      "errStr": "{\"name\":\"ApiError\",\"status\":404}"
+    },
+    "stack": "ApiError: {\"error\":{\"code\":404,\"message\":\"This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.6-flash for the latest features and improvements. We recommend you to use the Interactions API.\",\"status\":\"NOT_FOUND\"}}\n    at throwErrorIfNotOK (/app/applet/node_modules/@google/genai/src/_api_client.ts:1091:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async <anonymous> (/app/applet/node_modules/@google/genai/src/_api_client.ts:643:9)\n    at async Models.Models.generateContent (/app/applet/node_modules/@google/genai/src/models.ts:132:14)\n    at async generateWithRetry (/app/applet/src/server/ai/geminiClient.ts:68:24)\n    at async discoverTargetPlatforms (/app/applet/src/server/ai/discoveryEngine.ts:65:22)\n    at async runAutonomousCycleNow (/app/applet/src/server/ai/autonomousDaemon.ts:33:26)\n    at async Timeout._onTimeout (/app/applet/src/server/ai/autonomousDaemon.ts:280:9)"
+  },
+  {
+    "id": "log_1788603929596_193",
+    "timestamp": "2026-09-05T10:25:29.596Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.1-flash-lite به مدل gemini-2.5-flash به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.1-flash-lite",
+      "newModel": "gemini-2.5-flash",
+      "status": 503,
+      "errStr": "{\"name\":\"ApiError\",\"status\":503}"
+    }
+  },
+  {
+    "id": "log_1788603876018_634",
+    "timestamp": "2026-09-05T10:24:36.018Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788603875842_916",
+    "timestamp": "2026-09-05T10:24:35.842Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788603872826_110",
+    "timestamp": "2026-09-05T10:24:32.826Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788603326745_271",
+    "timestamp": "2026-09-05T10:15:26.745Z",
+    "level": "WARN",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "عدم پاسخگویی سرویس آنلاین پس از 1 تلاش. تغییر مسیر به موتور آفلاین محلی.",
+    "details": {
+      "model": "gemini-2.5-flash",
+      "attempt": 1,
+      "status": 404,
+      "errStr": "{\"name\":\"ApiError\",\"status\":404}"
+    },
+    "stack": "ApiError: {\"error\":{\"code\":404,\"message\":\"This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.6-flash for the latest features and improvements. We recommend you to use the Interactions API.\",\"status\":\"NOT_FOUND\"}}\n    at throwErrorIfNotOK (/app/applet/node_modules/@google/genai/src/_api_client.ts:1091:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async <anonymous> (/app/applet/node_modules/@google/genai/src/_api_client.ts:643:9)\n    at async Models.Models.generateContent (/app/applet/node_modules/@google/genai/src/models.ts:132:14)\n    at async generateWithRetry (/app/applet/src/server/ai/geminiClient.ts:68:24)\n    at async generateMarketingContent (/app/applet/src/server/ai/contentEngine.ts:36:22)\n    at async runAutonomousCycleNow (/app/applet/src/server/ai/autonomousDaemon.ts:57:26)\n    at async Timeout._onTimeout (/app/applet/src/server/ai/autonomousDaemon.ts:280:9)"
+  },
+  {
+    "id": "log_1788603326439_998",
+    "timestamp": "2026-09-05T10:15:26.439Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.1-flash-lite به مدل gemini-2.5-flash به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.1-flash-lite",
+      "newModel": "gemini-2.5-flash",
+      "status": 503,
+      "errStr": "{\"name\":\"ApiError\",\"status\":503}"
+    }
+  },
+  {
+    "id": "log_1788603263869_104",
+    "timestamp": "2026-09-05T10:14:23.869Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788603263755_649",
+    "timestamp": "2026-09-05T10:14:23.755Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverOfflinePlatforms",
+    "message": "استخراج و ثبت 12 رسانه تخصصی از موتور آفلاین اشک ۲۴ برای کلمات (چاپ و بسته‌بندی اشک قلم جعبه‌سازی سفارشی چاپ افست حرفه‌ای کارتن‌سازی مشهد طراحی زینک اختصاصی طراحی و چاپ لیبل صنعتی شهرک صنعتی کلات). کل دیتابیس: 32",
+    "details": {
+      "count": 12,
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788603263750_91",
+    "timestamp": "2026-09-05T10:14:23.750Z",
+    "level": "WARN",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "عدم پاسخگویی سرویس آنلاین پس از 1 تلاش. تغییر مسیر به موتور آفلاین محلی.",
+    "details": {
+      "model": "gemini-2.5-flash",
+      "attempt": 1,
+      "status": 404,
+      "errStr": "{\"name\":\"ApiError\",\"status\":404}"
+    },
+    "stack": "ApiError: {\"error\":{\"code\":404,\"message\":\"This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.6-flash for the latest features and improvements. We recommend you to use the Interactions API.\",\"status\":\"NOT_FOUND\"}}\n    at throwErrorIfNotOK (/app/applet/node_modules/@google/genai/src/_api_client.ts:1091:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async <anonymous> (/app/applet/node_modules/@google/genai/src/_api_client.ts:643:9)\n    at async Models.Models.generateContent (/app/applet/node_modules/@google/genai/src/models.ts:132:14)\n    at async generateWithRetry (/app/applet/src/server/ai/geminiClient.ts:68:24)\n    at async discoverTargetPlatforms (/app/applet/src/server/ai/discoveryEngine.ts:65:22)\n    at async runAutonomousCycleNow (/app/applet/src/server/ai/autonomousDaemon.ts:33:26)\n    at async Timeout._onTimeout (/app/applet/src/server/ai/autonomousDaemon.ts:280:9)"
+  },
+  {
+    "id": "log_1788603263314_498",
+    "timestamp": "2026-09-05T10:14:23.314Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.1-flash-lite به مدل gemini-2.5-flash به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.1-flash-lite",
+      "newModel": "gemini-2.5-flash",
+      "status": 503,
+      "errStr": "{\"name\":\"ApiError\",\"status\":503}"
+    }
+  },
+  {
+    "id": "log_1788603230350_65",
+    "timestamp": "2026-09-05T10:13:50.350Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788603230193_850",
+    "timestamp": "2026-09-05T10:13:50.193Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788603227175_856",
+    "timestamp": "2026-09-05T10:13:47.175Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788602773059_252",
+    "timestamp": "2026-09-05T10:06:13.059Z",
+    "level": "WARN",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "عدم پاسخگویی سرویس آنلاین پس از 1 تلاش. تغییر مسیر به موتور آفلاین محلی.",
+    "details": {
+      "model": "gemini-2.5-flash",
+      "attempt": 1,
+      "status": 404,
+      "errStr": "{\"name\":\"ApiError\",\"status\":404}"
+    },
+    "stack": "ApiError: {\"error\":{\"code\":404,\"message\":\"This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.6-flash for the latest features and improvements. We recommend you to use the Interactions API.\",\"status\":\"NOT_FOUND\"}}\n    at throwErrorIfNotOK (/app/applet/node_modules/@google/genai/src/_api_client.ts:1091:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async <anonymous> (/app/applet/node_modules/@google/genai/src/_api_client.ts:643:9)\n    at async Models.Models.generateContent (/app/applet/node_modules/@google/genai/src/models.ts:132:14)\n    at async generateWithRetry (/app/applet/src/server/ai/geminiClient.ts:68:24)\n    at async generateMarketingContent (/app/applet/src/server/ai/contentEngine.ts:36:22)\n    at async runAutonomousCycleNow (/app/applet/src/server/ai/autonomousDaemon.ts:57:26)\n    at async Timeout._onTimeout (/app/applet/src/server/ai/autonomousDaemon.ts:301:9)"
+  },
+  {
+    "id": "log_1788602772766_711",
+    "timestamp": "2026-09-05T10:06:12.766Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.1-flash-lite به مدل gemini-2.5-flash به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.1-flash-lite",
+      "newModel": "gemini-2.5-flash",
+      "status": 503,
+      "errStr": "{\"name\":\"ApiError\",\"status\":503}"
+    }
+  },
+  {
+    "id": "log_1788602718156_952",
+    "timestamp": "2026-09-05T10:05:18.156Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788602718051_691",
+    "timestamp": "2026-09-05T10:05:18.051Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 32)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - پلتفرم تولید محتوا (virgool.io)",
+        "شیپور - نیازمندی‌های سراسری (sheypoor.com)",
+        "باسلام - بازار اجتماعی (basalam.com)",
+        "ایستگاه - نیازمندی‌های صنعتی و تجاری (istgah.com)",
+        "دیوار - نیازمندی‌های آنلاین (divar.ir)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788602714768_314",
+    "timestamp": "2026-09-05T10:05:14.768Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788602714504_98",
+    "timestamp": "2026-09-05T10:05:14.504Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788601787333_341",
+    "timestamp": "2026-09-05T09:49:47.333Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788601787170_789",
+    "timestamp": "2026-09-05T09:49:47.170Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverOfflinePlatforms",
+    "message": "استخراج و ثبت 12 رسانه تخصصی از موتور آفلاین اشک ۲۴ برای کلمات (چاپ و بسته‌بندی اشک قلم جعبه‌سازی سفارشی چاپ افست حرفه‌ای کارتن‌سازی مشهد طراحی زینک اختصاصی طراحی و چاپ لیبل صنعتی شهرک صنعتی کلات). کل دیتابیس: 32",
+    "details": {
+      "count": 12,
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788601787161_58",
+    "timestamp": "2026-09-05T09:49:47.161Z",
+    "level": "WARN",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "عدم پاسخگویی سرویس آنلاین پس از 1 تلاش. تغییر مسیر به موتور آفلاین محلی.",
+    "details": {
+      "model": "gemini-2.5-flash",
+      "attempt": 1,
+      "status": 404,
+      "errStr": "{\"name\":\"ApiError\",\"status\":404}"
+    },
+    "stack": "ApiError: {\"error\":{\"code\":404,\"message\":\"This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.6-flash for the latest features and improvements. We recommend you to use the Interactions API.\",\"status\":\"NOT_FOUND\"}}\n    at throwErrorIfNotOK (/app/applet/node_modules/@google/genai/src/_api_client.ts:1091:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async <anonymous> (/app/applet/node_modules/@google/genai/src/_api_client.ts:643:9)\n    at async Models.Models.generateContent (/app/applet/node_modules/@google/genai/src/models.ts:132:14)\n    at async generateWithRetry (/app/applet/src/server/ai/geminiClient.ts:68:24)\n    at async discoverTargetPlatforms (/app/applet/src/server/ai/discoveryEngine.ts:65:22)\n    at async runAutonomousCycleNow (/app/applet/src/server/ai/autonomousDaemon.ts:33:26)\n    at async Timeout._onTimeout (/app/applet/src/server/ai/autonomousDaemon.ts:301:9)"
+  },
+  {
+    "id": "log_1788601786879_810",
+    "timestamp": "2026-09-05T09:49:46.879Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.1-flash-lite به مدل gemini-2.5-flash به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.1-flash-lite",
+      "newModel": "gemini-2.5-flash",
+      "status": 503,
+      "errStr": "{\"name\":\"ApiError\",\"status\":503}"
+    }
+  },
+  {
+    "id": "log_1788601754646_213",
+    "timestamp": "2026-09-05T09:49:14.647Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788601754498_125",
+    "timestamp": "2026-09-05T09:49:14.498Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788600877958_951",
+    "timestamp": "2026-09-05T09:34:37.958Z",
+    "level": "WARN",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "عدم پاسخگویی سرویس آنلاین پس از 1 تلاش. تغییر مسیر به موتور آفلاین محلی.",
+    "details": {
+      "model": "gemini-2.5-flash",
+      "attempt": 1,
+      "status": 404,
+      "errStr": "{\"name\":\"ApiError\",\"status\":404}"
+    },
+    "stack": "ApiError: {\"error\":{\"code\":404,\"message\":\"This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.6-flash for the latest features and improvements. We recommend you to use the Interactions API.\",\"status\":\"NOT_FOUND\"}}\n    at throwErrorIfNotOK (/app/applet/node_modules/@google/genai/src/_api_client.ts:1091:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async <anonymous> (/app/applet/node_modules/@google/genai/src/_api_client.ts:643:9)\n    at async Models.Models.generateContent (/app/applet/node_modules/@google/genai/src/models.ts:132:14)\n    at async generateWithRetry (/app/applet/src/server/ai/geminiClient.ts:68:24)\n    at async generateMarketingContent (/app/applet/src/server/ai/contentEngine.ts:36:22)\n    at async runAutonomousCycleNow (/app/applet/src/server/ai/autonomousDaemon.ts:57:26)\n    at async Timeout._onTimeout (/app/applet/src/server/ai/autonomousDaemon.ts:280:9)"
+  },
+  {
+    "id": "log_1788600877534_28",
+    "timestamp": "2026-09-05T09:34:37.534Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.1-flash-lite به مدل gemini-2.5-flash به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.1-flash-lite",
+      "newModel": "gemini-2.5-flash",
+      "status": 503,
+      "errStr": "{\"name\":\"ApiError\",\"status\":503}"
+    }
+  },
+  {
+    "id": "log_1788600808804_636",
+    "timestamp": "2026-09-05T09:33:28.804Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788600808682_8",
+    "timestamp": "2026-09-05T09:33:28.682Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 32)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - ثبت آگهی و نیازمندی‌ها (divar.ir)",
+        "ویرگول - پلتفرم نشر محتوا و مقاله (virgool.io)",
+        "ایستگاه - نیازمندی‌های اینترنتی (istgah.com)",
+        "ای‌فروش - نیازمندی‌ها و دایرکتوری مشاغل (eforosh.com)",
+        "آگهی۲۴ - نیازمندی‌های رایگان و صنعتی (agahi24.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788600797845_340",
+    "timestamp": "2026-09-05T09:33:17.845Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788600794464_55",
+    "timestamp": "2026-09-05T09:33:14.464Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788592419702_842",
+    "timestamp": "2026-09-05T07:13:39.702Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788592217664_253",
+    "timestamp": "2026-09-05T07:10:17.664Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 32)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "ویرگول - نشر مقالات و سئو (virgool.io)",
+        "ایستگاه - درج آگهی صنعتی و تجاری (istgah.com)",
+        "آگهی ۲۴ - نیازمندی‌های رایگان (agahi24.com)",
+        "ایپارین - نیازمندی‌ها و دایرکتوری مشاغل (eparin.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788592209056_928",
+    "timestamp": "2026-09-05T07:10:09.056Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788592206000_426",
+    "timestamp": "2026-09-05T07:10:06.000Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788591933097_541",
+    "timestamp": "2026-09-05T07:05:33.097Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 503,
+      "errStr": "{\"name\":\"ApiError\",\"status\":503}"
+    }
+  },
+  {
+    "id": "log_1788591923638_822",
+    "timestamp": "2026-09-05T07:05:23.638Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 31)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "ویرگول - نشر مقاله و رپورتاژ (virgool.io)",
+        "ایستگاه - نیازمندی‌های صنعتی و تجاری (istgah.com)",
+        "صنعت - مرجع B2B و نیازمندی‌های صنعتی (sanat.ir)",
+        "بلاگفا - سیستم مدیریت وبلاگ (blogfa.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788591914199_489",
+    "timestamp": "2026-09-05T07:05:14.199Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788591911180_756",
+    "timestamp": "2026-09-05T07:05:11.180Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788591098448_588",
+    "timestamp": "2026-09-05T06:51:38.448Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788591098351_291",
+    "timestamp": "2026-09-05T06:51:38.352Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 31)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های آنلاین سراسری (divar.ir)",
+        "ویرگول - پلتفرم وبلاگ‌نویسی فارسی (virgool.io)",
+        "شیپور - نیازمندی‌های خرید و فروش (sheypoor.com)",
+        "ایستگاه - دایرکتوری نیازمندی‌های صنعتی (istgah.com)",
+        "باسلام - بازار آنلاین صنایع و محصولات (basalam.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788591094759_535",
+    "timestamp": "2026-09-05T06:51:34.759Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788591094611_831",
+    "timestamp": "2026-09-05T06:51:34.611Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788591091595_306",
+    "timestamp": "2026-09-05T06:51:31.595Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788590841316_752",
+    "timestamp": "2026-09-05T06:47:21.316Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788590841214_16",
+    "timestamp": "2026-09-05T06:47:21.214Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 31)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "ویرگول - پلتفرم انتشار محتوا (virgool.io)",
+        "شیپور - نیازمندی‌های آنلاین (sheypoor.com)",
+        "ایستگاه - دایرکتوری نیازمندی‌های صنعتی (istgah.com)",
+        "باسلام - بازار اجتماعی ایران (basalam.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788590836317_878",
+    "timestamp": "2026-09-05T06:47:16.317Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788590836125_236",
+    "timestamp": "2026-09-05T06:47:16.125Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788590833091_646",
+    "timestamp": "2026-09-05T06:47:13.091Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788590189894_904",
+    "timestamp": "2026-09-05T06:36:29.894Z",
+    "level": "WARN",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "عدم پاسخگویی سرویس آنلاین پس از 1 تلاش. تغییر مسیر به موتور آفلاین محلی.",
+    "details": {
+      "model": "gemini-2.5-flash",
+      "attempt": 1,
+      "status": 404,
+      "errStr": "{\"name\":\"ApiError\",\"status\":404}"
+    },
+    "stack": "ApiError: {\"error\":{\"code\":404,\"message\":\"This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.6-flash for the latest features and improvements. We recommend you to use the Interactions API.\",\"status\":\"NOT_FOUND\"}}\n    at throwErrorIfNotOK (/app/applet/node_modules/@google/genai/src/_api_client.ts:1091:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async <anonymous> (/app/applet/node_modules/@google/genai/src/_api_client.ts:643:9)\n    at async Models.Models.generateContent (/app/applet/node_modules/@google/genai/src/models.ts:132:14)\n    at async generateWithRetry (/app/applet/src/server/ai/geminiClient.ts:68:24)\n    at async generateMarketingContent (/app/applet/src/server/ai/contentEngine.ts:36:22)\n    at async runAutonomousCycleNow (/app/applet/src/server/ai/autonomousDaemon.ts:57:26)\n    at async Timeout._onTimeout (/app/applet/src/server/ai/autonomousDaemon.ts:301:9)"
+  },
+  {
+    "id": "log_1788590189611_399",
+    "timestamp": "2026-09-05T06:36:29.611Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.1-flash-lite به مدل gemini-2.5-flash به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.1-flash-lite",
+      "newModel": "gemini-2.5-flash",
+      "status": 503,
+      "errStr": "{\"name\":\"ApiError\",\"status\":503}"
+    }
+  },
+  {
+    "id": "log_1788590156597_894",
+    "timestamp": "2026-09-05T06:35:56.597Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788590156489_957",
+    "timestamp": "2026-09-05T06:35:56.489Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverOfflinePlatforms",
+    "message": "استخراج و ثبت 12 رسانه تخصصی از موتور آفلاین اشک ۲۴ برای کلمات (چاپ و بسته‌بندی اشک قلم جعبه‌سازی سفارشی چاپ افست حرفه‌ای کارتن‌سازی مشهد طراحی زینک اختصاصی طراحی و چاپ لیبل صنعتی شهرک صنعتی کلات). کل دیتابیس: 31",
+    "details": {
+      "count": 12,
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788590156486_499",
+    "timestamp": "2026-09-05T06:35:56.486Z",
+    "level": "WARN",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "عدم پاسخگویی سرویس آنلاین پس از 1 تلاش. تغییر مسیر به موتور آفلاین محلی.",
+    "details": {
+      "model": "gemini-2.5-flash",
+      "attempt": 1,
+      "status": 404,
+      "errStr": "{\"name\":\"ApiError\",\"status\":404}"
+    },
+    "stack": "ApiError: {\"error\":{\"code\":404,\"message\":\"This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.6-flash for the latest features and improvements. We recommend you to use the Interactions API.\",\"status\":\"NOT_FOUND\"}}\n    at throwErrorIfNotOK (/app/applet/node_modules/@google/genai/src/_api_client.ts:1091:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async <anonymous> (/app/applet/node_modules/@google/genai/src/_api_client.ts:643:9)\n    at async Models.Models.generateContent (/app/applet/node_modules/@google/genai/src/models.ts:132:14)\n    at async generateWithRetry (/app/applet/src/server/ai/geminiClient.ts:68:24)\n    at async discoverTargetPlatforms (/app/applet/src/server/ai/discoveryEngine.ts:65:22)\n    at async runAutonomousCycleNow (/app/applet/src/server/ai/autonomousDaemon.ts:33:26)\n    at async Timeout._onTimeout (/app/applet/src/server/ai/autonomousDaemon.ts:301:9)"
+  },
+  {
+    "id": "log_1788590156031_51",
+    "timestamp": "2026-09-05T06:35:56.031Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.1-flash-lite به مدل gemini-2.5-flash به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.1-flash-lite",
+      "newModel": "gemini-2.5-flash",
+      "status": 503,
+      "errStr": "{\"name\":\"ApiError\",\"status\":503}"
+    }
+  },
+  {
+    "id": "log_1788590155668_947",
+    "timestamp": "2026-09-05T06:35:55.668Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788590155407_804",
+    "timestamp": "2026-09-05T06:35:55.407Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788589203162_444",
+    "timestamp": "2026-09-05T06:20:03.162Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788589203072_496",
+    "timestamp": "2026-09-05T06:20:03.072Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 31)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "ویرگول - پلتفرم انتشار محتوا (virgool.io)",
+        "شیپور - بازار آنلاین خرید و فروش (sheypoor.com)",
+        "ایستگاه - دایرکتوری نیازمندی‌های صنعتی (istgah.com)",
+        "باسلام - بازار اجتماعی فروشندگان (basalam.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788589198717_758",
+    "timestamp": "2026-09-05T06:19:58.717Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788589198395_334",
+    "timestamp": "2026-09-05T06:19:58.395Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788589195379_287",
+    "timestamp": "2026-09-05T06:19:55.379Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788589066794_155",
+    "timestamp": "2026-09-05T06:17:46.794Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788589066692_28",
+    "timestamp": "2026-09-05T06:17:46.692Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 31)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - شبکه اجتماعی محتوا (virgool.io)",
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "ایستگاه - دایرکتوری نیازمندی‌های مشاغل (istgah.com)",
+        "شیپور - نیازمندی‌های آنلاین (sheypoor.com)",
+        "باسلام - بازار آنلاین صنایع (basalam.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788589064160_449",
+    "timestamp": "2026-09-05T06:17:44.160Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788589063760_575",
+    "timestamp": "2026-09-05T06:17:43.760Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788589060743_189",
+    "timestamp": "2026-09-05T06:17:40.743Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788588526906_93",
+    "timestamp": "2026-09-05T06:08:46.907Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788588526814_713",
+    "timestamp": "2026-09-05T06:08:46.814Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 31)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "ویرگول - شبکه اجتماعی محتوایی (virgool.io)",
+        "شیپور - نیازمندی‌های سراسری (sheypoor.com)",
+        "ایستگاه - دایرکتوری نیازمندی‌های صنعتی (istgah.com)",
+        "باسلام - بازار اجتماعی و صنعتی (basalam.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788588524050_334",
+    "timestamp": "2026-09-05T06:08:44.050Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788588523801_660",
+    "timestamp": "2026-09-05T06:08:43.801Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788587568876_161",
+    "timestamp": "2026-09-05T05:52:48.876Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788587568772_931",
+    "timestamp": "2026-09-05T05:52:48.772Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 31)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های آنلاین ایران (divar.ir)",
+        "ویرگول - شبکه اجتماعی محتوا (virgool.io)",
+        "شیپور - نیازمندی‌های سراسری (sheypoor.com)",
+        "بلاگ دات آی آر - سرویس وبلاگ‌نویسی (blog.ir)",
+        "آگهی ۲۴ - بانک مشاغل ایران (agahi24.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788587564101_106",
+    "timestamp": "2026-09-05T05:52:44.101Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788587563791_85",
+    "timestamp": "2026-09-05T05:52:43.791Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788586610087_712",
+    "timestamp": "2026-09-05T05:36:50.087Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788586609990_651",
+    "timestamp": "2026-09-05T05:36:49.990Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 30)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - شبکه اجتماعی مقاله‌نویسی (virgool.io)",
+        "شیپور - نیازمندی‌های سراسری (sheypoor.com)",
+        "دیوار - پلتفرم ثبت آگهی (divar.ir)",
+        "ایستگاه - دایرکتوری نیازمندی‌های صنعتی (istgah.com)",
+        "باسلام - بازار اجتماعی ایران (basalam.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788586607064_468",
+    "timestamp": "2026-09-05T05:36:47.064Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788586606778_149",
+    "timestamp": "2026-09-05T05:36:46.778Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788586603763_551",
+    "timestamp": "2026-09-05T05:36:43.763Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788586224216_648",
+    "timestamp": "2026-09-05T05:30:24.216Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788586224119_187",
+    "timestamp": "2026-09-05T05:30:24.119Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 30)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "ویرگول - شبکه اجتماعی محتوایی (virgool.io)",
+        "شیپور - نیازمندی‌های آنلاین (sheypoor.com)",
+        "باسلام - بازار اجتماعی ایران (basalam.com)",
+        "ایستگاه - دایرکتوری مشاغل (istgah.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788586221305_949",
+    "timestamp": "2026-09-05T05:30:21.305Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788586220901_848",
+    "timestamp": "2026-09-05T05:30:20.901Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788586217748_28",
+    "timestamp": "2026-09-05T05:30:17.748Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788586029497_448",
+    "timestamp": "2026-09-05T05:27:09.497Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788586029390_328",
+    "timestamp": "2026-09-05T05:27:09.390Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 30)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های آنلاین سراسری (divar.ir)",
+        "ویرگول - شبکه اجتماعی محتوا (virgool.io)",
+        "ویترین نت - بازار آنلاین تجهیزات صنعتی (vitrinnet.com)",
+        "ایستگاه - دایرکتوری مشاغل و تبلیغات (istgah.com)",
+        "شیپور - نیازمندی‌های سراسری (sheypoor.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788586026508_42",
+    "timestamp": "2026-09-05T05:27:06.508Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788586026354_234",
+    "timestamp": "2026-09-05T05:27:06.354Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788585072090_87",
+    "timestamp": "2026-09-05T05:11:12.090Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788585071984_448",
+    "timestamp": "2026-09-05T05:11:11.984Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 30)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - شبکه اجتماعی مقاله‌نویسی (virgool.io)",
+        "باسلام - بازار آنلاین محصولات (basalam.com)",
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "ایستگاه - دایرکتوری نیازمندی‌ها (istgah.com)",
+        "شیپور - نیازمندی‌های آنلاین (sheypoor.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788585069510_870",
+    "timestamp": "2026-09-05T05:11:09.510Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788585069343_985",
+    "timestamp": "2026-09-05T05:11:09.343Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788585066327_614",
+    "timestamp": "2026-09-05T05:11:06.327Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788584435411_66",
+    "timestamp": "2026-09-05T05:00:35.411Z",
+    "level": "WARN",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "عدم پاسخگویی سرویس آنلاین پس از 1 تلاش. تغییر مسیر به موتور آفلاین محلی.",
+    "details": {
+      "model": "gemini-2.5-flash",
+      "attempt": 1,
+      "status": 404,
+      "errStr": "{\"name\":\"ApiError\",\"status\":404}"
+    },
+    "stack": "ApiError: {\"error\":{\"code\":404,\"message\":\"This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.6-flash for the latest features and improvements. We recommend you to use the Interactions API.\",\"status\":\"NOT_FOUND\"}}\n    at throwErrorIfNotOK (/app/applet/node_modules/@google/genai/src/_api_client.ts:1091:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async <anonymous> (/app/applet/node_modules/@google/genai/src/_api_client.ts:643:9)\n    at async Models.Models.generateContent (/app/applet/node_modules/@google/genai/src/models.ts:132:14)\n    at async generateWithRetry (/app/applet/src/server/ai/geminiClient.ts:68:24)\n    at async generateMarketingContent (/app/applet/src/server/ai/contentEngine.ts:36:22)\n    at async runAutonomousCycleNow (/app/applet/src/server/ai/autonomousDaemon.ts:57:26)\n    at async Timeout._onTimeout (/app/applet/src/server/ai/autonomousDaemon.ts:301:9)"
+  },
+  {
+    "id": "log_1788584434992_828",
+    "timestamp": "2026-09-05T05:00:34.992Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.1-flash-lite به مدل gemini-2.5-flash به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.1-flash-lite",
+      "newModel": "gemini-2.5-flash",
+      "status": 503,
+      "errStr": "{\"name\":\"ApiError\",\"status\":503}"
+    }
+  },
+  {
+    "id": "log_1788584432251_457",
+    "timestamp": "2026-09-05T05:00:32.251Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788584432143_78",
+    "timestamp": "2026-09-05T05:00:32.143Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 30)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "ویرگول - پلتفرم انتشار محتوا (virgool.io)",
+        "شیپور - نیازمندی‌های آنلاین (sheypoor.com)",
+        "ایستگاه - نیازمندی‌های اینترنتی (istgah.com)",
+        "باسلام - بازار اجتماعی (basalam.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788584429418_769",
+    "timestamp": "2026-09-05T05:00:29.418Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788584429167_657",
+    "timestamp": "2026-09-05T05:00:29.167Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788583473839_262",
+    "timestamp": "2026-09-05T04:44:33.839Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788583473745_771",
+    "timestamp": "2026-09-05T04:44:33.745Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 30)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "ویرگول - شبکه اجتماعی محتوا (virgool.io)",
+        "شیپور - نیازمندی‌های آنلاین (sheypoor.com)",
+        "ایستگاه - دایرکتوری نیازمندی‌های صنعتی (istgah.com)",
+        "باسلام - بازار اجتماعی ایران (basalam.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788583469460_983",
+    "timestamp": "2026-09-05T04:44:29.460Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788583469156_206",
+    "timestamp": "2026-09-05T04:44:29.156Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788582521925_50",
+    "timestamp": "2026-09-05T04:28:41.925Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788582521796_160",
+    "timestamp": "2026-09-05T04:28:41.796Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 30)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - پلتفرم نشر محتوا و وبلاگ‌نویسی (virgool.io)",
+        "دیوار - نیازمندی‌ها و خدمات صنعتی سراسری (divar.ir)",
+        "ایستگاه - نیازمندی‌های صنعتی و نیازمندی‌ها (istgah.com)",
+        "پارس سنتر - دایرکتوری و بستر B2B صنعتی (parscenter.com)",
+        "بلاگفا - سیستم سرویس وبلاگ‌دهی (blogfa.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788582509147_810",
+    "timestamp": "2026-09-05T04:28:29.147Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788581558411_442",
+    "timestamp": "2026-09-05T04:12:38.411Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 30)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - پلتفرم وبلاگ‌نویسی (virgool.io)",
+        "شیپور - نیازمندی‌های سراسری (sheypoor.com)",
+        "ایستگاه - نیازمندی‌های اینترنتی (istgah.com)",
+        "ایران تجارت - دایرکتوری B2B و آگهی‌های صنعتی (iran-tejarat.com)",
+        "آگهی۲۴ - ثبت آگهی رایگان صنعتی (agahi24.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788581549135_18",
+    "timestamp": "2026-09-05T04:12:29.135Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788580614702_987",
+    "timestamp": "2026-09-05T03:56:54.702Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 29)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - پلتفرم نشر محتوا و وبلاگ‌نویسی (virgool.io)",
+        "دیوار - ثبت آگهی و نیازمندی‌های سراسری (divar.ir)",
+        "ایستگاه - نیازمندی‌های اینترنتی و صنعتی (istgah.com)",
+        "آگهی۲۴ - نیازمندی‌های رایگان و آگهی صنعتی (agahi24.com)",
+        "بلاگفا - سرویس وبلاگ‌دهی فارسی (blogfa.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788580589124_617",
+    "timestamp": "2026-09-05T03:56:29.124Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788579637054_557",
+    "timestamp": "2026-09-05T03:40:37.054Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 29)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های سراسری و خدمات صنعتی (divar.ir)",
+        "ویرگول - پلتفرم نشر مقاله و محتوای تخصصی (virgool.io)",
+        "پارس سنتر - دایرکتوری B2B و محصولات صنعتی (parscenter.com)",
+        "ایستگاه - نیازمندی‌های درج آگهی صنعتی و تجاری (istgah.com)",
+        "بلاگفا - سیستم مدیریت وبلاگ و بک‌لینک‌سازی (blogfa.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788579629114_269",
+    "timestamp": "2026-09-05T03:40:29.114Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788578681472_883",
+    "timestamp": "2026-09-05T03:24:41.472Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 29)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های سراسری و خدمات صنعتی (divar.ir)",
+        "شیپور - پلتفرم نیازمندی‌ها و آگهی (sheypoor.com)",
+        "ویرگول - پلتفرم نشر محتوا و مقالات سئو (virgool.io)",
+        "ایستگاه - نیازمندی‌های اینترنتی و B2B صنعتی (istgah.com)",
+        "آگهی ۲۴ - نیازمندی‌ها و تبلیغات صنعتی (agahi24.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788578672202_77",
+    "timestamp": "2026-09-05T03:24:32.202Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788578669085_440",
+    "timestamp": "2026-09-05T03:24:29.085Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788578655402_130",
+    "timestamp": "2026-09-05T03:24:15.402Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788578652383_18",
+    "timestamp": "2026-09-05T03:24:12.383Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788577892965_27",
+    "timestamp": "2026-09-05T03:11:32.965Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 29)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - ثبت آگهی و نیازمندی‌ها (divar.ir)",
+        "شیپور - نیازمندی‌های سراسری (sheypoor.com)",
+        "ویرگول - پلتفرم نشر مقاله و محتوا (virgool.io)",
+        "ایستگاه - نیازمندی‌های اینترنتی (istgah.com)",
+        "پارس سنتر - دایرکتوری B2B و محصولات صنعتی (parscenter.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788577885554_995",
+    "timestamp": "2026-09-05T03:11:25.554Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788577882527_341",
+    "timestamp": "2026-09-05T03:11:22.527Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788577877613_882",
+    "timestamp": "2026-09-05T03:11:17.613Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788577587013_411",
+    "timestamp": "2026-09-05T03:06:27.013Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تلاش مجدد خودکار برای فراخوانی مدل gemini-3.6-flash (تلاش 1/3).",
+    "details": {
+      "model": "gemini-3.6-flash",
+      "attempt": 1,
+      "status": 500,
+      "errStr": "{\"name\":\"ApiError\",\"status\":500}"
+    }
+  },
+  {
+    "id": "log_1788577586843_705",
+    "timestamp": "2026-09-05T03:06:26.843Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 29)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های سراسری و آگهی صنعتی (divar.ir)",
+        "ویرگول - نشر مقاله و بلاگ‌نویسی سئو (virgool.io)",
+        "ایستگاه - نیازمندی‌ها و آگهی‌های صنعتی (istgah.com)",
+        "آگهی۲۴ - نیازمندی‌های کسب‌وکار و صنعت (agahi24.com)",
+        "صنعت - بانک اطلاعات صنایع و نیازمندی‌های B2B (sanat.ir)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788577557809_977",
+    "timestamp": "2026-09-05T03:05:57.809Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788576625335_482",
+    "timestamp": "2026-09-05T02:50:25.335Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 29)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - پلتفرم نشر محتوا (virgool.io)",
+        "دیوار - نیازمندی‌های رایگان (divar.ir)",
+        "ایستگاه - نیازمندی‌های اینترنتی (istgah.com)",
+        "آگهی۲۴ - نیازمندی‌های رایگان (agahi24.com)",
+        "بلاگفا - سیستم مدیریت وبلاگ (blogfa.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788576600796_334",
+    "timestamp": "2026-09-05T02:50:00.796Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788576597779_49",
+    "timestamp": "2026-09-05T02:49:57.779Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788576594411_87",
+    "timestamp": "2026-09-05T02:49:54.411Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788576000001_390",
+    "timestamp": "2026-09-05T02:40:00.001Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 29)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های آنلاین ایران (divar.ir)",
+        "ویرگول - شبکه اجتماعی محتوا (virgool.io)",
+        "ویترین‌نت - بازار تجارت B2B (vitrinnet.com)",
+        "شیپور - نیازمندی‌های سراسری (sheypoor.com)",
+        "آگهی۲۴ - پورتال جامع تبلیغات (agahi24.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788575995664_195",
+    "timestamp": "2026-09-05T02:39:55.664Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 503,
+      "errStr": "{\"name\":\"ApiError\",\"status\":503}"
+    }
+  },
+  {
+    "id": "log_1788575995130_40",
+    "timestamp": "2026-09-05T02:39:55.130Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788575991845_361",
+    "timestamp": "2026-09-05T02:39:51.845Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788122308153_859",
+    "timestamp": "2026-08-30T20:38:28.153Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788121879467_197",
+    "timestamp": "2026-08-30T20:31:19.467Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788121879365_696",
+    "timestamp": "2026-08-30T20:31:19.365Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 29)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "ویرگول - پلتفرم انتشار محتوا (virgool.io)",
+        "شیپور - نیازمندی‌های آنلاین (sheypoor.com)",
+        "صنعت‌بان - دایرکتوری جامع صنایع ایران (sanatban.com)",
+        "باسلام - بازار اجتماعی ایران (basalam.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788121874623_533",
+    "timestamp": "2026-08-30T20:31:14.623Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788121874470_553",
+    "timestamp": "2026-08-30T20:31:14.470Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788120924915_56",
+    "timestamp": "2026-08-30T20:15:24.915Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788120924804_838",
+    "timestamp": "2026-08-30T20:15:24.804Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 28)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - شبکه اجتماعی محتوایی (virgool.io)",
+        "دیوار - نیازمندی‌های آنلاین (divar.ir)",
+        "باسلام - بازار آنلاین (basalam.com)",
+        "ایستگاه - دایرکتوری مشاغل (istgah.com)",
+        "آگهی۲۴ - پلتفرم تبلیغات صنعتی (agahi24.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788120921530_118",
+    "timestamp": "2026-08-30T20:15:21.530Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 503,
+      "errStr": "{\"name\":\"ApiError\",\"status\":503}"
+    }
+  },
+  {
+    "id": "log_1788120917455_99",
+    "timestamp": "2026-08-30T20:15:17.455Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788120914442_667",
+    "timestamp": "2026-08-30T20:15:14.442Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788120632342_887",
+    "timestamp": "2026-08-30T20:10:32.342Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788120632237_402",
+    "timestamp": "2026-08-30T20:10:32.237Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 28)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - پلتفرم نشر محتوا (virgool.io)",
+        "ایستگاه - نیازمندی‌های اینترنتی و صنعتی (istgah.com)",
+        "آگهی۲۴ - نیازمندی‌ها و تبلیغات رایگان (agahi24.com)",
+        "بلاگفا - سرویس ساخت وبلاگ (blogfa.com)",
+        "شیپور - نیازمندی‌های سراسری (sheypoor.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788120617248_373",
+    "timestamp": "2026-08-30T20:10:17.248Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788119663751_200",
+    "timestamp": "2026-08-30T19:54:23.751Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788119663657_678",
+    "timestamp": "2026-08-30T19:54:23.657Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 28)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - شبکه اجتماعی نویسندگان (virgool.io)",
+        "شیپور - نیازمندی‌های سراسری (sheypoor.com)",
+        "دیوار - پلتفرم ثبت آگهی (divar.ir)",
+        "ایستگاه - دایرکتوری نیازمندی‌ها (istgah.com)",
+        "باسلام - بازار آنلاین (basalam.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788119660427_331",
+    "timestamp": "2026-08-30T19:54:20.427Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788119660252_255",
+    "timestamp": "2026-08-30T19:54:20.252Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788119657221_424",
+    "timestamp": "2026-08-30T19:54:17.221Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788119082304_724",
+    "timestamp": "2026-08-30T19:44:42.304Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788119082196_334",
+    "timestamp": "2026-08-30T19:44:42.196Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 28)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - شبکه اجتماعی نویسندگان (virgool.io)",
+        "شیپور - نیازمندی‌های آنلاین (sheypoor.com)",
+        "باسلام - بازار آنلاین کسب‌وکارهای خانگی و صنعتی (basalam.com)",
+        "ایستگاه - دایرکتوری مشاغل و تبلیغات (istgah.com)",
+        "دیوار - پلتفرم ثبت آگهی (divar.ir)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788119077779_635",
+    "timestamp": "2026-08-30T19:44:37.779Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788119077531_504",
+    "timestamp": "2026-08-30T19:44:37.531Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788119074506_800",
+    "timestamp": "2026-08-30T19:44:34.506Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788118725368_426",
+    "timestamp": "2026-08-30T19:38:45.368Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788118725270_580",
+    "timestamp": "2026-08-30T19:38:45.270Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 28)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - شبکه اجتماعی نویسندگان فارسی (virgool.io)",
+        "دیوار - نیازمندی‌های سراسری ایران (divar.ir)",
+        "شیپور - نیازمندی‌های خرید و فروش کالا (sheypoor.com)",
+        "باسلام - بازار آنلاین کسب‌وکارهای خانگی و صنعتی (basalam.com)",
+        "ایستگاه - بانک اطلاعات مشاغل ایران (istgah.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788118721117_585",
+    "timestamp": "2026-08-30T19:38:41.117Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788118720959_953",
+    "timestamp": "2026-08-30T19:38:40.959Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788117768621_975",
+    "timestamp": "2026-08-30T19:22:48.621Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788117768522_207",
+    "timestamp": "2026-08-30T19:22:48.522Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 28)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "ویرگول - شبکه اجتماعی محتوا (virgool.io)",
+        "شیپور - نیازمندی‌های آنلاین (sheypoor.com)",
+        "آگهی۲۴ - بانک مشاغل و تبلیغات (agahi24.com)",
+        "باسلام - بازار اجتماعی ایران (basalam.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788117764355_345",
+    "timestamp": "2026-08-30T19:22:44.355Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788117763949_521",
+    "timestamp": "2026-08-30T19:22:43.949Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788117760932_78",
+    "timestamp": "2026-08-30T19:22:40.932Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788117191376_520",
+    "timestamp": "2026-08-30T19:13:11.376Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788117191290_898",
+    "timestamp": "2026-08-30T19:13:11.290Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 28)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های آنلاین ایران (divar.ir)",
+        "ویرگول - پلتفرم انتشار محتوا (virgool.io)",
+        "شیپور - نیازمندی‌های سراسری (sheypoor.com)",
+        "ایستگاه - دایرکتوری نیازمندی‌های صنعتی (istgah.com)",
+        "باسلام - بازار اجتماعی ایران (basalam.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788117188254_338",
+    "timestamp": "2026-08-30T19:13:08.254Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788117187965_569",
+    "timestamp": "2026-08-30T19:13:07.965Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788116242134_161",
+    "timestamp": "2026-08-30T18:57:22.134Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788116241968_680",
+    "timestamp": "2026-08-30T18:57:21.968Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 28)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "ویرگول - پلتفرم نشر محتوا و سئو (virgool.io)",
+        "ایستگاه - نیازمندی‌های اینترنتی (istgah.com)",
+        "صنعت - نیازمندی‌ها و دایرکتوری صنعتی (sanat.ir)",
+        "بلاگفا - سرویس ساخت وبلاگ (blogfa.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788116230970_724",
+    "timestamp": "2026-08-30T18:57:10.970Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788116227941_95",
+    "timestamp": "2026-08-30T18:57:07.941Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788115916130_300",
+    "timestamp": "2026-08-30T18:51:56.130Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788115916040_804",
+    "timestamp": "2026-08-30T18:51:56.040Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 27)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - پلتفرم انتشار محتوا (virgool.io)",
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "شیپور - نیازمندی‌های آنلاین (sheypoor.com)",
+        "راهنما - دایرکتوری مشاغل صنعتی (rahnam.com)",
+        "آگهی۲۴ - بانک مشاغل و خدمات (agahi24.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788115910944_52",
+    "timestamp": "2026-08-30T18:51:50.944Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788115910792_312",
+    "timestamp": "2026-08-30T18:51:50.792Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788114956582_373",
+    "timestamp": "2026-08-30T18:35:56.582Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788114956485_161",
+    "timestamp": "2026-08-30T18:35:56.485Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 26)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های آنلاین سراسری (divar.ir)",
+        "ویرگول - شبکه اجتماعی محتوایی (virgool.io)",
+        "شیپور - بازار خرید و فروش کالا (sheypoor.com)",
+        "آگهی ۲۴ - بانک مشاغل ایران (agahi24.com)",
+        "باسلام - بازار اجتماعی کسب‌وکارها (basalam.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788114953959_827",
+    "timestamp": "2026-08-30T18:35:53.959Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788114953783_735",
+    "timestamp": "2026-08-30T18:35:53.783Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788114950769_269",
+    "timestamp": "2026-08-30T18:35:50.769Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788114297667_481",
+    "timestamp": "2026-08-30T18:24:57.667Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788114297579_189",
+    "timestamp": "2026-08-30T18:24:57.579Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 26)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویترین نت - بازار عمده فروشی ایران (vitrinnet.com)",
+        "ویرگول - شبکه اجتماعی بلاگ‌نویسی (virgool.io)",
+        "ایستگاه - نیازمندی‌های آنلاین ایران (istgah.com)",
+        "دیوار - بازار نیازمندی‌ها (divar.ir)",
+        "آگهی ۲۴ - پورتال درج آگهی (agahi24.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788114292680_29",
+    "timestamp": "2026-08-30T18:24:52.680Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788114292510_713",
+    "timestamp": "2026-08-30T18:24:52.510Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788114289489_49",
+    "timestamp": "2026-08-30T18:24:49.489Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788114192128_739",
+    "timestamp": "2026-08-30T18:23:12.128Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788114192024_729",
+    "timestamp": "2026-08-30T18:23:12.024Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 25)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - شبکه اجتماعی محتوا (virgool.io)",
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "شیپور - نیازمندی‌های آنلاین (sheypoor.com)",
+        "باسلام - بازار اجتماعی ایران (basalam.com)",
+        "ایستگاه - دایرکتوری نیازمندی‌های صنعتی (istgah.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1788114175074_524",
+    "timestamp": "2026-08-30T18:22:55.074Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1788114174934_24",
+    "timestamp": "2026-08-30T18:22:54.934Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788114171921_99",
+    "timestamp": "2026-08-30T18:22:51.921Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1788114165606_884",
+    "timestamp": "2026-08-30T18:22:45.606Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1788114162310_179",
+    "timestamp": "2026-08-30T18:22:42.310Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1787981177844_207",
+    "timestamp": "2026-08-29T05:26:17.844Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1787981177750_126",
+    "timestamp": "2026-08-29T05:26:17.750Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 22)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - پلتفرم نیازمندی‌های ایران (divar.ir)",
+        "ویرگول - پلتفرم انتشار محتوا (virgool.io)",
+        "شیپور - نیازمندی‌های آنلاین (sheypoor.com)",
+        "باسلام - بازار اجتماعی ایران (basalam.com)",
+        "ایستگاه - دایرکتوری نیازمندی‌های صنعتی (istgah.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1787981175675_911",
+    "timestamp": "2026-08-29T05:26:15.675Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1787981175492_885",
+    "timestamp": "2026-08-29T05:26:15.492Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1787981172482_972",
+    "timestamp": "2026-08-29T05:26:12.482Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1787980268838_188",
+    "timestamp": "2026-08-29T05:11:08.838Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1787980268730_849",
+    "timestamp": "2026-08-29T05:11:08.730Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 22)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - شبکه اجتماعی نویسندگان (virgool.io)",
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "شیپور - نیازمندی‌های آنلاین (sheypoor.com)",
+        "باسلام - بازار آنلاین اجتماعی (basalam.com)",
+        "ایستگاه - دایرکتوری مشاغل (istgah.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1787980266568_540",
+    "timestamp": "2026-08-29T05:11:06.568Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1787980266392_502",
+    "timestamp": "2026-08-29T05:11:06.392Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1787980263383_32",
+    "timestamp": "2026-08-29T05:11:03.383Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1787980233278_372",
+    "timestamp": "2026-08-29T05:10:33.278Z",
+    "level": "WARN",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "عدم پاسخگویی سرویس آنلاین پس از 1 تلاش. تغییر مسیر به موتور آفلاین محلی.",
+    "details": {
+      "model": "gemini-2.5-flash",
+      "attempt": 1,
+      "status": 404,
+      "errStr": "{\"name\":\"ApiError\",\"status\":404}"
+    },
+    "stack": "ApiError: {\"error\":{\"code\":404,\"message\":\"This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.6-flash for the latest features and improvements. We recommend you to use the Interactions API.\",\"status\":\"NOT_FOUND\"}}\n    at throwErrorIfNotOK (/app/applet/node_modules/@google/genai/src/_api_client.ts:1091:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async <anonymous> (/app/applet/node_modules/@google/genai/src/_api_client.ts:643:9)\n    at async Models.Models.generateContent (/app/applet/node_modules/@google/genai/src/models.ts:132:14)\n    at async generateWithRetry (/app/applet/src/server/ai/geminiClient.ts:68:24)\n    at async generateMarketingContent (/app/applet/src/server/ai/contentEngine.ts:36:22)\n    at async runAutonomousCycleNow (/app/applet/src/server/ai/autonomousDaemon.ts:57:26)\n    at async Timeout._onTimeout (/app/applet/src/server/ai/autonomousDaemon.ts:280:9)"
+  },
+  {
+    "id": "log_1787980232868_945",
+    "timestamp": "2026-08-29T05:10:32.868Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.1-flash-lite به مدل gemini-2.5-flash به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.1-flash-lite",
+      "newModel": "gemini-2.5-flash",
+      "status": 503,
+      "errStr": "{\"name\":\"ApiError\",\"status\":503}"
+    }
+  },
+  {
+    "id": "log_1787980169412_970",
+    "timestamp": "2026-08-29T05:09:29.412Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1787980169283_846",
+    "timestamp": "2026-08-29T05:09:29.283Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 22)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "شیپور - نیازمندی‌های سراسری (sheypoor.com)",
+        "ویرگول - شبکه اجتماعی محتوایی (virgool.io)",
+        "ایستگاه - بانک اطلاعات مشاغل (istgah.com)",
+        "آگهی۲۴ - پورتال تبلیغات صنعتی (agahi24.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1787980144197_814",
+    "timestamp": "2026-08-29T05:09:04.197Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 503,
+      "errStr": "{\"name\":\"ApiError\",\"status\":503}"
+    }
+  },
+  {
+    "id": "log_1787980078998_362",
+    "timestamp": "2026-08-29T05:07:58.998Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1787980075987_742",
+    "timestamp": "2026-08-29T05:07:55.987Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1787980061962_367",
+    "timestamp": "2026-08-29T05:07:41.962Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1787980061826_170",
+    "timestamp": "2026-08-29T05:07:41.826Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 22)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "ویرگول - شبکه اجتماعی محتوا (virgool.io)",
+        "شیپور - بازار آنلاین (sheypoor.com)",
+        "آگهی۲۴ - بانک مشاغل و خدمات (agahi24.com)",
+        "باسلام - بازار آنلاین خرید و فروش (basalam.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1787980059219_727",
+    "timestamp": "2026-08-29T05:07:39.219Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1787980059196_625",
+    "timestamp": "2026-08-29T05:07:39.196Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "NavigationDiscoveryEngine",
+    "message": "شروع کاوش زنده ساختار DOM و ناوبری برای niazerooz.com (آدرس صفحه اصلی: https://www.niazerooz.com)..."
+  },
+  {
+    "id": "log_1787980059040_354",
+    "timestamp": "2026-08-29T05:07:39.040Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1787980056028_336",
+    "timestamp": "2026-08-29T05:07:36.028Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1787979351420_289",
+    "timestamp": "2026-08-29T04:55:51.420Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1787979351327_532",
+    "timestamp": "2026-08-29T04:55:51.327Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 22)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "ویرگول - پلتفرم انتشار محتوا (virgool.io)",
+        "شیپور - نیازمندی‌های آنلاین (sheypoor.com)",
+        "ایستگاه - دایرکتوری تبلیغات صنعتی (istgah.com)",
+        "باسلام - بازار آنلاین (basalam.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1787979341682_82",
+    "timestamp": "2026-08-29T04:55:41.682Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1787979341529_487",
+    "timestamp": "2026-08-29T04:55:41.529Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1787978426336_146",
+    "timestamp": "2026-08-29T04:40:26.336Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1787978426242_988",
+    "timestamp": "2026-08-29T04:40:26.242Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 22)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های آنلاین ایران (divar.ir)",
+        "ویرگول - شبکه اجتماعی محتوایی (virgool.io)",
+        "شیپور - نیازمندی‌های سراسری (sheypoor.com)",
+        "راهنما - نیازمندی‌های صنعتی (rahnama.com)",
+        "بلاگفا - سیستم وبلاگ‌دهی (blogfa.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1787978384697_685",
+    "timestamp": "2026-08-29T04:39:44.697Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1787978384521_615",
+    "timestamp": "2026-08-29T04:39:44.521Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1787978381492_177",
+    "timestamp": "2026-08-29T04:39:41.492Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1787978177158_0",
+    "timestamp": "2026-08-29T04:36:17.158Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1787978177063_107",
+    "timestamp": "2026-08-29T04:36:17.063Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 21)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - شبکه اجتماعی محتوایی (virgool.io)",
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "شیپور - نیازمندی‌های صنعتی و شرکتی (sheypoor.com)",
+        "باسلام - بازار آنلاین محصولات صنعتی و هنری (basalam.com)",
+        "ایستگاه - دایرکتوری تخصصی آگهی (istgah.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1787978167437_713",
+    "timestamp": "2026-08-29T04:36:07.437Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1787978167246_795",
+    "timestamp": "2026-08-29T04:36:07.246Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1787978164237_900",
+    "timestamp": "2026-08-29T04:36:04.237Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1787978119589_791",
+    "timestamp": "2026-08-29T04:35:19.589Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1787978074876_422",
+    "timestamp": "2026-08-29T04:34:34.876Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1787977757741_98",
+    "timestamp": "2026-08-29T04:29:17.741Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1787977757567_891",
+    "timestamp": "2026-08-29T04:29:17.567Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverOfflinePlatforms",
+    "message": "استخراج و ثبت 12 رسانه تخصصی از موتور آفلاین اشک ۲۴ برای کلمات (چاپ و بسته‌بندی اشک قلم جعبه‌سازی سفارشی چاپ افست حرفه‌ای کارتن‌سازی مشهد طراحی زینک اختصاصی طراحی و چاپ لیبل صنعتی شهرک صنعتی کلات). کل دیتابیس: 21",
+    "details": {
+      "count": 12,
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1787977757561_693",
+    "timestamp": "2026-08-29T04:29:17.561Z",
+    "level": "WARN",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "عدم پاسخگویی سرویس آنلاین پس از 1 تلاش. تغییر مسیر به موتور آفلاین محلی.",
+    "details": {
+      "model": "gemini-2.5-flash",
+      "attempt": 1,
+      "status": 404,
+      "errStr": "{\"name\":\"ApiError\",\"status\":404}"
+    },
+    "stack": "ApiError: {\"error\":{\"code\":404,\"message\":\"This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.6-flash for the latest features and improvements. We recommend you to use the Interactions API.\",\"status\":\"NOT_FOUND\"}}\n    at throwErrorIfNotOK (/app/applet/node_modules/@google/genai/src/_api_client.ts:1091:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async <anonymous> (/app/applet/node_modules/@google/genai/src/_api_client.ts:643:9)\n    at async Models.Models.generateContent (/app/applet/node_modules/@google/genai/src/models.ts:132:14)\n    at async generateWithRetry (/app/applet/src/server/ai/geminiClient.ts:68:24)\n    at async discoverTargetPlatforms (/app/applet/src/server/ai/discoveryEngine.ts:65:22)\n    at async runAutonomousCycleNow (/app/applet/src/server/ai/autonomousDaemon.ts:33:26)\n    at async Timeout._onTimeout (/app/applet/src/server/ai/autonomousDaemon.ts:301:9)"
+  },
+  {
+    "id": "log_1787977757286_685",
+    "timestamp": "2026-08-29T04:29:17.286Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.1-flash-lite به مدل gemini-2.5-flash به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.1-flash-lite",
+      "newModel": "gemini-2.5-flash",
+      "status": 503,
+      "errStr": "{\"name\":\"ApiError\",\"status\":503}"
+    }
+  },
+  {
+    "id": "log_1787977752812_617",
+    "timestamp": "2026-08-29T04:29:12.812Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1787977752649_809",
+    "timestamp": "2026-08-29T04:29:12.649Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1787976845766_602",
+    "timestamp": "2026-08-29T04:14:05.766Z",
+    "level": "WARN",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "عدم پاسخگویی سرویس آنلاین پس از 1 تلاش. تغییر مسیر به موتور آفلاین محلی.",
+    "details": {
+      "model": "gemini-2.5-flash",
+      "attempt": 1,
+      "status": 404,
+      "errStr": "{\"name\":\"ApiError\",\"status\":404}"
+    },
+    "stack": "ApiError: {\"error\":{\"code\":404,\"message\":\"This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.6-flash for the latest features and improvements. We recommend you to use the Interactions API.\",\"status\":\"NOT_FOUND\"}}\n    at throwErrorIfNotOK (/app/applet/node_modules/@google/genai/src/_api_client.ts:1091:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async <anonymous> (/app/applet/node_modules/@google/genai/src/_api_client.ts:643:9)\n    at async Models.Models.generateContent (/app/applet/node_modules/@google/genai/src/models.ts:132:14)\n    at async generateWithRetry (/app/applet/src/server/ai/geminiClient.ts:68:24)\n    at async generateMarketingContent (/app/applet/src/server/ai/contentEngine.ts:36:22)\n    at async runAutonomousCycleNow (/app/applet/src/server/ai/autonomousDaemon.ts:57:26)\n    at async Timeout._onTimeout (/app/applet/src/server/ai/autonomousDaemon.ts:280:9)"
+  },
+  {
+    "id": "log_1787976845355_41",
+    "timestamp": "2026-08-29T04:14:05.355Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.1-flash-lite به مدل gemini-2.5-flash به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.1-flash-lite",
+      "newModel": "gemini-2.5-flash",
+      "status": 503,
+      "errStr": "{\"name\":\"ApiError\",\"status\":503}"
+    }
+  },
+  {
+    "id": "log_1787976804344_99",
+    "timestamp": "2026-08-29T04:13:24.344Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1787976804242_666",
+    "timestamp": "2026-08-29T04:13:24.242Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 17)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "شیپور - نیازمندی‌های آنلاین (sheypoor.com)",
+        "ویرگول - پلتفرم نشر محتوا و وبلاگ (virgool.io)",
+        "ایستگاه - نیازمندی‌ها و آگهی‌های صنعتی (istgah.com)",
+        "آگهی ۲۴ - نیازمندی‌های رایگان و کسب‌وکار (agahi24.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1787976795640_701",
+    "timestamp": "2026-08-29T04:13:15.640Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1787976792631_881",
+    "timestamp": "2026-08-29T04:13:12.631Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "source": "SystemLogger",
+    "message": "سرویس ثبت لاگ و عیب‌یابی پیشرفته اشک ۲۴ راه‌اندازی شد."
+  },
+  {
+    "id": "log_1787976190442_243",
+    "timestamp": "2026-08-29T04:03:10.442Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1787976190340_28",
+    "timestamp": "2026-08-29T04:03:10.340Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 17)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "شیپور - نیازمندی‌های آنلاین (sheypoor.com)",
+        "ویرگول - پلتفرم نشر محتوا و مقاله (virgool.io)",
+        "ایستگاه - نیازمندی‌های اینترنتی (istgah.com)",
+        "پارس‌سنتر - دایرکتوری کسب‌وکار و B2B (parscenter.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1787976179308_549",
+    "timestamp": "2026-08-29T04:02:59.308Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "شروع فرآیند کاوش وب و استخراج رسانه‌ها برای حوزه: industrial (کلمات کلیدی: چاپ و بسته‌بندی اشک قلم، جعبه‌سازی سفارشی، چاپ افست حرفه‌ای، کارتن‌سازی مشهد، طراحی زینک اختصاصی، طراحی و چاپ لیبل صنعتی، شهرک صنعتی کلات)",
+    "details": {
+      "sector": "industrial",
+      "keywords": [
+        "چاپ و بسته‌بندی اشک قلم",
+        "جعبه‌سازی سفارشی",
+        "چاپ افست حرفه‌ای",
+        "کارتن‌سازی مشهد",
+        "طراحی زینک اختصاصی",
+        "طراحی و چاپ لیبل صنعتی",
+        "شهرک صنعتی کلات"
+      ]
+    }
+  },
+  {
+    "id": "log_1787975221996_514",
+    "timestamp": "2026-08-29T03:47:01.996Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  },
+  {
+    "id": "log_1787975221915_903",
+    "timestamp": "2026-08-29T03:47:01.915Z",
+    "level": "INFO",
+    "category": "MEDIA_DISCOVERY",
+    "source": "discoverTargetPlatforms",
+    "message": "استخراج اتوماتیک وب با Gemini Flash انجام شد: 5 رسانه جدید در دیتابیس ثبت گردید. (مجموع بانک: 17)",
+    "details": {
+      "count": 5,
+      "platforms": [
+        "ویرگول - شبکه اجتماعی نویسندگان (virgool.io)",
+        "دیوار - نیازمندی‌های سراسری (divar.ir)",
+        "شیپور - نیازمندی‌های سراسری (sheypoor.com)",
+        "باسلام - بازار آنلاین (basalam.com)",
+        "ایستگاه - بانک مشاغل (istgah.com)"
+      ]
+    }
+  },
+  {
+    "id": "log_1787975219429_811",
+    "timestamp": "2026-08-29T03:46:59.429Z",
+    "level": "INFO",
+    "category": "GEMINI_AI",
+    "source": "generateWithRetry",
+    "message": "تغییر مسیر خودکار و هوشمند از مدل gemini-3.6-flash به مدل gemini-3.1-flash-lite به دلیل تقاضای بالا / محدودیت سهمیه.",
+    "details": {
+      "previousModel": "gemini-3.6-flash",
+      "newModel": "gemini-3.1-flash-lite",
+      "status": 429,
+      "errStr": "{\"name\":\"ApiError\",\"status\":429}"
+    }
+  }
+]

@@ -1,0 +1,51 @@
+# ================================================================
+# Ashk 24 - cPanel & Apache Configuration (.htaccess)
+# Supports:
+#  1. Static Mode (React SPA - No Node.js / No Server needed)
+#  2. Optional Python WSGI / CGI Backend (api.py / backend.py)
+#  3. Optional Node.js Passenger App
+# ================================================================
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Disable Directory Listing for security
+  Options -Indexes
+
+  # -------------------------------------------------------------
+  # cPanel Shared PHP Backend Routing (No Node.js Required)
+  # Automatically maps /api/* requests to cpanel-backend/api/index.php
+  # -------------------------------------------------------------
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^api/(.*)$ cpanel-backend/api/index.php?route=$1 [QSA,L]
+
+  # Serve uploaded assets from cpanel-backend/uploads/
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^uploads/(.*)$ cpanel-backend/uploads/$1 [L]
+
+  # Prevent 404 HTML pages on missing files/APIs in Static Mode
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# MIME Types for React JS / Assets
+<IfModule mod_mime.c>
+  AddType application/javascript .js .mjs
+  AddType text/css .css
+  AddType image/svg+xml .svg
+  AddType application/json .json
+</IfModule>
+
+# Deflate / Gzip Compression for Fast Loading
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json
+</IfModule>
+
+# Security Headers & CORS for Static Assets
+<IfModule mod_headers.c>
+  Header set Access-Control-Allow-Origin "*"
+  Header set X-Content-Type-Options "nosniff"
+</IfModule>

@@ -1,0 +1,187 @@
+name: Ashk24 Autonomous Cloud Worker POC
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_id:
+        description: 'Specific cPanel Job ID to claim (optional)'
+        required: false
+        default: ''
+      platform_target:
+        description: 'Target platform (e.g. divar, sheypoor)'
+        required: false
+        default: 'divar'
+  schedule:
+    # Autonomous periodic run: every 4 hours
+    - cron: '0 */4 * * *'
+
+concurrency:
+  group: ashk24-worker-execution
+  cancel-in-progress: false
+
+jobs:
+  browser-worker:
+    name: Execute Real Browser Job
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Repository Source of Truth
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Print Checkout Diagnostics & Worker Version
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "======================================================="
+          echo "🔍 Workflow Execution Diagnostics"
+          echo "🌿 Branch            : ${{ github.ref_name }} (${{ github.ref }})"
+          echo "📌 Real Checked-out SHA: $(git rev-parse HEAD)"
+          echo "🏷️ App Version (Config): $(grep 'APP_VERSION =' src/config/version.ts | cut -d"'" -f2)"
+          echo "🤖 Worker Version      : $(grep '"version"' local-agent/package.json | head -n 1 | cut -d'"' -f4)"
+          echo "🎯 Target Job ID       : ${{ inputs.job_id || github.event.inputs.job_id || 'None (Auto-Claim)' }}"
+          echo "🏷️ Platform Target     : ${{ inputs.platform_target || github.event.inputs.platform_target || 'divar' }}"
+          echo "======================================================="
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'local-agent/package.json'
+
+      - name: Install Local Worker Dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd local-agent
+          npm install --no-audit --prefer-offline
+
+      - name: Install System Display, VNC & Tunnel Tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -y
+          sudo apt-get install -y xvfb x11vnc novnc websockify curl netcat-openbsd
+          # Create symlink so root / request on noVNC web server serves vnc.html directly
+          sudo ln -sf /usr/share/novnc/vnc.html /usr/share/novnc/index.html || true
+          # Install cloudflared for secure on-demand Quick Tunnel
+          curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared.deb
+          rm -f cloudflared.deb
+
+      - name: Install Playwright Chromium with System Dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd local-agent
+          npx playwright install --with-deps chromium
+
+      - name: Run Interactive Cloud Browser Worker (Zero-Fake Safe Execution)
+        shell: bash
+        env:
+          CPANEL_URL: ${{ secrets.CPANEL_URL }}
+          CPANEL_AGENT_TOKEN: ${{ secrets.CPANEL_AGENT_TOKEN }}
+          TARGET_JOB_ID: ${{ inputs.job_id || github.event.inputs.job_id || '' }}
+          PLATFORM_TARGET: ${{ inputs.platform_target || github.event.inputs.platform_target || 'divar' }}
+          IRAN_PROXY_URL: ${{ secrets.IRAN_PROXY_URL }}
+          VNC_PASSWORD: ${{ secrets.VNC_PASSWORD || 'Ashk24SecureSession' }}
+          HEADLESS: 'false'
+          CI: 'true'
+        run: |
+          set -euo pipefail
+
+          # 1. Setup virtual framebuffer Xvfb
+          echo "🖥️ Starting Xvfb on DISPLAY :99..."
+          Xvfb :99 -screen 0 1280x800x24 -nolisten tcp &
+          XVFB_PID=$!
+          export DISPLAY=:99
+
+          # Health-check Xvfb display socket
+          echo "⏳ Waiting for Xvfb display socket /tmp/.X11-unix/X99..."
+          for i in {1..30}; do
+            if [ -S /tmp/.X11-unix/X99 ]; then
+              echo "✅ Xvfb display :99 is ready."
+              break
+            fi
+            sleep 0.5
+          done
+
+          if [ ! -S /tmp/.X11-unix/X99 ]; then
+            echo "❌ [Fatal] Xvfb failed to initialize on DISPLAY :99."
+            exit 1
+          fi
+
+          # 2. Setup password-protected VNC daemon on 127.0.0.1:5900
+          echo "🔐 Starting x11vnc daemon..."
+          mkdir -p ~/.vnc
+          x11vnc -storepasswd "$VNC_PASSWORD" ~/.vnc/passwd
+          x11vnc -display :99 -forever -shared -rfbauth ~/.vnc/passwd -listen 127.0.0.1 -rfbport 5900 &
+          VNC_PID=$!
+
+          # Health-check VNC port 5900
+          echo "⏳ Waiting for x11vnc port 5900..."
+          for i in {1..30}; do
+            if nc -z 127.0.0.1 5900 2>/dev/null; then
+              echo "✅ x11vnc listening on 127.0.0.1:5900."
+              break
+            fi
+            sleep 0.5
+          done
+
+          if ! nc -z 127.0.0.1 5900 2>/dev/null; then
+            echo "❌ [Fatal] x11vnc failed to bind port 5900."
+            exit 1
+          fi
+
+          # 3. Setup websockify / noVNC web interface on 127.0.0.1:6080
+          echo "🌐 Starting websockify / noVNC bridge on 127.0.0.1:6080..."
+          websockify --web=/usr/share/novnc 6080 127.0.0.1:5900 &
+          WEBSOCK_PID=$!
+
+          # Health-check websockify port 6080
+          echo "⏳ Waiting for websockify/noVNC on http://127.0.0.1:6080..."
+          for i in {1..30}; do
+            if nc -z 127.0.0.1 6080 2>/dev/null || curl -s http://127.0.0.1:6080/ >/dev/null; then
+              echo "✅ websockify/noVNC bridge is up and serving on http://127.0.0.1:6080."
+              break
+            fi
+            sleep 0.5
+          done
+
+          if ! nc -z 127.0.0.1 6080 2>/dev/null; then
+            echo "❌ [Fatal] websockify failed to bind port 6080."
+            exit 1
+          fi
+
+          # Trap background daemons for robust shutdown while preserving script exit code
+          cleanup() {
+            local exit_code=$?
+            echo "🛑 [Cleanup] Shutting down virtual display and network daemons..."
+            kill $WEBSOCK_PID $VNC_PID $XVFB_PID 2>/dev/null || true
+            exit "$exit_code"
+          }
+          trap cleanup EXIT INT TERM
+
+          # Execute real worker without masking failures
+          echo "======================================================="
+          echo "🚀 Launching Ashk24 Cloud Worker Engine..."
+          echo "🌿 Branch            : ${{ github.ref_name }}"
+          echo "📌 Real Checked-out SHA: $(git rev-parse HEAD)"
+          echo "🏷️ App Version (Config): $(grep 'APP_VERSION =' src/config/version.ts | cut -d"'" -f2)"
+          echo "🤖 Worker Version      : $(grep '"version"' local-agent/package.json | head -n 1 | cut -d'"' -f4)"
+          echo "🎯 Target Job ID       : ${TARGET_JOB_ID:-None (Auto-Claim)}"
+          echo "🏷️ Platform Target     : ${PLATFORM_TARGET:-divar}"
+          echo "======================================================="
+          node local-agent/index.js --once --cloud-mode
+
+      - name: Upload Execution Evidence (Screenshots / Traces)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ashk24-worker-evidence-${{ github.run_id }}
+          path: local-agent/evidence/
+          retention-days: 7

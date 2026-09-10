@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "ASHK 24 Local Execution Agent",
+  "version": "1.0",
+  "description": "Local execution agent for ASHK 24 Orchestrator.",
+  "permissions": [
+    "storage",
+    "tabs",
+    "alarms",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://*.divar.ir/*",
+    "https://*.sheypoor.com/*",
+    "https://*.istgah.com/*",
+    "https://*.niazpardaz.com/*",
+    "https://*.payamsara.com/*",
+    "https://*.niazerooz.com/*",
+    "https://*.rahnama.com/*",
+    "https://*.agahi24.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.divar.ir/*",
+        "https://*.sheypoor.com/*",
+        "https://*.istgah.com/*",
+        "https://*.niazpardaz.com/*",
+        "https://*.payamsara.com/*",
+        "https://*.niazerooz.com/*",
+        "https://*.rahnama.com/*",
+        "https://*.agahi24.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

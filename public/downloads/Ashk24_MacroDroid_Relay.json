@@ -1,0 +1,20 @@
+{
+  "macroName": "انتقال خودکار پیامک OTP به سامانه اشک ۲۴",
+  "version": "4.0.10",
+  "description": "به محض دریافت پیامک، کد تایید را استخراج و به وب‌هوک هاست secret.ashkghalam.ir ارسال می‌کند.",
+  "triggers": [
+    {
+      "type": "IncomingSMS",
+      "from": "Any"
+    }
+  ],
+  "actions": [
+    {
+      "type": "HttpRequest",
+      "method": "POST",
+      "url": "https://secret.ashkghalam.ir/api/webhooks/sms",
+      "body": "{\"senderNumber\":\"{sms_number}\",\"receiverNumber\":\"09153108763\",\"messageText\":\"{sms_body}\"}",
+      "contentType": "application/json"
+    }
+  ]
+}

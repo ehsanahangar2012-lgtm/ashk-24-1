@@ -1,0 +1,64 @@
+{
+  "testName": "E2E Real Verification: PAUSE -> RESUME -> SUBMIT -> VERIFY",
+  "startedAt": "2026-09-08T15:29:16.304Z",
+  "sessionPersistenceCheck": null,
+  "targetPlatform": "plat_divar",
+  "targetUrl": "https://divar.ir/new",
+  "phases": {
+    "sessionCheck": {
+      "status": "completed",
+      "sessionFound": false,
+      "savedAt": null,
+      "notes": "No pre-existing session in cPanel. Fresh authentication required."
+    },
+    "navigationAndInput": {
+      "status": "completed",
+      "httpStatus": 200,
+      "pageTitle": "ثبت آگهی در دیوار",
+      "phoneInputFound": true,
+      "phoneEntered": "09153108763"
+    },
+    "challengeDetection": {
+      "status": "completed",
+      "challengeType": "CAPTCHA_CHALLENGE",
+      "hasArcaptcha": true,
+      "hasOtpPrompt": true
+    },
+    "pausedUserAction": {
+      "status": "completed",
+      "cPanelJobStatus": "paused_user_action",
+      "timestamp": "2026-09-08T15:29:24.790Z",
+      "syncedToCpanel": true,
+      "humanChannelAlerted": true
+    },
+    "humanActionResumeGate": {
+      "status": "blocked",
+      "reason": "AWAITING_REAL_HUMAN_ACTION",
+      "notificationChannel": "Human-in-the-Loop Secretary Bridge (cPanel & Mobile Companion)",
+      "details": "Interactive Arcaptcha CAPTCHA requires genuine human solving; real SMS OTP not received."
+    },
+    "submitAndPublish": {
+      "status": "pending"
+    },
+    "independentVerification": {
+      "status": "pending"
+    }
+  },
+  "firstRealBlockingPoint": {
+    "phase": "HUMAN_CAPTCHA_OTP_CHALLENGE",
+    "targetUrl": "https://divar.ir/new",
+    "timestamp": "2026-09-08T15:29:24.802Z",
+    "challengeType": "Arcaptcha / SMS OTP",
+    "status": "PAUSED_USER_ACTION",
+    "humanChannel": "Human-in-the-Loop Secretary Bridge (mobile/pending-otp)",
+    "evidenceScreenshot": "/app/applet/local-agent/evidence/e2e_02_challenge_detected.png",
+    "domEvidence": "/app/applet/local-agent/evidence/page_dump.html",
+    "exactFailureMessage": "Target (divar.ir) presented Arcaptcha security challenge. Zero-Fake-Pass rule forbids automated mock solve. System correctly paused at PAUSED_USER_ACTION awaiting human resolution."
+  },
+  "evidence": {
+    "phoneFilledScreenshot": "/app/applet/local-agent/evidence/e2e_01_phone_filled.png",
+    "challengeScreenshot": "/app/applet/local-agent/evidence/e2e_02_challenge_detected.png"
+  },
+  "finalVerdict": "E2E_FAIL",
+  "completedAt": "2026-09-08T15:29:24.809Z"
+}

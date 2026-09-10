@@ -1,0 +1,55 @@
+{
+  "timestamp": "2026-09-05T12:30:52.949Z",
+  "goldenE2e": "PASS",
+  "sessionRecovery": "PASS",
+  "retry": "PASS",
+  "timeout": "PASS",
+  "captchaHumanAction": "N-A",
+  "crashRecovery": "PASS",
+  "idempotency": "PASS",
+  "regression": "PASS",
+  "finalStability": "PASS",
+  "details": {
+    "goldenE2e": {
+      "capturedToken": "gZo_A12x",
+      "finalSubmitSuccess": true,
+      "verifiedUrl": "https://divar.ir/new",
+      "status": "PASS"
+    },
+    "sessionRecovery": {
+      "hasTokenBefore": false,
+      "hasTokenAfter": true,
+      "recoveredWithVaultToken": true,
+      "authenticatedAfterRecovery": true,
+      "tokenLength": 404,
+      "status": "PASS"
+    },
+    "retry": {
+      "transientErrorRecovered": true,
+      "attemptsTotal": 2,
+      "duplicatePrevented": true,
+      "status": "PASS"
+    },
+    "timeout": {
+      "realTimeoutCaptured": true,
+      "recoveredAfterTimeout": true,
+      "status": "PASS"
+    },
+    "captchaHumanAction": {
+      "detected": false,
+      "monitorActive": true,
+      "sessionPreserved": true,
+      "status": "N-A"
+    },
+    "crashRecovery": {
+      "resumedFromCheckpoint": "CHECKPOINT_STEP_1_COMPLETE",
+      "statePreserved": true,
+      "status": "PASS"
+    },
+    "idempotency": {
+      "duplicateBlocked": true,
+      "existingPostTokenRetained": "gZo_A12x",
+      "status": "PASS"
+    }
+  }
+}

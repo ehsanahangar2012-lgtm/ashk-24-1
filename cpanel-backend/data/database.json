@@ -1,0 +1,513 @@
+{
+  "companyProfile": {
+    "id": "cmp_default_01",
+    "name": "مجتمع چاپ، کارتن‌سازی و بسته‌بندی حرفه‌ای اشک قلم",
+    "brandName": "اشک قلم (Ashk Ghalam)",
+    "nationalCode": "10380456789",
+    "phoneNumber": "09153108763",
+    "email": "info@ashkghalam.ir",
+    "website": "http://www.ashkghalam.ir",
+    "address": "مشهد، شهرک صنعتی کلات",
+    "sector": "industrial",
+    "defaultTone": "persuasive",
+    "keywords": [
+      "چاپ و بسته‌بندی اشک قلم",
+      "جعبه‌سازی سفارشی",
+      "چاپ افست حرفه‌ای",
+      "کارتن‌سازی مشهد",
+      "طراحی زینک اختصاصی",
+      "طراحی و چاپ لیبل صنعتی",
+      "شهرک صنعتی کلات"
+    ],
+    "targetAudience": "تولیدکنندگان کالا، کارخانجات صنعتی، سازمان‌ها و صاحبان کسب‌وکارها جهت صفر تا صد بسته‌بندی، کارتن و چاپ کاتالوگ",
+    "logoUrl": "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=400&auto=format&fit=crop&q=80",
+    "contactPerson": "مهندس احسان آهنگر",
+    "taxId": "IR-98153108763",
+    "registrationNumber": "584920",
+    "telegramChannel": "@ashkghalam",
+    "instagramHandle": "@ashkghalam",
+    "catalogPdfUrl": "http://www.ashkghalam.ir/catalog.pdf",
+    "productImages": [
+      "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=800&auto=format&fit=crop&q=80"
+    ],
+    "aboutUsSummary": "اشک قلم: همکار قابل‌اعتماد شما در بسته‌بندی و چاپ حرفه‌ای. از صفر تا صد خدمات چاپ و کارتن‌سازی، جعبه‌سازی سفارشی، چاپ افست کاتالوگ و بروشور، طراحی زینک اختصاصی و لیبل‌های صنعتی در مشهد، شهرک صنعتی کلات. راه‌های تماس: 09153108763 - 09353108763 - 09393108763 وب‌سایت: http://www.ashkghalam.ir",
+    "updatedAt": "2026-09-08T13:14:43.018Z"
+  },
+  "mediaPlatforms": [
+    {
+      "id": "plat_divar",
+      "name": "Divar",
+      "persianName": "دیوار (Divar.ir)",
+      "domain": "divar.ir",
+      "category": "classifieds",
+      "monthlyVisits": "۵۵ میلیون بازدید ماهانه",
+      "requiresOtp": true,
+      "supportsImage": true,
+      "formType": "classified",
+      "trustScore": 98,
+      "sessionStatus": "none"
+    },
+    {
+      "id": "plat_sheypoor",
+      "name": "Sheypoor",
+      "persianName": "شیپور (Sheypoor.com)",
+      "domain": "sheypoor.com",
+      "category": "classifieds",
+      "monthlyVisits": "۲۲ میلیون بازدید ماهانه",
+      "requiresOtp": true,
+      "supportsImage": true,
+      "formType": "classified",
+      "trustScore": 94,
+      "sessionStatus": "none"
+    },
+    {
+      "id": "plat_bama",
+      "name": "Bama",
+      "persianName": "باما (Bama.ir)",
+      "domain": "bama.ir",
+      "category": "classifieds",
+      "monthlyVisits": "۱۲ میلیون بازدید ماهانه",
+      "requiresOtp": true,
+      "supportsImage": true,
+      "formType": "classified",
+      "trustScore": 91,
+      "sessionStatus": "none"
+    },
+    {
+      "id": "plat_torob",
+      "name": "Torob",
+      "persianName": "ترب (Torob.com)",
+      "domain": "torob.com",
+      "category": "b2b",
+      "monthlyVisits": "۴۰ میلیون بازدید ماهانه",
+      "requiresOtp": false,
+      "supportsImage": true,
+      "formType": "directory_entry",
+      "trustScore": 97,
+      "sessionStatus": "none"
+    },
+    {
+      "id": "plat_emalls",
+      "name": "Emalls",
+      "persianName": "ایمالز (Emalls.ir)",
+      "domain": "emalls.ir",
+      "category": "b2b",
+      "monthlyVisits": "۱۸ میلیون بازدید ماهانه",
+      "requiresOtp": false,
+      "supportsImage": true,
+      "formType": "directory_entry",
+      "trustScore": 89,
+      "sessionStatus": "none"
+    },
+    {
+      "id": "plat_virgool",
+      "name": "Virgool",
+      "persianName": "ویرگول (Virgool.io)",
+      "domain": "virgool.io",
+      "category": "blog",
+      "monthlyVisits": "۶ میلیون بازدید ماهانه",
+      "requiresOtp": true,
+      "supportsImage": true,
+      "formType": "blog_post",
+      "trustScore": 92,
+      "sessionStatus": "none"
+    },
+    {
+      "id": "plat_internal_blog",
+      "name": "InternalBlog",
+      "persianName": "سامانه انتشار بومی سی‌پنل اشک ۲۴",
+      "domain": "ashkghalam.ir",
+      "category": "internal",
+      "monthlyVisits": "اختصاصی داخلی",
+      "requiresOtp": false,
+      "supportsImage": true,
+      "formType": "blog_post",
+      "trustScore": 100,
+      "sessionStatus": "authenticated"
+    }
+  ],
+  "campaigns": [
+    {
+      "id": "camp_carton_laminated_01",
+      "title": "کمپین سراسری تولید و عرضه کارتن لمینتی و جعبه‌های دایکاتی صادراتی",
+      "description": "تولید انواع کارتن لمینتی ۳ لایه و ۵ لایه، کارتن دارویی و غذایی، چاپ فلکسو و افست با دستگاه‌های پیشرفته در شهرک صنعتی کلات مشهد",
+      "sector": "industrial",
+      "tone": "persuasive",
+      "priceToman": 1800000,
+      "keywords": [
+        "کارتن_لمینتی",
+        "جعبه_سازی_مشهد",
+        "چاپ_بسته_بندی",
+        "کارتن_صادراتی"
+      ],
+      "targetPlatforms": [
+        "plat_divar",
+        "plat_sheypoor",
+        "plat_torob",
+        "plat_internal_blog"
+      ],
+      "status": "active",
+      "createdAt": "2026-09-08T13:14:43.019Z",
+      "updatedAt": "2026-09-08T13:14:43.019Z"
+    },
+    {
+      "id": "camp_offset_catalog_02",
+      "title": "طراحی اختصاصی زینک و چاپ افست کاتالوگ صنعتی و جعبه مقوایی",
+      "description": "خدمات تخصصی لیتوگرافی، تهیه زینک اختصاصی و چاپ افست کاتالوگ و بروشور با برترین متریال مقوای ایندربرد و کرافت",
+      "sector": "industrial",
+      "tone": "technical",
+      "priceToman": 950000,
+      "keywords": [
+        "چاپ_افست",
+        "زینک_اختصاصی",
+        "چاپ_کاتالوگ",
+        "اشک_قلم"
+      ],
+      "targetPlatforms": [
+        "plat_sheypoor",
+        "plat_virgool",
+        "plat_internal_blog"
+      ],
+      "status": "active",
+      "createdAt": "2026-09-08T13:14:43.019Z",
+      "updatedAt": "2026-09-08T13:14:43.019Z"
+    },
+    {
+      "id": "cmp_1788873568279",
+      "status": "scheduled",
+      "createdAt": "2026-09-08T13:19:28.279Z",
+      "updatedAt": "2026-09-08T13:19:28.279Z",
+      "title": "تولید انواع کارتن ۳ لایه و ۵ لایه لمینتی و دایکاتی صادراتی",
+      "companyId": "cmp_default_01",
+      "selectedPlatformIds": [
+        "plat_test_site",
+        "plat_istgah",
+        "plat_niazerooz",
+        "plat_agahi24",
+        "plat_niazchi"
+      ],
+      "productName": "کارتن و جعبه بسته‌بندی صادراتی",
+      "productDescription": "مجتمع تخصصی کارتن‌سازی و چاپ افست: طراحی و تولید انواع کارتن ۳ لایه، ۵ لایه، لمینتی، جعبه مقوایی و هاردباکس با بالاترین کیفیت چاپ و تیراژ بالا، ارسال به سراسر کشور و کشورهای همسایه.",
+      "priceToman": 0,
+      "sector": "industrial",
+      "tone": "persuasive",
+      "targetKeywords": [
+        "کارتن سازی",
+        "جعبه سازی",
+        "اشک قلم",
+        "بسته بندی",
+        "چاپ افست"
+      ],
+      "jalaliScheduleDate": "1405/06/17",
+      "jalaliScheduleTime": "۱۶:۴۹",
+      "autoRetryCount": 3,
+      "isRenewalScheduled": true,
+      "renewalIntervalDays": 30,
+      "lastRenewalDate": "",
+      "nextRenewalDate": "۱۴۰۵/۰۶/۲۵",
+      "renewalCount": 0
+    }
+  ],
+  "publicationJobs": [
+    {
+      "id": "job_1788989067_670",
+      "campaignId": "cmp_01_automation",
+      "platformId": "plat_divar",
+      "platformName": "دیوار (Divar.ir)",
+      "status": "pending",
+      "currentStep": "در صف انتشار...",
+      "progressPercent": 0,
+      "logs": [],
+      "otpRequired": false,
+      "usedEngine": "offline-heuristic-persian",
+      "createdAt": "2026-09-10T00:54:27+03:30",
+      "updatedAt": "2026-09-10T00:54:27+03:30",
+      "campaignTitle": "کمپین سراسری معرفی نرم‌افزار اشک ۲۴"
+    },
+    {
+      "id": "job_1788881356348",
+      "campaignId": "camp_carton_laminated_01",
+      "campaignTitle": "کمپین سراسری تولید و عرضه کارتن لمینتی و جعبه‌های دایکاتی صادراتی",
+      "platformId": "plat_divar",
+      "platformName": "دیوار (Divar.ir)",
+      "platformDomain": "divar.ir",
+      "status": "paused_user_action",
+      "currentStep": "توقف در انتظار حل چالش انسانی آرکپچا و کد پیامک واقعی. هرگونه بای‌پس ساختگی طبق قانون ZERO-FAKE ممنوع است.",
+      "logs": [
+        {
+          "timestamp": "2026-09-08T15:29:16.348Z",
+          "level": "info",
+          "message": "وظیفه انتشار برای دیوار (Divar.ir) آغاز گردید."
+        }
+      ],
+      "createdAt": "2026-09-08T15:29:16.348Z",
+      "updatedAt": "2026-09-08T15:29:24.807Z",
+      "jobId": "job_1788881356348",
+      "challengeType": "CAPTCHA_CHALLENGE",
+      "evidenceScreenshot": "/app/applet/local-agent/evidence/e2e_02_challenge_detected.png",
+      "humanAlert": {
+        "channel": "Secretary Bridge / Mobile Companion / Dashboard UI",
+        "alertTimestamp": "2026-09-08T15:29:24.783Z",
+        "status": "NOTIFIED",
+        "actionUrl": "http://localhost:3000/cpanel-backend/api/index.php?route=jobs/resolve-challenge",
+        "message": "چالش امنیتی نیازمند اقدام انسانی شناسایی شد. لطفاً چالش را در پل ارتباطی منشی هوشمند حل و تایید فرمایید."
+      },
+      "blockingPoint": {
+        "phase": "HUMAN_CAPTCHA_OTP_CHALLENGE",
+        "targetUrl": "https://divar.ir/new",
+        "timestamp": "2026-09-08T15:29:24.802Z",
+        "challengeType": "Arcaptcha / SMS OTP",
+        "status": "PAUSED_USER_ACTION",
+        "humanChannel": "Human-in-the-Loop Secretary Bridge (mobile/pending-otp)",
+        "evidenceScreenshot": "/app/applet/local-agent/evidence/e2e_02_challenge_detected.png",
+        "domEvidence": "/app/applet/local-agent/evidence/page_dump.html",
+        "exactFailureMessage": "Target (divar.ir) presented Arcaptcha security challenge. Zero-Fake-Pass rule forbids automated mock solve. System correctly paused at PAUSED_USER_ACTION awaiting human resolution."
+      }
+    },
+    {
+      "id": "job_1788881011846",
+      "campaignId": "camp_carton_laminated_01",
+      "campaignTitle": "کمپین سراسری تولید و عرضه کارتن لمینتی و جعبه‌های دایکاتی صادراتی",
+      "platformId": "plat_divar",
+      "platformName": "دیوار (Divar.ir)",
+      "platformDomain": "divar.ir",
+      "status": "paused_user_action",
+      "currentStep": "توقف در انتظار حل چالش انسانی آرکپچا و کد پیامک واقعی. هرگونه بای‌پس ساختگی طبق قانون ZERO-FAKE ممنوع است.",
+      "logs": [
+        {
+          "timestamp": "2026-09-08T15:23:31.846Z",
+          "level": "info",
+          "message": "وظیفه انتشار برای دیوار (Divar.ir) آغاز گردید."
+        }
+      ],
+      "createdAt": "2026-09-08T15:23:31.846Z",
+      "updatedAt": "2026-09-08T15:23:40.383Z",
+      "jobId": "job_1788881011846",
+      "challengeType": "CAPTCHA_CHALLENGE",
+      "evidenceScreenshot": "/app/applet/local-agent/evidence/e2e_02_challenge_detected.png",
+      "humanAlert": {
+        "channel": "Secretary Bridge / Mobile Companion / Dashboard UI",
+        "alertTimestamp": "2026-09-08T15:23:40.353Z",
+        "status": "NOTIFIED",
+        "actionUrl": "http://localhost:3000/cpanel-backend/api/index.php?route=jobs/resolve-challenge",
+        "message": "چالش امنیتی نیازمند اقدام انسانی شناسایی شد. لطفاً چالش را در پل ارتباطی منشی هوشمند حل و تایید فرمایید."
+      },
+      "blockingPoint": {
+        "phase": "HUMAN_CAPTCHA_OTP_CHALLENGE",
+        "targetUrl": "https://divar.ir/new",
+        "timestamp": "2026-09-08T15:23:40.375Z",
+        "challengeType": "Arcaptcha / SMS OTP",
+        "status": "PAUSED_USER_ACTION",
+        "humanChannel": "Human-in-the-Loop Secretary Bridge (mobile/pending-otp)",
+        "evidenceScreenshot": "/app/applet/local-agent/evidence/e2e_02_challenge_detected.png",
+        "domEvidence": "/app/applet/local-agent/evidence/page_dump.html",
+        "exactFailureMessage": "Target (divar.ir) presented Arcaptcha security challenge. Zero-Fake-Pass rule forbids automated mock solve. System correctly paused at PAUSED_USER_ACTION awaiting human resolution."
+      }
+    },
+    {
+      "id": "job_1788880842470",
+      "campaignId": "camp_carton_laminated_01",
+      "campaignTitle": "کمپین سراسری تولید و عرضه کارتن لمینتی و جعبه‌های دایکاتی صادراتی",
+      "platformId": "plat_divar",
+      "platformName": "دیوار (Divar.ir)",
+      "platformDomain": "divar.ir",
+      "status": "paused_user_action",
+      "currentStep": "توقف در انتظار حل چالش انسانی آرکپچا و کد پیامک واقعی. هرگونه بای‌پس ساختگی طبق قانون ZERO-FAKE ممنوع است.",
+      "logs": [
+        {
+          "timestamp": "2026-09-08T15:20:42.470Z",
+          "level": "info",
+          "message": "وظیفه انتشار برای دیوار (Divar.ir) آغاز گردید."
+        }
+      ],
+      "createdAt": "2026-09-08T15:20:42.470Z",
+      "updatedAt": "2026-09-08T15:20:50.832Z",
+      "jobId": "job_1788880842470",
+      "challengeType": "CAPTCHA_CHALLENGE",
+      "evidenceScreenshot": "/app/applet/local-agent/evidence/e2e_02_challenge_detected.png",
+      "humanAlert": {
+        "channel": "Secretary Bridge / Mobile Companion / Dashboard UI",
+        "alertTimestamp": "2026-09-08T15:20:50.805Z",
+        "status": "NOTIFIED",
+        "actionUrl": "http://localhost:3000/cpanel-backend/api/index.php?route=jobs/resolve-challenge",
+        "message": "چالش امنیتی نیازمند اقدام انسانی شناسایی شد. لطفاً چالش را در پل ارتباطی منشی هوشمند حل و تایید فرمایید."
+      },
+      "blockingPoint": {
+        "phase": "HUMAN_CAPTCHA_OTP_CHALLENGE",
+        "targetUrl": "https://divar.ir/new",
+        "timestamp": "2026-09-08T15:20:50.827Z",
+        "challengeType": "Arcaptcha / SMS OTP",
+        "status": "PAUSED_USER_ACTION",
+        "humanChannel": "Human-in-the-Loop Secretary Bridge (mobile/pending-otp)",
+        "evidenceScreenshot": "/app/applet/local-agent/evidence/e2e_02_challenge_detected.png",
+        "domEvidence": "/app/applet/local-agent/evidence/page_dump.html",
+        "exactFailureMessage": "Target (divar.ir) presented Arcaptcha security challenge. Zero-Fake-Pass rule forbids automated mock solve. System correctly paused at PAUSED_USER_ACTION awaiting human resolution."
+      }
+    },
+    {
+      "id": "job_1788879736283",
+      "campaignId": "camp_carton_laminated_01",
+      "campaignTitle": "کمپین سراسری تولید و عرضه کارتن لمینتی و جعبه‌های دایکاتی صادراتی",
+      "platformId": "plat_divar",
+      "platformName": "دیوار (Divar.ir)",
+      "platformDomain": "divar.ir",
+      "status": "paused_user_action",
+      "currentStep": "توقف در انتظار حل چالش انسانی آرکپچا و کد پیامک واقعی. هرگونه بای‌پس ساختگی طبق قانون ZERO-FAKE ممنوع است.",
+      "logs": [
+        {
+          "timestamp": "2026-09-08T15:02:16.283Z",
+          "level": "info",
+          "message": "وظیفه انتشار برای دیوار (Divar.ir) آغاز گردید."
+        }
+      ],
+      "createdAt": "2026-09-08T15:02:16.283Z",
+      "updatedAt": "2026-09-08T15:02:24.705Z",
+      "jobId": "job_1788879736283",
+      "challengeType": "CAPTCHA_CHALLENGE",
+      "evidenceScreenshot": "/app/applet/local-agent/evidence/e2e_02_challenge_detected.png",
+      "humanAlert": {
+        "channel": "Secretary Bridge / Mobile Companion / Dashboard UI",
+        "alertTimestamp": "2026-09-08T15:02:24.683Z",
+        "status": "NOTIFIED",
+        "actionUrl": "http://localhost:3000/cpanel-backend/api/index.php?route=jobs/resolve-challenge",
+        "message": "چالش امنیتی نیازمند اقدام انسانی شناسایی شد. لطفاً چالش را در پل ارتباطی منشی هوشمند حل و تایید فرمایید."
+      },
+      "blockingPoint": {
+        "phase": "HUMAN_CAPTCHA_OTP_CHALLENGE",
+        "targetUrl": "https://divar.ir/new",
+        "timestamp": "2026-09-08T15:02:24.702Z",
+        "challengeType": "Arcaptcha / SMS OTP",
+        "status": "PAUSED_USER_ACTION",
+        "humanChannel": "Human-in-the-Loop Secretary Bridge (mobile/pending-otp)",
+        "evidenceScreenshot": "/app/applet/local-agent/evidence/e2e_02_challenge_detected.png",
+        "domEvidence": "/app/applet/local-agent/evidence/page_dump.html",
+        "exactFailureMessage": "Target (divar.ir) presented Arcaptcha security challenge. Zero-Fake-Pass rule forbids automated mock solve. System correctly paused at PAUSED_USER_ACTION awaiting human resolution."
+      }
+    },
+    {
+      "id": "job_1788879406989",
+      "campaignId": "camp_carton_laminated_01",
+      "campaignTitle": "کمپین سراسری تولید و عرضه کارتن لمینتی و جعبه‌های دایکاتی صادراتی",
+      "platformId": "plat_divar",
+      "platformName": "دیوار (Divar.ir)",
+      "platformDomain": "divar.ir",
+      "status": "paused_user_action",
+      "currentStep": "توقف در انتظار حل چالش انسانی آرکپچا و کد پیامک واقعی. هرگونه بای‌پس ساختگی طبق قانون ZERO-FAKE ممنوع است.",
+      "logs": [
+        {
+          "timestamp": "2026-09-08T14:56:46.989Z",
+          "level": "info",
+          "message": "وظیفه انتشار برای دیوار (Divar.ir) آغاز گردید."
+        }
+      ],
+      "createdAt": "2026-09-08T14:56:46.989Z",
+      "updatedAt": "2026-09-08T14:56:55.491Z",
+      "jobId": "job_1788879406989",
+      "challengeType": "CAPTCHA_CHALLENGE",
+      "evidenceScreenshot": "/app/applet/local-agent/evidence/e2e_02_challenge_detected.png",
+      "blockingPoint": {
+        "phase": "HUMAN_CAPTCHA_OTP_CHALLENGE",
+        "targetUrl": "https://divar.ir/new",
+        "timestamp": "2026-09-08T14:56:55.483Z",
+        "challengeType": "Arcaptcha / SMS OTP",
+        "status": "PAUSED_USER_ACTION",
+        "evidenceScreenshot": "/app/applet/local-agent/evidence/e2e_02_challenge_detected.png",
+        "domEvidence": "/app/applet/local-agent/evidence/page_dump.html",
+        "exactFailureMessage": "Target (divar.ir) presented Arcaptcha security challenge. Zero-Fake-Pass rule forbids automated mock solve. System correctly paused at PAUSED_USER_ACTION awaiting human resolution."
+      }
+    },
+    {
+      "id": "job_1788878901665",
+      "campaignId": "camp_carton_laminated_01",
+      "campaignTitle": "کمپین سراسری تولید و عرضه کارتن لمینتی و جعبه‌های دایکاتی صادراتی",
+      "platformId": "plat_divar",
+      "platformName": "دیوار (Divar.ir)",
+      "platformDomain": "divar.ir",
+      "status": "paused_user_action",
+      "currentStep": "چالش امنیتی آرکپچا (Arcaptcha) شناسایی شد. سیستم در انتظار حل چالش انسانی متوقف گردید.",
+      "logs": [
+        {
+          "timestamp": "2026-09-08T14:48:21.665Z",
+          "level": "info",
+          "message": "وظیفه انتشار برای دیوار (Divar.ir) آغاز گردید."
+        }
+      ],
+      "createdAt": "2026-09-08T14:48:21.665Z",
+      "updatedAt": "2026-09-08T14:48:33.959Z",
+      "claimedBy": "gh_actions_1788878905264",
+      "claimToken": "claim_1788878905333_336yr12",
+      "leaseExpiresAt": "2026-09-08T14:53:25.333Z",
+      "jobId": "job_1788878901665",
+      "challengeType": "CAPTCHA_CHALLENGE",
+      "evidenceScreenshot": "/app/applet/local-agent/evidence/job_job_1788878901665_step2_challenge.png"
+    },
+    {
+      "id": "job_1788878813392",
+      "campaignId": "camp_carton_laminated_01",
+      "campaignTitle": "کمپین سراسری تولید و عرضه کارتن لمینتی و جعبه‌های دایکاتی صادراتی",
+      "platformId": "plat_divar",
+      "platformName": "دیوار (Divar.ir)",
+      "platformDomain": "divar.ir",
+      "status": "paused_user_action",
+      "currentStep": "کپچای امنیتی آرکپچا (Arcaptcha) در دیوار شناسایی شد. ورود نیازمند حل چالش انسانی است.",
+      "logs": [
+        {
+          "timestamp": "2026-09-08T14:46:53.392Z",
+          "level": "info",
+          "message": "وظیفه انتشار برای دیوار (Divar.ir) آغاز گردید."
+        }
+      ],
+      "createdAt": "2026-09-08T14:46:53.393Z",
+      "updatedAt": "2026-09-08T14:47:19.897Z",
+      "claimedBy": "github_actions_runner_01",
+      "claimToken": "claim_1788878815685_scgvin5",
+      "leaseExpiresAt": "2026-09-08T14:51:55.685Z",
+      "jobId": "job_1788878813392",
+      "challengeType": "CAPTCHA_CHALLENGE",
+      "evidenceScreenshot": "local-agent/evidence/02_after_submit_challenge.png"
+    }
+  ],
+  "smsLogs": [],
+  "users": [
+    {
+      "id": "usr_admin_01",
+      "username": "admin",
+      "passwordHash": "$2y$10$e8Z4z5sJ3d7f9g0h1j2k3l4m5n6o7p8q9r0s1t2u3v4w5x6y7z8",
+      "role": "operator",
+      "name": "مدیر سامانه اشک ۲۴",
+      "email": "admin@ashkghalam.ir",
+      "createdAt": "2026-09-08T13:14:43.019Z"
+    }
+  ],
+  "autonomousSettings": {
+    "enabled": true,
+    "dailyTargetCount": 8,
+    "publishingHoursStart": 8,
+    "publishingHoursEnd": 22,
+    "minDelayMinutes": 15,
+    "maxDelayMinutes": 45,
+    "autoRetryOnFailure": true,
+    "smartSmsDetection": true,
+    "lastRunAt": "2026-09-08T13:14:43.019Z"
+  },
+  "autonomousLogs": [],
+  "cronExecutions": [],
+  "telemetryLogs": [],
+  "platformStorageStates": {
+    "plat_divar_test": {
+      "platformId": "plat_divar_test",
+      "storageState": {
+        "cookies": [
+          {
+            "name": "test",
+            "value": "123"
+          }
+        ],
+        "origins": []
+      },
+      "savedAt": "2026-09-08T14:56:22.069Z",
+      "isValid": true
+    }
+  }
+}

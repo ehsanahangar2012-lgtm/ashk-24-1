@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>اشک 24 - سامانه اتوماسیون بازاریابی و هوش مصنوعی</title>
+    <meta name="description" content="پلتفرم جامع و خودمختار اتوماسیون بازاریابی، تولید محتوا، کشف رسانه و انتشار آگهی مبتنی بر هوش مصنوعی و موتورهای آفلاین پشتیبان" />
+    <meta property="og:title" content="اشک 24 - سامانه اتوماسیون بازاریابی و هوش مصنوعی" />
+    <meta property="og:description" content="پلتفرم جامع و خودمختار اتوماسیون بازاریابی، تولید محتوا، کشف رسانه و انتشار آگهی مبتنی بر هوش مصنوعی و موتورهای آفلاین پشتیبان" />
+    <meta name="theme-color" content="#f59e0b" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+      // 1. Purge legacy service workers and clear cache storage
+      try {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(regs) {
+            for (var r of regs) {
+              r.unregister();
+            }
+          });
+        }
+        if ('caches' in window) {
+          caches.keys().then(function(names) {
+            for (var n of names) {
+              caches.delete(n);
+            }
+          });
+        }
+      } catch (e) {
+        console.warn('Cache purge notice:', e);
+      }
+
+      // 2. Global Error Diagnostic Gate (Anti-Black-Screen)
+      function showDiagnosticScreen(errorTitle, errorMessage, errorStack) {
+        var root = document.getElementById('root');
+        if (!root) return;
+        var existingDiag = document.getElementById('ashk24-global-diagnostic');
+        if (existingDiag) return;
+
+        var diagBox = document.createElement('div');
+        diagBox.id = 'ashk24-global-diagnostic';
+        diagBox.style.cssText = 'position:fixed;inset:0;z-index:999999;background:#0f172a;color:#f8fafc;padding:24px;overflow-y:auto;font-family:Vazirmatn,system-ui,sans-serif;direction:rtl;text-align:right;';
+        diagBox.innerHTML = 
+          '<div style="max-width:760px;margin:30px auto;background:#1e293b;border:1px solid #ef4444;border-radius:16px;padding:24px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);">' +
+            '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;border-bottom:1px solid #334155;padding-bottom:12px;">' +
+              '<span style="font-size:24px;">⚠️</span>' +
+              '<h2 style="margin:0;font-size:18px;font-weight:bold;color:#f87171;">گزارش عیب‌یابی سامانه اشک ۲۴ (Diagnostic Screen)</h2>' +
+            '</div>' +
+            '<p style="margin:0 0 12px;font-size:14px;color:#cbd5e1;">یک خطای زمان اجرا شناسایی شد. جهت جلوگیری از صفحه سیاه، اطلاعات خطا جهت رفع مشکل در زیر ارائه شده است:</p>' +
+            '<div style="background:#090d16;border:1px solid #334155;border-radius:8px;padding:12px;font-family:monospace;font-size:12px;direction:ltr;text-align:left;color:#fca5a5;overflow-x:auto;margin-bottom:16px;">' +
+              '<strong>' + (errorTitle || 'Runtime Exception') + ':</strong> ' + (errorMessage || 'Unknown Error') +
+              (errorStack ? '<br><br><span style="color:#94a3b8;">' + errorStack.replace(/\n/g, '<br>') + '</span>' : '') +
+            '</div>' +
+            '<div style="display:flex;gap:12px;flex-wrap:wrap;">' +
+              '<button onclick="window.location.reload(true)" style="background:#f59e0b;color:#0f172a;font-weight:bold;padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;">بارگذاری مجدد بدون کش</button>' +
+              '<button onclick="try{localStorage.clear();sessionStorage.clear();window.location.reload(true);}catch(e){}" style="background:#ef4444;color:#fff;font-weight:bold;padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;">بازنشانی حافظه موقت (Reset Local Cache)</button>' +
+            '</div>' +
+          '</div>';
+        document.body.appendChild(diagBox);
+      }
+
+      window.onerror = function(msg, url, lineNo, columnNo, error) {
+        showDiagnosticScreen('Window Error', msg + ' (' + url + ':' + lineNo + ':' + columnNo + ')', error && error.stack ? error.stack : '');
+        return false;
+      };
+
+      window.onunhandledrejection = function(event) {
+        var reason = event.reason;
+        var msg = reason && reason.message ? reason.message : String(reason);
+        var stack = reason && reason.stack ? reason.stack : '';
+        showDiagnosticScreen('Unhandled Promise Rejection', msg, stack);
+      };
+    </script>
+  </head>
+  <body class="bg-slate-900 text-slate-100 font-sans antialiased selection:bg-amber-500 selection:text-slate-900">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

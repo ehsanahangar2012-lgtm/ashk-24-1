@@ -1,0 +1,46 @@
+name: Real cPanel Connectivity Probe
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe cPanel API
+        env:
+          CPANEL_URL: ${{ secrets.CPANEL_URL }}
+        run: |
+          echo "Targeting CPANEL_URL: $CPANEL_URL"
+          
+          if [ -z "$CPANEL_URL" ]; then
+            echo "❌ ERROR: CPANEL_URL Secret is MISSING."
+            exit 1
+          fi
+
+          echo "Sending HTTP GET to $CPANEL_URL?route=jobs..."
+          
+          # Fetch full response headers and body without silent redirects
+          RESPONSE=$(curl -sS -D headers.txt "$CPANEL_URL?route=jobs")
+          HTTP_STATUS=$(grep -oP "^HTTP/[0-9\.]+\s+\K[0-9]+" headers.txt | tail -n1)
+          
+          echo "HTTP_STATUS=$HTTP_STATUS"
+          echo "--- RESPONSE HEADERS ---"
+          cat headers.txt
+          echo "--- RESPONSE BODY ---"
+          echo "$RESPONSE" | head -c 1000
+          echo ""
+          
+          if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 201 ]; then
+            if echo "$RESPONSE" | jq -e 'type == "array" or type == "object"' > /dev/null; then
+              echo "✅ REAL_CPANEL_CONNECTIVITY=YES"
+            else
+              echo "❌ REAL_CPANEL_CONNECTIVITY=NO (Valid JSON not found)"
+              exit 1
+            fi
+          elif [[ "$HTTP_STATUS" =~ ^3 ]]; then
+            echo "❌ REAL_CPANEL_CONNECTIVITY=NO (HTTP $HTTP_STATUS - Redirect Detected)"
+            REDIRECT_TARGET=$(grep -i "^location:" headers.txt | awk '{print $2}')
+            echo "Redirects to: $REDIRECT_TARGET"
+            exit 1
+          else
+            echo "❌ REAL_CPANEL_CONNECTIVITY=NO (HTTP $HTTP_STATUS)"
+            exit 1
+          fi

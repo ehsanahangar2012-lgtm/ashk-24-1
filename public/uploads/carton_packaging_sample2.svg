@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <linearGradient id="boxGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e293b;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#boxGrad2)"/>
+  <rect x="50" y="50" width="700" height="500" rx="30" fill="#020617" stroke="#334155" stroke-width="4"/>
+  <circle cx="280" cy="280" r="110" fill="#047857" opacity="0.8"/>
+  <circle cx="520" cy="280" r="110" fill="#d97706" opacity="0.8"/>
+  <circle cx="400" cy="240" r="110" fill="#2563eb" opacity="0.8"/>
+  <rect x="180" y="380" width="440" height="110" rx="20" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+  <text x="400" y="425" font-family="Tahoma, Arial, sans-serif" font-size="28" font-weight="900" fill="#f8fafc" text-anchor="middle">چاپ افست، لیبل صنعتی و کارتن دایکاتی</text>
+  <text x="400" y="465" font-family="Tahoma, Arial, sans-serif" font-size="18" font-weight="bold" fill="#f59e0b" text-anchor="middle">کنترل کیفیت رنگ زینک اختصاصی</text>
+</svg>

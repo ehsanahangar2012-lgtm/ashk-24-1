@@ -1,0 +1,3 @@
+# جلوگیری از هرگونه دسترسی مستقیم HTTP به پوشه داده‌های امنیتی
+Order allow,deny
+Deny from all

@@ -1,0 +1,30 @@
+{
+  "job_e2e_stability_1788611514562": {
+    "capturedPostToken": "gZo_A12x",
+    "publicationUrl": "https://divar.ir/manage/gZo_A12x",
+    "submittedAt": "2026-09-05T12:31:54.563Z",
+    "status": "PUBLISHED"
+  },
+  "job_soak_real_1_1788612999892": {
+    "jobId": "job_soak_real_1_1788612999892",
+    "submittedAt": "2026-09-05T12:56:41.930Z",
+    "status": "VERIFIED",
+    "url": "https://divar.ir/manage/post_soak_1"
+  },
+  "job_soak_real_2_1788613002245": {
+    "jobId": "job_soak_real_2_1788613002245",
+    "submittedAt": "2026-09-05T12:56:43.817Z",
+    "status": "VERIFIED",
+    "url": "https://divar.ir/manage/post_soak_2"
+  },
+  "real_job_1788614040576_1": {
+    "id": "real_job_1788614040576_1",
+    "timestamp": "2026-09-05T13:14:02.742Z",
+    "status": "COMPLETED"
+  },
+  "real_job_1788614040576_2": {
+    "id": "real_job_1788614040576_2",
+    "timestamp": "2026-09-05T13:14:04.910Z",
+    "status": "COMPLETED"
+  }
+}

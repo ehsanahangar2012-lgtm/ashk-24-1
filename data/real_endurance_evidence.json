@@ -1,0 +1,81 @@
+{
+  "testDate": "2026-09-05T12:56:45.926Z",
+  "realTestDurationSeconds": 6,
+  "realTestDurationFormatted": "0m 6s",
+  "totalRealJobs": 3,
+  "successfulJobs": 3,
+  "failedJobs": 0,
+  "duplicates": 0,
+  "memoryRssInitial": "159.03 MB",
+  "memoryRssPeak": "173.87 MB",
+  "memoryRssFinal": "173.87 MB",
+  "memoryDelta": "+14.84 MB",
+  "browserCreated": 3,
+  "browserDestroyed": 3,
+  "zombieProcesses": 1,
+  "realNetworkFailureRecovery": "NOT PROVEN",
+  "realCrashRestartRecovery": "PROVEN",
+  "statePersistence": "PASS",
+  "crossJobInterference": "PASS",
+  "actual24x7Execution": "NO",
+  "memoryLeakResistance": "NOT PROVEN",
+  "crashRecoveryStatus": "PROVEN",
+  "finalStatus": "PARTIAL",
+  "jobTimestamps": [
+    {
+      "jobId": "job_soak_real_1_1788612999892",
+      "event": "CLAIM",
+      "timestamp": "2026-09-05T12:56:39.892Z"
+    },
+    {
+      "jobId": "job_soak_real_1_1788612999892",
+      "event": "BROWSER_LAUNCHED",
+      "timestamp": "2026-09-05T12:56:41.024Z"
+    },
+    {
+      "jobId": "job_soak_real_1_1788612999892",
+      "event": "FORM_NAVIGATED",
+      "timestamp": "2026-09-05T12:56:41.573Z"
+    },
+    {
+      "jobId": "job_soak_real_1_1788612999892",
+      "event": "SUBMIT_STEP",
+      "timestamp": "2026-09-05T12:56:41.930Z"
+    },
+    {
+      "jobId": "job_soak_real_1_1788612999892",
+      "event": "VERIFIED",
+      "timestamp": "2026-09-05T12:56:41.930Z"
+    },
+    {
+      "jobId": "job_soak_real_2_1788613002245",
+      "event": "CLAIM",
+      "timestamp": "2026-09-05T12:56:42.245Z"
+    },
+    {
+      "jobId": "job_soak_real_2_1788613002245",
+      "event": "BROWSER_LAUNCHED",
+      "timestamp": "2026-09-05T12:56:43.231Z"
+    },
+    {
+      "jobId": "job_soak_real_2_1788613002245",
+      "event": "FORM_NAVIGATED",
+      "timestamp": "2026-09-05T12:56:43.817Z"
+    },
+    {
+      "jobId": "job_soak_real_2_1788613002245",
+      "event": "VERIFIED",
+      "timestamp": "2026-09-05T12:56:43.820Z"
+    },
+    {
+      "jobId": "job_soak_real_3_1788613004079",
+      "event": "CLAIM",
+      "timestamp": "2026-09-05T12:56:44.079Z"
+    },
+    {
+      "jobId": "job_soak_real_3_1788613004079",
+      "event": "RESUMED_AND_VERIFIED",
+      "timestamp": "2026-09-05T12:56:45.646Z"
+    }
+  ]
+}

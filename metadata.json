@@ -1,0 +1,6 @@
+{
+  "name": "اشک 24 - سامانه اتوماسیون بازاریابی و هوش مصنوعی",
+  "description": "پلتفرم جامع و خودمختار اتوماسیون بازاریابی، تولید محتوا، کشف رسانه و انتشار آگهی مبتنی بر هوش مصنوعی و موتورهای آفلاین پشتیبان",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
