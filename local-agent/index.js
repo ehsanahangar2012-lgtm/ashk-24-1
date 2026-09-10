@@ -373,8 +373,14 @@ async function executeJob(job, claimData) {
         timestamp: new Date().toISOString()
       });
 
-      // Spawn quick tunnel for live human interaction
-      const tunnelUrl = await startQuickTunnel();
+      // Determine if running locally on desktop (Windows/local headed without CI) vs Cloud/GitHub container
+      const isLocalHeaded = !IS_HEADLESS && (process.platform === 'win32' || process.env.LOCAL_MODE === 'true' || process.env.LOCAL_AGENT === 'true' || !process.env.CI);
+      let tunnelUrl = null;
+      if (isLocalHeaded) {
+        console.log('🖥️ [Local Headed Mode] Skipping cloudflared / noVNC tunnel. Please solve CAPTCHA directly in the open Chrome browser window on your desktop.');
+      } else {
+        tunnelUrl = await startQuickTunnel();
+      }
 
       // 2. PAUSE the job safely with evidence
       await updateJobState(job.id, {
