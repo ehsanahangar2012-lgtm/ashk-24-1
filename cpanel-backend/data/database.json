@@ -211,19 +211,78 @@
   ],
   "publicationJobs": [
     {
+      "id": "job_1789066320596",
+      "campaignId": "camp_carton_laminated_01",
+      "campaignTitle": "کمپین سراسری تولید و عرضه کارتن لمینتی و جعبه‌های دایکاتی صادراتی",
+      "platformId": "plat_divar",
+      "platformName": "دیوار (Divar.ir)",
+      "platformDomain": "divar.ir",
+      "status": "failed",
+      "currentStep": "خطای پردازش مرورگر: browserType.launch: Target page, context or browser has been closed\nBrowser logs:\n\n╔════════════════════════════════════════════════════════════════════════════════════════════════╗\n║ Looks like you launched a headed browser without having a XServer running.                     ║\n║ Set either 'headless: true' or use 'xvfb-run <your-playwright-app>' before running Playwright. ║\n║                                                                                                ║\n║ <3 Playwright Team                                                                             ║\n╚════════════════════════════════════════════════════════════════════════════════════════════════╝\nCall log:\n  - <launching> /root/.cache/ms-playwright/chromium-1243/chrome-linux64/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --no-sandbox --no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --user-data-dir=/tmp/playwright_chromiumdev_profile-RpigEd --remote-debugging-pipe --no-startup-window\n  - <launched> pid=1817\n  - [pid=1817][err] [1825:1825:0910/185229.278904:ERROR:base/files/file_path_watcher_inotify.cc:925] Failed to read /proc/sys/fs/inotify/max_user_watches\n  - [pid=1817][err] [1824:1824:0910/185229.288547:ERROR:base/files/file_path_watcher_inotify.cc:925] Failed to read /proc/sys/fs/inotify/max_user_watches\n  - [pid=1817][err] [1817:1829:0910/185229.292875:ERROR:base/files/file_path_watcher_inotify.cc:925] Failed to read /proc/sys/fs/inotify/max_user_watches\n  - [pid=1817][err] [1817:1831:0910/185229.293624:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory\n  - [pid=1817][err] [1817:1831:0910/185229.293745:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are \"tcp\" and on UNIX \"unix\")\n  - [pid=1817][err] [1817:1817:0910/185229.310591:ERROR:ui/ozone/platform/x11/ozone_platform_x11.cc:257] Missing X server or $DISPLAY\n  - [pid=1817][err] [1817:1817:0910/185229.310632:ERROR:ui/aura/env.cc:246] The platform failed to initialize.  Exiting.\n  - [pid=1817] <gracefully close start>\n  - [pid=1817] <kill>\n  - [pid=1817] <will force kill>\n  - [pid=1817][err] [0910/185229.326203:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:182] incorrect payload size 0\n  - [pid=1817][err] [0910/185229.327644:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:182] incorrect payload size 0\n  - [pid=1817] <process did exit: exitCode=1, signal=null>\n  - [pid=1817] starting temporary directories cleanup\n  - [pid=1817] finished temporary directories cleanup\n  - [pid=1817] <gracefully close end>\n",
+      "logs": [
+        {
+          "timestamp": "2026-09-10T18:52:00.596Z",
+          "level": "info",
+          "message": "وظیفه انتشار برای دیوار (Divar.ir) آغاز گردید."
+        }
+      ],
+      "createdAt": "2026-09-10T18:52:00.596Z",
+      "updatedAt": "2026-09-10T18:52:29.344Z",
+      "claimedBy": "agent_desktop_1789066348968",
+      "claimToken": "claim_1789066349024_0plo74h",
+      "leaseExpiresAt": "2026-09-10T18:57:29.024Z",
+      "jobId": "job_1789066320596",
+      "error": "browserType.launch: Target page, context or browser has been closed\nBrowser logs:\n\n╔════════════════════════════════════════════════════════════════════════════════════════════════╗\n║ Looks like you launched a headed browser without having a XServer running.                     ║\n║ Set either 'headless: true' or use 'xvfb-run <your-playwright-app>' before running Playwright. ║\n║                                                                                                ║\n║ <3 Playwright Team                                                                             ║\n╚════════════════════════════════════════════════════════════════════════════════════════════════╝\nCall log:\n  - <launching> /root/.cache/ms-playwright/chromium-1243/chrome-linux64/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --no-sandbox --no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --user-data-dir=/tmp/playwright_chromiumdev_profile-RpigEd --remote-debugging-pipe --no-startup-window\n  - <launched> pid=1817\n  - [pid=1817][err] [1825:1825:0910/185229.278904:ERROR:base/files/file_path_watcher_inotify.cc:925] Failed to read /proc/sys/fs/inotify/max_user_watches\n  - [pid=1817][err] [1824:1824:0910/185229.288547:ERROR:base/files/file_path_watcher_inotify.cc:925] Failed to read /proc/sys/fs/inotify/max_user_watches\n  - [pid=1817][err] [1817:1829:0910/185229.292875:ERROR:base/files/file_path_watcher_inotify.cc:925] Failed to read /proc/sys/fs/inotify/max_user_watches\n  - [pid=1817][err] [1817:1831:0910/185229.293624:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory\n  - [pid=1817][err] [1817:1831:0910/185229.293745:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are \"tcp\" and on UNIX \"unix\")\n  - [pid=1817][err] [1817:1817:0910/185229.310591:ERROR:ui/ozone/platform/x11/ozone_platform_x11.cc:257] Missing X server or $DISPLAY\n  - [pid=1817][err] [1817:1817:0910/185229.310632:ERROR:ui/aura/env.cc:246] The platform failed to initialize.  Exiting.\n  - [pid=1817] <gracefully close start>\n  - [pid=1817] <kill>\n  - [pid=1817] <will force kill>\n  - [pid=1817][err] [0910/185229.326203:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:182] incorrect payload size 0\n  - [pid=1817][err] [0910/185229.327644:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:182] incorrect payload size 0\n  - [pid=1817] <process did exit: exitCode=1, signal=null>\n  - [pid=1817] starting temporary directories cleanup\n  - [pid=1817] finished temporary directories cleanup\n  - [pid=1817] <gracefully close end>\n",
+      "resume_supported": true,
+      "session_restored": false
+    },
+    {
       "id": "job_1788989067_670",
       "campaignId": "cmp_01_automation",
       "platformId": "plat_divar",
       "platformName": "دیوار (Divar.ir)",
-      "status": "pending",
-      "currentStep": "در صف انتشار...",
-      "progressPercent": 0,
+      "status": "failed",
+      "currentStep": "انتشار نهایی متوقف شد: فرم آگهی به درستی تکمیل نشد یا لینک آگهی عمومی دریافت نگردید.",
+      "progressPercent": 90,
       "logs": [],
       "otpRequired": false,
       "usedEngine": "offline-heuristic-persian",
       "createdAt": "2026-09-10T00:54:27+03:30",
-      "updatedAt": "2026-09-10T00:54:27+03:30",
-      "campaignTitle": "کمپین سراسری معرفی نرم‌افزار اشک ۲۴"
+      "updatedAt": "2026-09-10T18:55:48.016Z",
+      "campaignTitle": "کمپین سراسری معرفی نرم‌افزار اشک ۲۴",
+      "claimedBy": "agent_desktop_1789066354754",
+      "claimToken": "claim_1789066354830_ulavhtx",
+      "leaseExpiresAt": "2026-09-10T18:57:34.830Z",
+      "jobId": "job_1788989067_670",
+      "challengeType": "CAPTCHA_CHALLENGE",
+      "evidenceScreenshot": "/app/applet/local-agent/evidence/job_job_1788989067_670_submitted.png",
+      "interactiveUrl": null,
+      "humanActionRequired": true,
+      "resume_supported": true,
+      "session_saved": true,
+      "saved_step": "چالش امنیتی آرکپچا شناسایی شد. نشست مرورگر ذخیره و دسترسی زنده به مرورگر فعال گردید.",
+      "saved_url": "https://divar.ir/new",
+      "saved_at": "2026-09-10T18:52:43.316Z",
+      "humanActionVerified": true,
+      "humanResolution": {
+        "resolvedAt": "2026-09-10T18:53:00.732Z",
+        "channel": "Human-in-the-Loop Secretary Bridge",
+        "hasOtp": true,
+        "hasCaptcha": false
+      },
+      "otpCode": "123456",
+      "resumedAt": "2026-09-10T18:53:00.732Z",
+      "session_restored": true,
+      "restored_at": "2026-09-10T18:55:47.912Z",
+      "error": "FAILED_REAL_EXECUTION",
+      "independentVerification": {
+        "timestamp": "2026-09-10T18:55:48.012Z",
+        "targetUrl": "https://divar.ir/new",
+        "httpStatus": 200,
+        "isAccessible": true,
+        "verifiedBy": "Ashk24_LocalAgent_SessionManager",
+        "evidenceCaptured": false
+      }
     },
     {
       "id": "job_1788881356348",
@@ -507,6 +566,94 @@
         "origins": []
       },
       "savedAt": "2026-09-08T14:56:22.069Z",
+      "isValid": true
+    },
+    "plat_divar": {
+      "platformId": "plat_divar",
+      "storageState": {
+        "cookies": [
+          {
+            "name": "did",
+            "value": "18432439-d271-41b7-b360-0bac2a61cdfa",
+            "domain": ".divar.ir",
+            "path": "/",
+            "expires": 1823626355.6082,
+            "httpOnly": false,
+            "secure": false,
+            "sameSite": "Lax"
+          },
+          {
+            "name": "cdid",
+            "value": "0ed5d30f-6a46-427f-97f8-249dc4d1d54c",
+            "domain": ".divar.ir",
+            "path": "/",
+            "expires": 1823626355.608387,
+            "httpOnly": false,
+            "secure": false,
+            "sameSite": "Lax"
+          },
+          {
+            "name": "ff",
+            "value": "%7B%22f%22%3A%7B%22device_fp_enable%22%3Atrue%2C%22enable-places-selector-online-search-web%22%3Atrue%2C%22chat_message_disabled%22%3Atrue%2C%22web_sentry_sample_rate%22%3A0.2%2C%22web_sentry_traces_sample_rate%22%3A0.01%2C%22is_web_proactive_refresh_enabled%22%3Atrue%2C%22post-stats-batch-event-web-max-batch-size%22%3A%2220%22%2C%22post-stats-batch-event-web-flush-interval-sec%22%3A%2220%22%2C%22divar_default_call_center%22%3A%22neda%22%2C%22web_client_exporter_page_load_sample_rate%22%3A0.5%2C%22web_app_error_enabled%22%3Atrue%7D%2C%22e%22%3A1789069955501%2C%22r%22%3A1789152755501%7D",
+            "domain": ".divar.ir",
+            "path": "/",
+            "expires": 1789152755.60842,
+            "httpOnly": false,
+            "secure": false,
+            "sameSite": "Lax"
+          },
+          {
+            "name": "csid",
+            "value": "",
+            "domain": ".divar.ir",
+            "path": "/",
+            "expires": 1823626356.801235,
+            "httpOnly": false,
+            "secure": false,
+            "sameSite": "Lax"
+          },
+          {
+            "name": "theme",
+            "value": "light",
+            "domain": ".divar.ir",
+            "path": "/",
+            "expires": 1823626356.95297,
+            "httpOnly": false,
+            "secure": false,
+            "sameSite": "Lax"
+          },
+          {
+            "name": "resolution_width",
+            "value": "1280",
+            "domain": ".divar.ir",
+            "path": "/",
+            "expires": 1823626357.143537,
+            "httpOnly": false,
+            "secure": false,
+            "sameSite": "Lax"
+          }
+        ],
+        "origins": [
+          {
+            "origin": "https://divar.ir",
+            "localStorage": [
+              {
+                "name": "search-history-v2",
+                "value": "{\"records\":[]}"
+              },
+              {
+                "name": "my-viewed-posts",
+                "value": "[]"
+              },
+              {
+                "name": "is-store-reset",
+                "value": "true"
+              }
+            ]
+          }
+        ]
+      },
+      "savedAt": "2026-09-10T18:55:47.911Z",
       "isValid": true
     }
   }

@@ -262,6 +262,24 @@ export function cpanelDevApiPlugin(): Plugin {
         const db = readDb();
 
         try {
+          // Handle dynamic routes before the switch
+          if (route.startsWith('jobs/') && route !== 'jobs/trigger' && route !== 'jobs/claim' && route !== 'jobs/update' && route !== 'jobs/resolve-challenge' && route !== 'jobs/resume' && route !== 'jobs/verify-publication' && route !== 'jobs/submit-otp') {
+            const jobId = route.split('/')[1];
+            if (method === 'GET') {
+              const job = db.publicationJobs.find((j: any) => j.id === jobId);
+              if (job) return sendJson(job);
+              return sendJson({ error: 'Job not found' }, 404);
+            } else if (method === 'PUT') {
+              const job = db.publicationJobs.find((j: any) => j.id === jobId);
+              if (job) {
+                Object.assign(job, body, { updatedAt: new Date().toISOString() });
+                writeDb(db);
+                return sendJson(job);
+              }
+              return sendJson({ error: 'Job not found' }, 404);
+            }
+          }
+
           switch (route) {
             case 'health':
               return sendJson({

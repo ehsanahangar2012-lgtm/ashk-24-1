@@ -684,7 +684,8 @@ try {
             break;
 
         case (preg_match('/^jobs\/([^\/]+)$/', $route, $matches) ? true : false):
-            $jobId = $matches[1];
+        case (strpos($route, 'jobs/job_') === 0):
+            $jobId = $matches[1] ?? str_replace('jobs/', '', $route);
             if ($method === 'GET') {
                 $j = $db->getJobById($jobId);
                 if (!$j) {
