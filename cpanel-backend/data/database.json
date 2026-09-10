@@ -211,6 +211,130 @@
   ],
   "publicationJobs": [
     {
+      "id": "job_1789067839679",
+      "campaignId": "camp_carton_laminated_01",
+      "campaignTitle": "کمپین سراسری تولید و عرضه کارتن لمینتی و جعبه‌های دایکاتی صادراتی",
+      "platformId": "plat_divar",
+      "platformName": "دیوار (Divar.ir)",
+      "platformDomain": "divar.ir",
+      "status": "failed",
+      "currentStep": "انتشار نهایی متوقف شد: فرم آگهی به درستی تکمیل نشد یا لینک آگهی عمومی دریافت نگردید.",
+      "logs": [
+        {
+          "timestamp": "2026-09-10T19:17:19.679Z",
+          "level": "info",
+          "message": "وظیفه انتشار برای دیوار (Divar.ir) آغاز گردید."
+        }
+      ],
+      "createdAt": "2026-09-10T19:17:19.679Z",
+      "updatedAt": "2026-09-10T19:17:38.864Z",
+      "claimedBy": "agent_desktop_1789067842109",
+      "claimToken": "claim_1789067842161_ze32eya",
+      "leaseExpiresAt": "2026-09-10T19:22:22.161Z",
+      "jobId": "job_1789067839679",
+      "challengeType": "CAPTCHA_CHALLENGE",
+      "evidenceScreenshot": "/app/applet/local-agent/evidence/job_job_1789067839679_submitted.png",
+      "interactiveUrl": null,
+      "humanActionRequired": true,
+      "resume_supported": true,
+      "session_saved": true,
+      "saved_step": "چالش امنیتی آرکپچا شناسایی شد. نشست مرورگر ذخیره و دسترسی زنده به مرورگر فعال گردید.",
+      "saved_url": "https://divar.ir/new",
+      "saved_at": "2026-09-10T19:17:30.659Z",
+      "humanActionVerified": true,
+      "otpCode": "849201",
+      "session_restored": true,
+      "restored_at": "2026-09-10T19:17:38.769Z",
+      "error": "FAILED_REAL_EXECUTION",
+      "progressPercent": 90,
+      "independentVerification": {
+        "timestamp": "2026-09-10T19:17:38.860Z",
+        "targetUrl": "https://divar.ir/new",
+        "httpStatus": 200,
+        "isAccessible": true,
+        "verifiedBy": "Ashk24_LocalAgent_SessionManager",
+        "evidenceCaptured": false
+      }
+    },
+    {
+      "id": "job_1789067511023",
+      "campaignId": "camp_carton_laminated_01",
+      "campaignTitle": "کمپین سراسری تولید و عرضه کارتن لمینتی و جعبه‌های دایکاتی صادراتی",
+      "platformId": "plat_divar",
+      "platformName": "دیوار (Divar.ir)",
+      "platformDomain": "divar.ir",
+      "status": "failed",
+      "currentStep": "انتشار نهایی متوقف شد: فرم آگهی به درستی تکمیل نشد یا لینک آگهی عمومی دریافت نگردید.",
+      "logs": [
+        {
+          "timestamp": "2026-09-10T19:11:51.023Z",
+          "level": "info",
+          "message": "وظیفه انتشار برای دیوار (Divar.ir) آغاز گردید."
+        }
+      ],
+      "createdAt": "2026-09-10T19:11:51.023Z",
+      "updatedAt": "2026-09-10T19:12:10.361Z",
+      "claimedBy": "agent_desktop_1789067513736",
+      "claimToken": "claim_1789067513822_b9aqavx",
+      "leaseExpiresAt": "2026-09-10T19:16:53.822Z",
+      "jobId": "job_1789067511023",
+      "challengeType": "CAPTCHA_CHALLENGE",
+      "evidenceScreenshot": "/app/applet/local-agent/evidence/job_job_1789067511023_submitted.png",
+      "interactiveUrl": null,
+      "humanActionRequired": true,
+      "resume_supported": true,
+      "session_saved": true,
+      "saved_step": "چالش امنیتی آرکپچا شناسایی شد. نشست مرورگر ذخیره و دسترسی زنده به مرورگر فعال گردید.",
+      "saved_url": "https://divar.ir/new",
+      "saved_at": "2026-09-10T19:12:02.158Z",
+      "humanActionVerified": true,
+      "otpCode": "543210",
+      "session_restored": true,
+      "restored_at": "2026-09-10T19:12:10.259Z",
+      "error": "FAILED_REAL_EXECUTION",
+      "progressPercent": 90,
+      "independentVerification": {
+        "timestamp": "2026-09-10T19:12:10.355Z",
+        "targetUrl": "https://divar.ir/new",
+        "httpStatus": 200,
+        "isAccessible": true,
+        "verifiedBy": "Ashk24_LocalAgent_SessionManager",
+        "evidenceCaptured": false
+      }
+    },
+    {
+      "id": "job_1789067461779",
+      "campaignId": "camp_carton_laminated_01",
+      "campaignTitle": "کمپین سراسری تولید و عرضه کارتن لمینتی و جعبه‌های دایکاتی صادراتی",
+      "platformId": "plat_divar",
+      "platformName": "دیوار (Divar.ir)",
+      "platformDomain": "divar.ir",
+      "status": "paused_user_action",
+      "currentStep": "زمان انتظار برای حل چالش انسانی به پایان رسید. نوبت کاری متوقف باقی می‌ماند.",
+      "logs": [
+        {
+          "timestamp": "2026-09-10T19:11:01.779Z",
+          "level": "info",
+          "message": "وظیفه انتشار برای دیوار (Divar.ir) آغاز گردید."
+        }
+      ],
+      "createdAt": "2026-09-10T19:11:01.779Z",
+      "updatedAt": "2026-09-10T19:14:14.805Z",
+      "claimedBy": "agent_desktop_1789067464669",
+      "claimToken": "claim_1789067464735_ve4kk9r",
+      "leaseExpiresAt": "2026-09-10T19:16:04.735Z",
+      "jobId": "job_1789067461779",
+      "challengeType": "CAPTCHA_CHALLENGE",
+      "evidenceScreenshot": "/app/applet/local-agent/evidence/job_job_1789067461779_step2_challenge.png",
+      "interactiveUrl": null,
+      "humanActionRequired": true,
+      "resume_supported": true,
+      "session_saved": true,
+      "saved_step": "چالش امنیتی آرکپچا شناسایی شد. نشست مرورگر ذخیره و دسترسی زنده به مرورگر فعال گردید.",
+      "saved_url": "https://divar.ir/new",
+      "saved_at": "2026-09-10T19:11:13.274Z"
+    },
+    {
       "id": "job_1789066320596",
       "campaignId": "camp_carton_laminated_01",
       "campaignTitle": "کمپین سراسری تولید و عرضه کارتن لمینتی و جعبه‌های دایکاتی صادراتی",
@@ -527,7 +651,41 @@
       "evidenceScreenshot": "local-agent/evidence/02_after_submit_challenge.png"
     }
   ],
-  "smsLogs": [],
+  "smsLogs": [
+    {
+      "id": "sms_1789067852590",
+      "senderNumber": "Divar",
+      "messageBody": "کد تایید دیوار: 849201",
+      "extractedCode": "849201",
+      "receivedAt": "2026-09-10T19:17:32.590Z",
+      "status": "received",
+      "gatewaySignatureVerified": true,
+      "receiverNumber": "09153108763",
+      "messageText": "کد تایید دیوار: 849201"
+    },
+    {
+      "id": "sms_1789067526377",
+      "senderNumber": "Divar",
+      "messageBody": "کد تایید دیوار: 543210",
+      "extractedCode": "543210",
+      "receivedAt": "2026-09-10T19:12:06.377Z",
+      "status": "received",
+      "gatewaySignatureVerified": true,
+      "receiverNumber": "09153108763",
+      "messageText": "کد تایید دیوار: 543210"
+    },
+    {
+      "id": "sms_1789067477553",
+      "senderNumber": "Divar",
+      "messageBody": "",
+      "extractedCode": "",
+      "receivedAt": "2026-09-10T19:11:17.553Z",
+      "status": "received",
+      "gatewaySignatureVerified": true,
+      "receiverNumber": "09153108763",
+      "messageText": "کد تایید دیوار: 982341"
+    }
+  ],
   "users": [
     {
       "id": "usr_admin_01",
@@ -607,7 +765,7 @@
             "value": "",
             "domain": ".divar.ir",
             "path": "/",
-            "expires": 1823626356.801235,
+            "expires": 1823627844.283358,
             "httpOnly": false,
             "secure": false,
             "sameSite": "Lax"
@@ -617,7 +775,7 @@
             "value": "light",
             "domain": ".divar.ir",
             "path": "/",
-            "expires": 1823626356.95297,
+            "expires": 1823627844.411518,
             "httpOnly": false,
             "secure": false,
             "sameSite": "Lax"
@@ -653,7 +811,7 @@
           }
         ]
       },
-      "savedAt": "2026-09-10T18:55:47.911Z",
+      "savedAt": "2026-09-10T19:17:38.767Z",
       "isValid": true
     }
   }

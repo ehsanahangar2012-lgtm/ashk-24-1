@@ -910,7 +910,7 @@ try {
             if (!empty($otp)) {
                 $jobs = $db->getJobs();
                 foreach ($jobs as $job) {
-                    if ($job['status'] === 'waiting_otp') {
+                    if ($job['status'] === 'waiting_otp' || $job['status'] === 'paused_user_action') {
                         $matchedJobId = $job['id'];
                         $db->addJobLog($job['id'], [
                             'step' => 'Mobile SMS Auto-Relay',
@@ -918,8 +918,9 @@ try {
                             'message' => "کد تایید OTP ($otp) از وب‌هوک معتبر گیت‌وی استخراج و به منشی تحویل داده شد."
                         ]);
                         $db->updateJob($job['id'], [
-                            'status' => 'in_progress',
-                            'currentStep' => "کد تایید OTP ($otp) با امضای معتبر گیت‌وی دریافت شد.",
+                            'status' => 'resumed',
+                            'humanActionVerified' => true,
+                            'currentStep' => "کد تایید OTP ($otp) با امضای معتبر گیت‌وی دریافت و نشست کاری ازسر گرفته شد.",
                             'otpCode' => $otp
                         ]);
                         break;
@@ -966,7 +967,7 @@ try {
             $matchedJobId = null;
             $jobs = $db->getJobs();
             foreach ($jobs as $job) {
-                if (($jobId && $job['id'] === $jobId) || (!$jobId && $job['status'] === 'waiting_otp')) {
+                if (($jobId && $job['id'] === $jobId) || (!$jobId && ($job['status'] === 'waiting_otp' || $job['status'] === 'paused_user_action'))) {
                     $matchedJobId = $job['id'];
                     $db->addJobLog($job['id'], [
                         'step' => 'Mobile One-Tap Relay',
@@ -974,8 +975,9 @@ try {
                         'message' => "کد تایید ($otp) از طریق اعلان موبایل توسط کاربر تایید و تحویل منشی گردید."
                     ]);
                     $db->updateJob($job['id'], [
-                        'status' => 'in_progress',
-                        'currentStep' => "کد تایید ($otp) دریافت شد. در حال تکمیل فرآیند انتشار در سرور مقصد...",
+                        'status' => 'resumed',
+                        'humanActionVerified' => true,
+                        'currentStep' => "کد تایید ($otp) از طریق موبایل دریافت و نشست کاری ازسر گرفته شد.",
                         'otpCode' => $otp
                     ]);
                     break;

@@ -533,19 +533,37 @@ export function cpanelDevApiPlugin(): Plugin {
 
             case 'webhooks/sms':
               if (method === 'POST') {
+                const msgText = body.messageText || body.messageBody || body.rawText || '';
+                const otpMatch = msgText.match(/\b\d{4,8}\b/);
+                const extractedOtp = body.extractedCode || (otpMatch ? otpMatch[0] : '');
+
                 const newSms = {
                   id: `sms_${Date.now()}`,
                   senderNumber: body.senderNumber || '982000',
-                  messageBody: body.messageBody || body.rawText || '',
-                  extractedCode: body.extractedCode || (body.messageBody ? body.messageBody.match(/\d{4,6}/)?.[0] : ''),
+                  messageBody: msgText,
+                  extractedCode: extractedOtp,
                   receivedAt: new Date().toISOString(),
                   status: 'received',
                   gatewaySignatureVerified: true,
                   ...body,
                 };
+
+                let matchedJobId = null;
+                if (extractedOtp) {
+                  const targetJob = db.publicationJobs.find((j: any) => j.status === 'waiting_otp' || j.status === 'paused_user_action');
+                  if (targetJob) {
+                    matchedJobId = targetJob.id;
+                    targetJob.status = 'resumed';
+                    targetJob.humanActionVerified = true;
+                    targetJob.otpCode = extractedOtp;
+                    targetJob.currentStep = `کد تایید OTP (${extractedOtp}) از وب‌هوک معتبر گیت‌وی دریافت و نشست کاری ازسر گرفته شد.`;
+                    targetJob.updatedAt = new Date().toISOString();
+                  }
+                }
+
                 db.smsLogs.unshift(newSms);
                 writeDb(db);
-                return sendJson({ success: true, sms: newSms });
+                return sendJson({ success: true, matchedJobId, sms: newSms });
               }
               return sendJson(db.smsLogs);
 
