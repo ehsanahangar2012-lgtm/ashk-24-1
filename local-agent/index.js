@@ -486,19 +486,49 @@ async function executeJob(job, claimData) {
     }
 
     // Submit and Verification Evidence Capture
-    console.log('📝 [Form Finalization] Proceeding to ad submission & verification phase...');
+    console.log('📝 [Form Finalization] Checking for actual ad submission & verification evidence...');
     const finalScreenshot = path.join(EVIDENCE_DIR, `job_${job.id}_submitted.png`);
     await page.screenshot({ path: finalScreenshot });
 
-    // Independent verification
     const verificationUrl = page.url();
     const isSuccess = httpStatus >= 200 && httpStatus < 400;
 
+    // Zero-Fake: Determine if we actually have a public URL for the ad
+    // Usually a real Divar ad url looks like divar.ir/v/...
+    const isRealDivarAd = verificationUrl.includes('divar.ir/v/');
+    const isRealSheypoorAd = verificationUrl.includes('sheypoor.com/v/');
+    const hasPublicAdUrl = isRealDivarAd || isRealSheypoorAd;
+
+    if (!hasPublicAdUrl) {
+      console.log('⚠️ [Zero-Fake] No public Ad URL detected. Real execution evidence is missing.');
+      await updateJobState(job.id, {
+        status: 'failed',
+        currentStep: 'انتشار نهایی متوقف شد: فرم آگهی به درستی تکمیل نشد یا لینک آگهی عمومی دریافت نگردید.',
+        error: 'FAILED_REAL_EXECUTION',
+        progressPercent: 90,
+        evidenceScreenshot: finalScreenshot,
+        resume_supported: true,
+        session_restored: sessionRestored,
+        restored_at: restoredAt || new Date().toISOString(),
+        independentVerification: {
+          timestamp: new Date().toISOString(),
+          targetUrl: verificationUrl,
+          httpStatus,
+          isAccessible: isSuccess,
+          verifiedBy: 'Ashk24_LocalAgent_SessionManager',
+          evidenceCaptured: false
+        }
+      });
+      return false; // Real execution did not succeed
+    }
+
+    // If we DO have real evidence
     await updateJobState(job.id, {
-      status: 'completed',
+      status: 'published',
       currentStep: 'ماموریت با موفقیت به پایان رسید و راستی‌آزمایی تایید گردید.',
       progressPercent: 100,
       evidenceScreenshot: finalScreenshot,
+      adUrl: verificationUrl,
       resume_supported: true,
       session_restored: sessionRestored,
       restored_at: restoredAt || new Date().toISOString(),
@@ -507,11 +537,12 @@ async function executeJob(job, claimData) {
         targetUrl: verificationUrl,
         httpStatus,
         isAccessible: isSuccess,
-        verifiedBy: 'Ashk24_LocalAgent_SessionManager'
+        verifiedBy: 'Ashk24_LocalAgent_SessionManager',
+        evidenceCaptured: true
       }
     });
 
-    console.log(`✅ [Job Handled] Execution completed in ${Date.now() - startTime}ms.`);
+    console.log(`✅ [Job Handled] Execution completed successfully in ${Date.now() - startTime}ms.`);
     return true;
   } catch (err) {
     console.error(`❌ [Execution Error]: ${err.message}`);

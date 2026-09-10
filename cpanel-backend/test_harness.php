@@ -782,29 +782,27 @@ class Ashk24ProductionTestHarness {
             $isInternal = ($plat['id'] === 'plat_internal_blog');
 
             if ($isInternal) {
-                // ثبت واقعی در پایگاه داخلی
-                $realAdUrl = SITE_URL . "/?ad=TEST-ASHK24-{$t}";
+                // ثبت وظیفه اما انتظار برای ایجنت
                 $this->db->createJob([
                     'id' => $jobId,
                     'campaignId' => "TEST-ASHK24-CMP-{$t}",
                     'platformId' => $plat['id'],
                     'platformName' => $plat['persianName'],
-                    'status' => 'published',
-                    'currentStep' => 'انتشار واقعی آزمایشی در پایگاه داخلی اشک ۲۴ با موفقیت ثبت شد.',
-                    'progressPercent' => 100,
-                    'adUrl' => $realAdUrl
+                    'status' => 'pending_agent',
+                    'currentStep' => 'ثبت پایگاه داخلی: نیازمند ایجنت لوکال برای شبیه‌سازی انتشار واقعی.',
+                    'progressPercent' => 10,
+                    'adUrl' => null
                 ]);
 
                 $evidence = [
                     'EXECUTION_ENVIRONMENT' => 'CPANEL_SERVER',
-                    'REAL_EXECUTION' => 'YES',
+                    'REAL_EXECUTION' => 'NO',
                     'EXTERNAL_CALL' => 'NO',
                     'SMS_ACTUALLY_RECEIVED' => 'NO',
                     'CAPTCHA_ACTUALLY_DETECTED' => 'NO',
-                    'PUBLISHED_ACTUALLY' => 'YES',
+                    'PUBLISHED_ACTUALLY' => 'NO',
                     'mode' => 'LIVE_TEST',
-                    'platform' => $plat['persianName'],
-                    'publishedRealUrl' => $realAdUrl
+                    'platform' => $plat['persianName']
                 ];
 
                 $step = [
@@ -813,12 +811,12 @@ class Ashk24ProductionTestHarness {
                     'stepName' => 'انتشار زنده آزمایشی بر روی تارگت داخلی اشک ۲۴ (LIVE TEST)',
                     'endpoint' => '/api/index.php?route=jobs/trigger',
                     'httpStatus' => 200,
-                    'status' => 'PASS',
+                    'status' => 'BLOCKED',
                     'jobId' => $jobId,
                     'platform' => $plat['persianName'],
                     'durationMs' => round((microtime(true) - $stepStart) * 1000),
-                    'stateTransition' => 'PREPARED -> SUBMITTED -> PUBLISHED',
-                    'error' => null,
+                    'stateTransition' => 'PREPARED -> BLOCKED_NO_AGENT',
+                    'error' => 'بدون حضور ایجنت واقعی امکان انتشار و تولید آدرس عمومی وجود ندارد.',
                     'EXECUTION_ENVIRONMENT' => 'CPANEL_SERVER',
                     'EXECUTION_MODE' => 'REAL_SERVER',
                     'evidence' => $evidence

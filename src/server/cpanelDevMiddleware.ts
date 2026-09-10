@@ -267,7 +267,7 @@ export function cpanelDevApiPlugin(): Plugin {
               return sendJson({
                 status: 'ok',
                 systemName: 'سامانه هوش مصنوعی اشک ۲۴ (موتور فعال پروداکشن)',
-                version: '4.0.10-zero-fake-cleanup',
+                version: '4.0.11-e2e-ready',
                 timestamp: new Date().toISOString(),
                 phpVersion: '8.2.14-Native',
                 cpanelCompatible: true,

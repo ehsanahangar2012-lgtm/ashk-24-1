@@ -1,7 +1,7 @@
 {
   "name": "ashk24-automation",
   "private": true,
-  "version": "4.0.10-zero-fake-cleanup",
+  "version": "4.0.11-e2e-ready",
   "type": "module",
   "scripts": {
     "dev": "vite",
