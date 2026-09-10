@@ -1186,7 +1186,7 @@ try {
             echo json_encode([
                 'success' => false,
                 'status' => 'initialized',
-                'bridgeVersion' => '4.0.10',
+                'bridgeVersion' => APP_VERSION,
                 'serverTime' => date('c'),
                 'message' => 'منتظر اتصال واقعی ایجنت لوکال...'
             ], JSON_UNESCAPED_UNICODE);
