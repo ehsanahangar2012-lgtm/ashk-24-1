@@ -1,0 +1,46 @@
+{
+  "jobId": "job_test_save_1789059725977",
+  "savedAt": "2026-09-10T17:02:06.309Z",
+  "timestamp": "2026-09-10T17:02:06.306Z",
+  "currentUrl": "http://localhost/new_ad",
+  "currentStep": "ورود شماره همراه و تایید کپچا",
+  "platformId": "plat_divar",
+  "challengeType": "CAPTCHA_CHALLENGE",
+  "workflowStepIndex": null,
+  "storageState": {
+    "cookies": [
+      {
+        "name": "ashk24_session_token",
+        "value": "sec_tok_divar_98153108763",
+        "domain": "localhost",
+        "path": "/",
+        "expires": -1,
+        "httpOnly": true,
+        "secure": false,
+        "sameSite": "Lax"
+      },
+      {
+        "name": "divar_user_id",
+        "value": "usr_iran_mashhad_01",
+        "domain": "localhost",
+        "path": "/",
+        "expires": -1,
+        "httpOnly": false,
+        "secure": false,
+        "sameSite": "Lax"
+      }
+    ],
+    "origins": []
+  },
+  "metadata": {
+    "currentUrl": "http://localhost/new_ad",
+    "currentStep": "ورود شماره همراه و تایید کپچا",
+    "platformId": "plat_divar",
+    "challengeType": "CAPTCHA_CHALLENGE",
+    "timestamp": "2026-09-10T17:02:06.306Z",
+    "savedAt": "2026-09-10T17:02:06.309Z",
+    "cookieCount": 2,
+    "originCount": 0,
+    "resume_supported": true
+  }
+}

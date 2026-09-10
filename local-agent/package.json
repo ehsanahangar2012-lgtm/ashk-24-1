@@ -5,7 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "node test_session_lifecycle.js",
+    "test:real": "node test_real_target.js"
   },
   "dependencies": {
     "playwright": "^1.40.0"
