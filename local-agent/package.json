@@ -1,6 +1,6 @@
 {
   "name": "ashk24-local-agent",
-  "version": "4.0.10",
+  "version": "4.0.10-zero-fake-cleanup",
   "description": "Ashk24 Desktop Local Agent with Headed Playwright for cPanel Orchestrator",
   "main": "index.js",
   "type": "module",

@@ -1439,8 +1439,8 @@ class ClientStorageService {
       timestamp: new Date().toISOString(),
       action: 'discovery',
       title: 'اجرای چرخه پایش ۲۴ ساعته در سرور سی‌پنل',
-      details: 'بررسی فرصت‌های معرفی خدمات و تبلیغات در پلتفرم‌های فعال',
-      status: 'success',
+      details: 'تعداد 0 رسانه و وبلاگ هدف شناسایی شدند. انتشار نیازمند اتصال ایجنت لوکال واقعی است.',
+      status: 'pending_agent',
     };
 
     const logs = await this.getAutonomousLogs();
@@ -1449,10 +1449,10 @@ class ClientStorageService {
     } catch (e) {}
 
     return {
-      success: true,
-      message: 'چرخه پایش خودکار با موفقیت در پس‌زمینه اجرا گردید.',
-      discoveredCount: 1,
-      publishedCount: 1,
+      success: false,
+      message: 'شناسایی پلتفرم‌ها انجام شد. برای انتشار نیازمند اجرای Local Agent واقعی هستید.',
+      discoveredCount: 0,
+      publishedCount: 0,
     };
   }
 
@@ -1463,10 +1463,8 @@ class ClientStorageService {
     });
 
     return res || {
-      success: true,
-      message: 'آگهی در پایگاه آزمایشی ثبت شد.',
-      targetUrl: 'https://secret.ashkghalam.ir',
-      postUrl: 'https://secret.ashkghalam.ir',
+      success: false,
+      message: 'محتوا به صورت داخلی ثبت شد. انتشار نهایی نیازمند Evidence از ایجنت لوکال است.',
     };
   }
 
@@ -1809,13 +1807,23 @@ class ClientStorageService {
     return [];
   }
 
-  public async triggerTelemetryProbeNow(): Promise<{ success: boolean; message: string; logs: PublicationTelemetryLog[]; report: PublicationDebuggerReport }> {
-    const logs = await this.getTelemetryLogs();
+  public async triggerTelemetryProbeNow(): Promise<{ success: boolean; message: string; logs: PublicationTelemetryLog[]; report?: PublicationDebuggerReport }> {
+    const res = await callCpanelApi<{ success: boolean; message: string; logs: PublicationTelemetryLog[] }>('telemetry/probe-now', {
+      method: 'POST'
+    });
+
+    if (res) {
+      return {
+        ...res,
+        report: await this.getPublicationDebuggerReport()
+      };
+    }
+
     const report = await this.getPublicationDebuggerReport();
     return {
-      success: true,
-      message: 'پایش زنده و عیب‌یابی عمیق اندپینت‌ها با موفقیت در سی‌پنل انجام شد.',
-      logs,
+      success: false,
+      message: 'عدم دسترسی به سی‌پنل جهت انجام کاوش. هیچ نتیجه فیکی تولید نشد.',
+      logs: [],
       report,
     };
   }

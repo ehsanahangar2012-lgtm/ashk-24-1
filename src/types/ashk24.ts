@@ -501,6 +501,10 @@ export interface PublicationTelemetryLog {
   timestamp: string;
   stage: 'platform_connect' | 'dom_analysis' | 'form_filling' | 'otp_request' | 'otp_verify' | 'ad_submission' | 'pre_validation' | 'self_healing_audit';
   httpStatus?: number;
+  httpCode?: number;
+  latencyMs?: number;
+  reachable?: boolean;
+  responseHash?: string | null;
   requestUrl?: string;
   requestMethod?: 'GET' | 'POST' | 'PUT';
   requestHeaders?: Record<string, string>;

@@ -1,6 +1,6 @@
 {
   "macroName": "انتقال خودکار پیامک OTP به سامانه اشک ۲۴",
-  "version": "4.0.10",
+  "version": "4.0.10-zero-fake-cleanup",
   "description": "به محض دریافت پیامک، کد تایید را استخراج و به وب‌هوک هاست secret.ashkghalam.ir ارسال می‌کند.",
   "triggers": [
     {

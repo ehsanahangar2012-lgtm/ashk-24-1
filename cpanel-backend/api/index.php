@@ -1183,23 +1183,34 @@ try {
 
 
         case ($route === 'bridge/handshake/init'):
-            $token = 'brg_' . bin2hex(random_bytes(16));
             echo json_encode([
-                'success' => true,
-                'handshakeToken' => $token,
-                'bridgeVersion' => '3.9.3',
+                'success' => false,
+                'status' => 'initialized',
+                'bridgeVersion' => '4.0.10',
                 'serverTime' => date('c'),
-                'message' => 'ارتباط هندشیک با افزونه اشک ۲۴ مقداردهی اولیه شد.'
+                'message' => 'منتظر اتصال واقعی ایجنت لوکال...'
             ], JSON_UNESCAPED_UNICODE);
             break;
 
         case ($route === 'bridge/handshake/complete'):
-            echo json_encode([
-                'success' => true,
-                'status' => 'connected',
-                'timestamp' => date('c'),
-                'message' => 'اتصال ایجنت لوکال با بک‌اند سی‌پنل اشک ۲۴ برقرار و تایید گردید.'
-            ], JSON_UNESCAPED_UNICODE);
+            $token = $body['handshakeToken'] ?? '';
+            $sessionData = $body['sessionData'] ?? null;
+            
+            if (empty($token) || empty($sessionData)) {
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'status' => 'rejected',
+                    'message' => 'اتصال نامعتبر. توکن هندشیک و اطلاعات نشست (Session) الزامی است.'
+                ], JSON_UNESCAPED_UNICODE);
+            } else {
+                echo json_encode([
+                    'success' => true,
+                    'status' => 'connected',
+                    'timestamp' => date('c'),
+                    'message' => 'اتصال ایجنت لوکال با بک‌اند سی‌پنل تایید گردید.'
+                ], JSON_UNESCAPED_UNICODE);
+            }
             break;
 
 
@@ -1209,15 +1220,14 @@ try {
                 'campaignId' => $body['campaignId'] ?? 'cmp_manual',
                 'platformId' => 'plat_internal_blog',
                 'platformName' => 'پایگاه اطلاع‌رسانی داخلی اشک ۲۴',
-                'status' => 'published',
-                'publishedUrl' => SITE_URL . '/blog/' . time(),
+                'status' => 'internal_only',
                 'title' => $title,
                 'createdAt' => date('c')
             ]);
             http_response_code(201);
             echo json_encode([
-                'success' => true,
-                'message' => 'محتوا با موفقیت در پایگاه وب‌سایت داخلی منتشر گردید.',
+                'success' => false,
+                'message' => 'محتوا به صورت داخلی ثبت شد. انتشار نهایی نیازمند Evidence از ایجنت لوکال است.',
                 'report' => $report
             ], JSON_UNESCAPED_UNICODE);
             break;
@@ -1240,13 +1250,13 @@ try {
             $db->addAutonomousLog([
                 'action' => 'discovery',
                 'title' => 'اجرای چرخه منشی ۲۴ ساعته در سی‌پنل',
-                'details' => "تعداد " . count($discoveredList) . " رسانه و وبلاگ هدف شناسایی شدند.",
-                'status' => 'success'
+                'details' => "تعداد " . count($discoveredList) . " رسانه و وبلاگ هدف شناسایی شدند. انتشار نیازمند اتصال ایجنت لوکال واقعی است.",
+                'status' => 'pending_agent'
             ]);
 
             echo json_encode([
-                'success' => true,
-                'message' => 'چرخه منشی ۲۴ ساعته با موفقیت در سی‌پنل اجرا گردید.',
+                'success' => false,
+                'message' => 'شناسایی پلتفرم‌ها انجام شد. برای انتشار نیازمند اجرای Local Agent واقعی هستید.',
                 'details' => $discovery
             ], JSON_UNESCAPED_UNICODE);
             break;
@@ -1285,19 +1295,34 @@ try {
             $platforms = array_filter($db->getMediaPlatforms(), function($p) { return !empty($p['active']); });
             $logs = [];
             foreach ($platforms as $p) {
+                $url = "https://{$p['domain']}";
+                $ch = curl_init($url);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+                $start = microtime(true);
+                $content = curl_exec($ch);
+                $latency = round((microtime(true) - $start) * 1000);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+                
+                $isReachable = $httpCode >= 200 && $httpCode < 400;
+
                 $tel = $db->addTelemetryLog([
                     'platformId' => $p['id'],
                     'platformName' => $p['persianName'],
                     'platformDomain' => $p['domain'],
                     'stage' => 'dom_analysis',
-                    'httpStatus' => 200,
-                    'requestUrl' => "https://{$p['domain']}",
-                    'status' => 'success',
-                    'aiDiagnosticSummary' => "پایش زنده دامنه {$p['persianName']} در سی‌پنل انجام شد."
+                    'httpCode' => $httpCode,
+                    'latencyMs' => $latency,
+                    'reachable' => $isReachable,
+                    'responseHash' => $content ? md5($content) : null,
+                    'requestUrl' => $url,
+                    'status' => $isReachable ? 'success' : 'error',
+                    'aiDiagnosticSummary' => "نتیجه کاوش: HTTP $httpCode"
                 ]);
                 $logs[] = $tel;
             }
-            echo json_encode(['message' => 'پایش زنده سی‌پنل انجام شد.', 'logs' => $logs], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['success' => true, 'message' => 'کاوش واقعی انجام شد.', 'logs' => $logs], JSON_UNESCAPED_UNICODE);
             break;
 
         case ($route === 'telemetry/dom-watcher'):
