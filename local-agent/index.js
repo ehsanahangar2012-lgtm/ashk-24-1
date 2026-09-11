@@ -11,6 +11,9 @@ import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import SessionManager, { saveSession, restoreSession, deleteSession, validateSession } from './session_manager.js';
 
+// Ignore self-signed / untrusted SSL certificate errors common in cPanel environments
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Strictly required configuration: No fallback for Production
@@ -146,7 +149,7 @@ async function handshake() {
     console.log(`✅ [Handshake] Connected successfully to cPanel Orchestrator.`);
     return true;
   } catch (err) {
-    console.error(`❌ [Handshake Error]: ${err.message}`);
+    console.error(`❌ [Handshake Error]: ${err.message}`, err.cause ? `| Cause: ${JSON.stringify(err.cause)}` : '');
     process.exit(1);
   }
 }

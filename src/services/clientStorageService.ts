@@ -71,6 +71,7 @@ async function callCpanelApi<T>(route: string, options?: RequestInit): Promise<T
       signal: controller.signal,
       headers: {
         'Accept': 'application/json',
+        'Authorization': 'Bearer secret_9153108763',
         ...(options?.body && !(options.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}),
         ...(options?.headers || {}),
       },

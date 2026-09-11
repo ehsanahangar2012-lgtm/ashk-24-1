@@ -28,7 +28,7 @@ import {
 } from './types/ashk24';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [activeTab, setActiveTab] = useState<TabType>('campaigns');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
   const [showCompanyModal, setShowCompanyModal] = useState<boolean>(false);
   const [showSecurityModal, setShowSecurityModal] = useState<boolean>(false);
@@ -235,26 +235,6 @@ export default function App() {
           <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
             <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto">
               <ErrorBoundary fallbackTitle="خطا در رندر این بخش" onReset={fetchAllData}>
-                {activeTab === 'overview' && (
-                  <DashboardOverview
-                    campaigns={campaigns}
-                    jobs={jobs}
-                    resilience={resilience}
-                    smsLogs={smsLogs}
-                    onNavigateTab={(tab) => {
-                      // Map legacy sub-navigation to 6 core tabs
-                      if (tab === 'reports') setActiveTab('reports');
-                      else if (tab === 'autonomous' || tab === 'campaigns') setActiveTab('campaigns');
-                      else if (tab === 'mobile_companion' || tab === 'live_visualizer' || tab === 'jobs') setActiveTab('jobs');
-                      else if (tab === 'company') setActiveTab('company');
-                      else if (tab === 'platforms' || tab === 'media_discovery') setActiveTab('platforms');
-                      else setActiveTab('overview');
-                    }}
-                    onTriggerJob={handleTriggerJob}
-                    onToggleForcedOffline={handleToggleForcedOffline}
-                  />
-                )}
-
                 {activeTab === 'company' && (
                   <CompanyProfileView
                     company={company}
@@ -284,20 +264,6 @@ export default function App() {
 
                 {activeTab === 'jobs' && (
                   <JobQueueMonitorModule jobs={jobs} onRefreshJobs={fetchAllData} />
-                )}
-
-                {activeTab === 'reports' && (
-                  <PublicationReportModule
-                    company={company}
-                    platforms={platforms}
-                    onRefreshData={fetchAllData}
-                  />
-                )}
-
-                {activeTab === 'test_harness' && (
-                  <ProductionTestHarnessModule
-                    onRefreshGlobalData={fetchAllData}
-                  />
                 )}
               </ErrorBoundary>
             </main>

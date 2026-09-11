@@ -1201,12 +1201,12 @@ try {
             $token = $body['handshakeToken'] ?? '';
             $sessionData = $body['sessionData'] ?? null;
             
-            if (empty($token) || empty($sessionData)) {
+            if (empty($token)) {
                 http_response_code(400);
                 echo json_encode([
                     'success' => false,
                     'status' => 'rejected',
-                    'message' => 'اتصال نامعتبر. توکن هندشیک و اطلاعات نشست (Session) الزامی است.'
+                    'message' => 'اتصال نامعتبر. توکن هندشیک الزامی است.'
                 ], JSON_UNESCAPED_UNICODE);
             } else {
                 echo json_encode([

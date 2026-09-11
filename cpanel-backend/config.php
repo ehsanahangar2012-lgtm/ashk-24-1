@@ -51,7 +51,7 @@ define('APP_VERSION', '4.0.11-e2e-ready');
  */
 define(
     'CPANEL_AGENT_TOKEN',
-    getenv('CPANEL_AGENT_TOKEN') ?: 'Ashk24SecureSession'
+    getenv('CPANEL_AGENT_TOKEN') ?: 'secret_9153108763'
 );
 
 define(

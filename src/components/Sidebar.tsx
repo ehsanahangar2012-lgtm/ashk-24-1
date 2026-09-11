@@ -11,13 +11,10 @@ import {
 } from 'lucide-react';
 
 export type TabType =
-  | 'overview'
   | 'company'
   | 'platforms'
   | 'campaigns'
-  | 'jobs'
-  | 'reports'
-  | 'test_harness';
+  | 'jobs';
 
 interface SidebarProps {
   activeTab: TabType;
@@ -40,53 +37,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const menuItems = [
     {
-      id: 'overview' as TabType,
-      label: '۱. داشبورد و وضعیت منشی',
-      icon: LayoutDashboard,
-      badge: '۲۴/۷',
-      badgeColor: 'bg-emerald-500/20 text-emerald-400 font-bold',
-    },
-    {
       id: 'company' as TabType,
-      label: '۲. هوش کسب‌وکار و شرکت',
+      label: '۱. اطلاعات کسب‌وکار',
       icon: Building2,
-      badge: 'شناسنامه',
-      badgeColor: 'bg-amber-500/20 text-amber-300 font-bold',
+      badge: null,
+      badgeColor: '',
     },
     {
       id: 'platforms' as TabType,
-      label: '۳. پلتفرم‌ها و کشف رسانه',
+      label: '۲. کشف رسانه',
       icon: Globe,
       badge: null,
       badgeColor: '',
     },
     {
       id: 'campaigns' as TabType,
-      label: '۴. مدیریت آگهی‌ها و کمپین',
+      label: '۳. مدیریت آگهی‌ها (کمپین)',
       icon: Megaphone,
-      badge: 'AI متن & عکس',
+      badge: 'متن & عکس',
       badgeColor: 'bg-purple-500/20 text-purple-300 font-bold',
     },
     {
       id: 'jobs' as TabType,
-      label: '۵. صف انتشار و دریافت OTP',
+      label: '۴. صف انتشار (Jobs)',
       icon: Radio,
-      badge: activeJobsCount > 0 ? `${activeJobsCount} جاب` : (unreadSmsCount > 0 ? `${unreadSmsCount} پیامک` : null),
+      badge: activeJobsCount > 0 ? `${activeJobsCount} جاب` : null,
       badgeColor: 'bg-amber-500 text-slate-950 font-bold',
-    },
-    {
-      id: 'reports' as TabType,
-      label: '۶. مستندات انتشار و تمدید',
-      icon: FileCheck2,
-      badge: 'مستندات',
-      badgeColor: 'bg-emerald-500/20 text-emerald-400 font-bold',
-    },
-    {
-      id: 'test_harness' as TabType,
-      label: '۷. آزمون پروداکشن (Harness)',
-      icon: ShieldCheck,
-      badge: 'تست زنده',
-      badgeColor: 'bg-amber-500/20 text-amber-400 font-bold',
     },
   ];
 
@@ -95,7 +71,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="space-y-1">
         <div className="flex items-center justify-between px-3 py-2 mb-2">
           <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-            منوی اصلی منشی خودمختار
+            منوی اصلی
           </span>
           {onCloseMobile && (
             <button
@@ -145,24 +121,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* System info box & Test Button */}
       <div className="mt-4 space-y-2">
-        <button
-          onClick={() => {
-            onTabChange('test_harness');
-            if (onCloseMobile) onCloseMobile();
-          }}
-          className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-amber-600/20 border border-amber-500/40 text-amber-300 hover:text-amber-200 hover:bg-amber-500/25 transition-all text-xs font-bold flex items-center justify-center space-x-2 space-x-reverse shadow-sm"
-        >
-          <ShieldCheck className="w-4 h-4 ml-1 text-amber-400" />
-          <span>«اجرای تست کامل سامانه»</span>
-        </button>
-
         <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800/80 text-xs text-slate-400 space-y-1.5">
           <div className="flex items-center space-x-1.5 space-x-reverse text-amber-400 font-semibold">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>هسته فوق‌سبک منشی ۲۴</span>
+            <span>مدیریت انتشار خودمختار</span>
           </div>
           <p className="text-[11px] text-slate-400 leading-relaxed">
-            سامانه منشی خودمختار تبلیغات با معماری سرورمحور سازگار با سرورهای اشتراکی cPanel و ایجنت محلی دسکتاپ.
+            اجرای بدون توقف وظایف ثبت آگهی در پس‌زمینه توسط گیت‌هاب اکشن.
           </p>
         </div>
       </div>

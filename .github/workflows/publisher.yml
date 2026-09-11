@@ -1,0 +1,38 @@
+name: Ashk24 Autonomous Publisher
+
+on:
+  schedule:
+    # Run every 10 minutes to poll for new jobs
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+    inputs:
+      headless:
+        description: 'Run headless'
+        required: true
+        default: 'true'
+
+jobs:
+  publish-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: |
+          cd local-agent
+          npm install
+
+      - name: Run Autonomous Agent
+        env:
+          CPANEL_URL: "https://secret.ashkghalam.ir/cpanel-backend/api/index.php"
+          CPANEL_AGENT_TOKEN: ${{ secrets.CPANEL_AGENT_TOKEN || 'secret_9153108763' }}
+          HEADLESS: "true"
+        run: |
+          cd local-agent
+          node index.js --once
