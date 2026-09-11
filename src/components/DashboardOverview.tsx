@@ -46,33 +46,37 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-amber-950/40 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center space-x-2 space-x-reverse text-amber-400 text-xs font-semibold mb-1">
-            <ShieldCheck className="w-4 h-4" />
-            <span>سیستم اتوماسیون ۲۴ ساعته خودمختار</span>
+      <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-amber-950/40 border border-slate-800 flex flex-col gap-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center space-x-2 space-x-reverse text-amber-400 text-xs font-semibold mb-1">
+              <ShieldCheck className="w-4 h-4" />
+              <span>سیستم اتوماسیون ۲۴ ساعته خودمختار</span>
+            </div>
+            <h2 className="text-lg sm:text-xl font-bold text-slate-100">
+              خوش‌آمدید به مرکز فرماندهی بازاریابی اشک ۲۴
+            </h2>
+            <p className="text-xs text-slate-400 mt-1 max-w-3xl leading-relaxed">
+              مدیریت یکپارچه تولید محتوا، تحلیل معنایی فرم‌های وب، استخراج پیامک OTP و انتشار خودکار آگهی در رسانه‌های هدف.
+            </p>
           </div>
-          <h2 className="text-xl font-bold text-slate-100">
-            خوش‌آمدید به مرکز فرماندهی بازاریابی اشک ۲۴
-          </h2>
-          <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
-            مدیریت یکپارچه تولید محتوا، تحلیل معنایی فرم‌های وب، استخراج پیامک OTP و انتشار خودکار آگهی در رسانه‌های هدف.
-          </p>
+          <div className="shrink-0 self-start md:self-auto">
+            <SmartHelpButton
+              content={{
+                title: 'داشبورد جامع فرماندهی اشک ۲۴',
+                summary: 'این بخش نمای کلان فعالیت‌های انتشار آگهی، آمار ثبت موفق، کارکردهای منشی اتوماتیک و وضعیت سرور را نمایش می‌دهد.',
+                steps: [
+                  'از دکمه «پایش زنده» برای مشاهده لحظه‌ای عملیات ثبت فرم استفاده کنید.',
+                  'وضعیت سینک آفلاین نشان‌دهنده ذخیره‌سازی محلی روی هاست ایران/cPanel بدون نیاز به Node.js است.',
+                  'برای ایجاد یا ویرایش پروژه‌ها به بخش کمپین‌ها مراجعه نمایید.'
+                ],
+                offlineNote: 'تمام داده‌های داشبورد در حافظه محلی ذخیره می‌شوند و حتی هنگام قطعی اینترنت کاملاً رندر می‌گردند.'
+              }}
+            />
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
-          <SmartHelpButton
-            content={{
-              title: 'داشبورد جامع فرماندهی اشک ۲۴',
-              summary: 'این بخش نمای کلان فعالیت‌های انتشار آگهی، آمار ثبت موفق، کارکردهای منشی اتوماتیک و وضعیت سرور را نمایش می‌دهد.',
-              steps: [
-                'از دکمه «پایش زنده» برای مشاهده لحظه‌ای عملیات ثبت فرم استفاده کنید.',
-                'وضعیت سینک آفلاین نشان‌دهنده ذخیره‌سازی محلی روی هاست ایران/cPanel بدون نیاز به Node.js است.',
-                'برای ایجاد یا ویرایش پروژه‌ها به بخش کمپین‌ها مراجعه نمایید.'
-              ],
-              offlineNote: 'تمام داده‌های داشبورد در حافظه محلی ذخیره می‌شوند و حتی هنگام قطعی اینترنت کاملاً رندر می‌گردند.'
-            }}
-          />
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/80">
           <button
             onClick={() => onNavigateTab('live_visualizer')}
             className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all flex items-center space-x-1.5 space-x-reverse animate-pulse"

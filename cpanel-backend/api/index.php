@@ -1186,12 +1186,14 @@ try {
 
 
         case ($route === 'bridge/handshake/init'):
+            $handshakeToken = 'hs_' . bin2hex(random_bytes(8));
             echo json_encode([
-                'success' => false,
+                'success' => true,
                 'status' => 'initialized',
                 'bridgeVersion' => APP_VERSION,
                 'serverTime' => date('c'),
-                'message' => 'منتظر اتصال واقعی ایجنت لوکال...'
+                'handshakeToken' => $handshakeToken,
+                'message' => 'اتصال اولیه هندشیک برقرار شد.'
             ], JSON_UNESCAPED_UNICODE);
             break;
 

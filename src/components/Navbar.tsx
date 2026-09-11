@@ -83,8 +83,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Desktop Controls (md and up) */}
-        <div className="hidden md:flex items-center space-x-2 space-x-reverse shrink-0">
+        {/* Desktop Controls (lg and up) */}
+        <div className="hidden lg:flex items-center space-x-2 space-x-reverse shrink-0">
           {/* Active Backend Indicator */}
           <div className="flex items-center space-x-2 space-x-reverse px-3 py-1.5 rounded-xl border text-xs font-medium shrink-0 bg-emerald-500/10 border-emerald-500/30 text-emerald-400">
             <div className="relative flex h-2 w-2">
@@ -92,7 +92,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </div>
             <Server className="w-4 h-4 ml-1 shrink-0" />
-            <span className="hidden lg:inline">
+            <span className="hidden xl:inline">
               بک‌اند cPanel PHP 8.x + MySQL
             </span>
           </div>
@@ -139,8 +139,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </div>
 
-        {/* Mobile Dropdown Menu Controls (< md) */}
-        <div className="flex md:hidden items-center space-x-2 space-x-reverse shrink-0 relative" ref={menuRef}>
+        {/* Mobile & Tablet Dropdown Menu Controls (< lg) */}
+        <div className="flex lg:hidden items-center space-x-2 space-x-reverse shrink-0 relative" ref={menuRef}>
           <button
             onClick={onRefreshData}
             title="بروزرسانی"
