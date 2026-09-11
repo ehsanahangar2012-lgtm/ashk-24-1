@@ -139,6 +139,7 @@ export default function App() {
         }, 500);
 
         setActiveTab('jobs');
+        return created;
       }
     } catch (e) {
       console.error('Error creating campaign:', e);

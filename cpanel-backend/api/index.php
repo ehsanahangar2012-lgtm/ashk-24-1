@@ -4,6 +4,9 @@
  * Ashk 24 Enterprise API Entry Point
  */
 
+error_reporting(0); // Suppress PHP warnings that corrupt JSON responses
+ini_set('display_errors', '0');
+
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../db.php';
 require_once __DIR__ . '/../ai_engine.php';

@@ -32,7 +32,7 @@ import { SmartHelpButton } from './SmartHelpModal.js';
 interface CampaignManagerModuleProps {
   campaigns: Campaign[];
   platforms: MediaPlatform[];
-  onCreateCampaign: (newCamp: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onCreateCampaign: (newCamp: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Campaign | undefined> | void;
   onDeleteCampaign: (id: string) => void;
   onTriggerJob: (campaignId: string, platformId: string) => void;
 }
@@ -173,12 +173,16 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
         renewalCount: 0,
       };
 
-      await onCreateCampaign(campData);
+      const createdCamp = await onCreateCampaign(campData);
+      
+      if (!createdCamp) {
+         throw new Error("کمپین ایجاد نشد");
+      }
 
       // 2. Trigger jobs sequentially
       const targetPlatforms = campData.selectedPlatformIds;
       for (const pid of targetPlatforms) {
-        await onTriggerJob('cmp_fast_track', pid);
+        await onTriggerJob(createdCamp.id, pid);
       }
 
       setQuickPublishSuccess(`✅ دستور انتشار سریع به ${toPersianDigits(targetPlatforms.length)} رسانه منتخب با موفقیت ارسال شد و در صف اجرای خودکار قرار گرفت.`);
