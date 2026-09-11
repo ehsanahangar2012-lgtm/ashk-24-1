@@ -1,5 +1,5 @@
 /**
- * Ashk24 Autonomous Agent / Cloud Worker v4.0.10
+ * Ashk24 Autonomous Agent / Cloud Worker v4.0.11-e2e
  * Executes real browser missions using Playwright Chromium connected to cPanel Orchestrator.
  * Supports both Cloud Headless (GitHub Actions / Linux VPS) and Local Headed mode.
  */
@@ -13,8 +13,14 @@ import SessionManager, { saveSession, restoreSession, deleteSession, validateSes
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const CPANEL_URL = process.env.CPANEL_URL || 'http://localhost:3000/cpanel-backend/api/index.php';
-const CPANEL_AGENT_TOKEN = process.env.CPANEL_AGENT_TOKEN || 'Ashk24SecureSession';
+// Strictly required configuration: No fallback for Production
+if (!process.env.CPANEL_URL || !process.env.CPANEL_AGENT_TOKEN) {
+  console.error('❌ [Fatal] Missing mandatory environment variables: CPANEL_URL or CPANEL_AGENT_TOKEN');
+  process.exit(1);
+}
+
+const CPANEL_URL = process.env.CPANEL_URL;
+const CPANEL_AGENT_TOKEN = process.env.CPANEL_AGENT_TOKEN;
 const AGENT_ID = process.env.AGENT_ID || (process.env.CI ? `gh_actions_${Date.now()}` : `agent_desktop_${Date.now()}`);
 const POLL_INTERVAL_MS = parseInt(process.env.POLL_INTERVAL_MS || '5000', 10);
 const IS_ONCE = process.argv.includes('--once');
@@ -105,7 +111,7 @@ function stopQuickTunnel() {
 }
 
 console.log(`=======================================================`);
-console.log(`🤖 Ashk24 Worker Engine v4.0.10 Starting...`);
+console.log(`🤖 Ashk24 Worker Engine v4.0.11-e2e Starting...`);
 console.log(`🆔 Agent ID: ${AGENT_ID}`);
 console.log(`🌐 Orchestrator: ${CPANEL_URL}`);
 console.log(`🎯 Target Job ID: ${TARGET_JOB_ID || 'None (Auto-Claim Any Pending)'}`);
@@ -123,6 +129,7 @@ async function handshake() {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${CPANEL_AGENT_TOKEN}` },
       body: JSON.stringify({ agentId: AGENT_ID, platform: IS_HEADLESS ? 'cloud_ubuntu_worker' : 'desktop' })
     });
+    if (!initRes.ok) throw new Error(`Handshake init failed with status: ${initRes.status}`);
     const initData = await initRes.json();
     if (!initData.success) throw new Error(initData.message || 'Handshake init failed');
 
@@ -131,6 +138,7 @@ async function handshake() {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${CPANEL_AGENT_TOKEN}` },
       body: JSON.stringify({ agentId: AGENT_ID, handshakeToken: initData.handshakeToken })
     });
+    if (!compRes.ok) throw new Error(`Handshake complete failed with status: ${compRes.status}`);
     const compData = await compRes.json();
     if (!compData.success) throw new Error(compData.message || 'Handshake complete failed');
 
@@ -138,10 +146,11 @@ async function handshake() {
     console.log(`✅ [Handshake] Connected successfully to cPanel Orchestrator.`);
     return true;
   } catch (err) {
-    console.error(`⚠️ [Handshake Notice]: ${err.message} (Will continue with direct API access)`);
-    return true; // Allow direct job processing even if handshake bridge is optional
+    console.error(`❌ [Handshake Error]: ${err.message}`);
+    process.exit(1);
   }
 }
+
 
 async function pollPendingJobs() {
   try {
@@ -186,10 +195,11 @@ async function updateJobState(jobId, payload) {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${CPANEL_AGENT_TOKEN}` },
       body: JSON.stringify({ jobId, ...payload })
     });
+    if (!res.ok) throw new Error(`Job update failed with status: ${res.status}`);
     return await res.json();
   } catch (err) {
-    console.error(`⚠️ [Job State Update Error]: ${err.message}`);
-    return null;
+    console.error(`❌ [Job State Update Error]: ${err.message}`);
+    throw err; // Ensure failure is propagated
   }
 }
 
