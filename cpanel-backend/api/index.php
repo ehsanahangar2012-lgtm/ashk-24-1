@@ -167,6 +167,36 @@ try {
                 echo json_encode(['message' => 'فایل از هاست سی‌پنل حذف شد.'], JSON_UNESCAPED_UNICODE);
             }
             break;
+        case ($route === 'system/fix'):
+            $dataDir = defined('DATA_DIR') ? DATA_DIR : __DIR__ . '/../data';
+            $uploadsDir = defined('UPLOADS_DIR') ? UPLOADS_DIR : __DIR__ . '/../uploads';
+            
+            $results = [];
+            
+            // Fix Data Dir
+            if (!file_exists($dataDir)) @mkdir($dataDir, 0777, true);
+            @chmod($dataDir, 0777);
+            $results['data_dir'] = is_writable($dataDir) ? 'Writable (OK)' : 'Not Writable (Permission Denied)';
+            
+            // Fix Database file
+            $dbFile = $dataDir . '/database.json';
+            if (file_exists($dbFile)) {
+                @chmod($dbFile, 0666);
+                $results['database_file'] = is_writable($dbFile) ? 'Writable (OK)' : 'Not Writable (Permission Denied)';
+            }
+            
+            // Fix Uploads Dir
+            if (!file_exists($uploadsDir)) @mkdir($uploadsDir, 0777, true);
+            @chmod($uploadsDir, 0777);
+            $results['uploads_dir'] = is_writable($uploadsDir) ? 'Writable (OK)' : 'Not Writable (Permission Denied)';
+            
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'عملیات بررسی و اصلاح خودکار پرمیشن‌های سی‌پنل انجام شد.',
+                'results' => $results
+            ], JSON_UNESCAPED_UNICODE);
+            break;
+
         case ($route === 'health'):
             echo json_encode([
                 'status' => 'ok',
