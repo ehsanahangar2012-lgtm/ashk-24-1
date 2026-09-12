@@ -12,6 +12,7 @@ import { CompanyProfileView } from './components/CompanyProfileView';
 import { CompanyProfileModal } from './components/CompanyProfileModal';
 import { ImageUploadVaultModal } from './components/ImageUploadVaultModal';
 import { CpanelGuideModal } from './components/CpanelGuideModal';
+import { MobileCompanionModule } from './components/MobileCompanionModule';
 import { LoginGate, UserSecurityModal } from './components/LoginGate';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { KeyRound, Sparkles, RefreshCw, ShieldCheck, Database } from 'lucide-react';
@@ -211,12 +212,21 @@ export default function App() {
                 🔔 توجه: نوبت ثبت‌نام در پلتفرم «{waitingOtpJobs[0].platformName}» منتظر ورود کد تایید پیامک (OTP) شماست!
               </span>
             </div>
-            <button
-              onClick={() => setActiveTab('jobs')}
-              className="w-full sm:w-auto text-center px-3.5 py-1.5 rounded-xl bg-slate-950 text-amber-400 font-bold hover:bg-slate-900 transition-colors shrink-0"
-            >
-              ورود و ثبت کد OTP
-            </button>
+            <div className="flex items-center space-x-2 space-x-reverse shrink-0">
+              <button
+                onClick={() => setActiveTab('mobile_companion')}
+                className="px-3 py-1.5 rounded-xl bg-emerald-950 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-900 transition-colors text-xs font-bold"
+                title="مشاهده پل ارتباطی همراه اندروید و رله خودکار"
+              >
+                📱 پل همراه اندروید (IP ایران)
+              </button>
+              <button
+                onClick={() => setActiveTab('jobs')}
+                className="px-3.5 py-1.5 rounded-xl bg-slate-950 text-amber-400 font-bold hover:bg-slate-900 transition-colors text-xs"
+              >
+                ورود و ثبت کد OTP
+              </button>
+            </div>
           </div>
         )}
 
@@ -265,6 +275,10 @@ export default function App() {
 
                 {activeTab === 'jobs' && (
                   <JobQueueMonitorModule jobs={jobs} onRefreshJobs={fetchAllData} />
+                )}
+
+                {activeTab === 'mobile_companion' && (
+                  <MobileCompanionModule />
                 )}
               </ErrorBoundary>
             </main>

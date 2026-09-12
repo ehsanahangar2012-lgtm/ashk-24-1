@@ -37,6 +37,7 @@ export type BusinessSector =
   | 'home_appliances'     // لوازم خانگی و دکوراسیون
   | 'services'            // خدمات تخصصی و کسب‌وکار
   | 'consumer_services'   // خدمات عمومی و مصرفی
+  | 'b2b'                 // خدمات B2B
   | 'b2b_services'        // خدمات B2B
   | 'education_courses'   // آموزش و دوره‌ها
   | 'healthcare'          // سلامت و پزشکی
@@ -127,6 +128,9 @@ export interface AuthSession {
 
 export type PlatformCategory = 'classifieds' | 'social' | 'blog' | 'directory' | 'b2b';
 
+export type AuthTierType = 'tier1_easy_email' | 'tier2_otp_mobile' | 'tier3_strict_challenge';
+export type AuthMethodType = 'email_password' | 'email_confirmation' | 'otp_sms' | 'direct_no_auth';
+
 export interface MediaPlatform {
   id: string;
   name: string;
@@ -140,6 +144,10 @@ export interface MediaPlatform {
   formType: 'classified' | 'article' | 'post' | 'directory_entry';
   active: boolean;
   trustScore: number; // 0 - 100
+  // Categorization based on authentication mechanism and IP security level
+  authTier?: AuthTierType;
+  authMethod?: AuthMethodType;
+  emailVerificationRequired?: boolean;
   // Smart Session Vault (کوکی‌ها و توکن‌های فعال)
   sessionStatus?: 'none' | 'authenticated' | 'expired' | 'refreshing';
   sessionToken?: string;
@@ -170,6 +178,8 @@ export interface Campaign {
   status: CampaignStatus;
   autoRetryCount: number;
   generatedContentId?: string;
+  images?: string[];
+  productImages?: string[];
   createdAt: string;
   updatedAt: string;
   // Auto-Renewal and Bumping System (تمدید خودکار ۳۰ روزه و نردبان)
@@ -178,6 +188,20 @@ export interface Campaign {
   lastRenewalDate?: string;
   nextRenewalDate?: string;
   renewalCount?: number;
+}
+
+export interface ImageTextAnalysisResult {
+  id: string;
+  imageUrl: string;
+  matchScore: number; // 0 - 100
+  complianceStatus: 'compliant' | 'warning' | 'rejected';
+  visualElements: string[];
+  persianAltText: string;
+  persianCaption: string;
+  detectedText?: string;
+  targetPlatformTips: { platform: string; status: 'ok' | 'warning'; note: string }[];
+  recommendations: string[];
+  analyzedAt: string;
 }
 
 export interface ContentGenerationRequest {
@@ -241,7 +265,7 @@ export interface DomAnalysisResult {
   parsedBy: 'offline-semantic-parser' | 'cpanel-native-parser';
 }
 
-export type JobStatus = 'pending' | 'claimed' | 'navigating' | 'parsing_dom' | 'filling_data' | 'waiting_otp' | 'otp_received' | 'solving_captcha' | 'waiting_human_action' | 'paused_user_action' | 'resumed' | 'submitting' | 'verifying' | 'published' | 'failed';
+export type JobStatus = 'pending' | 'processing' | 'claimed' | 'navigating' | 'parsing_dom' | 'filling_data' | 'waiting_otp' | 'otp_received' | 'solving_captcha' | 'waiting_human_action' | 'paused_user_action' | 'resumed' | 'submitting' | 'verifying' | 'published' | 'failed';
 
 export interface JobStepLog {
   timestamp: string;
@@ -261,13 +285,16 @@ export interface PublicationFieldMapping {
 export interface PublicationJob {
   id: string;
   campaignId: string;
+  campaignTitle?: string;
   platformId: string;
   platformName: string;
+  platformDomain?: string;
   status: JobStatus;
   currentStep: string;
   progressPercent: number;
   logs: JobStepLog[];
   otpRequired: boolean;
+  otpCode?: string;
   otpCodeExtracted?: string;
   humanActionRequired?: boolean;
   challengeInfo?: {
@@ -288,6 +315,9 @@ export interface PublicationJob {
   usedEngine: 'online-ai' | 'offline-fallback' | 'cpanel-native';
   startedAt: string;
   completedAt?: string;
+  publishedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface PublicationReportItem {

@@ -101,6 +101,114 @@ class Ashk24Db {
             ],
             'mediaPlatforms' => [
                 [
+                    'id' => 'plat_payamsara',
+                    'name' => 'Payamsara',
+                    'persianName' => 'پیام‌سرا (Payamsara.com)',
+                    'domain' => 'payamsara.com',
+                    'category' => 'classifieds',
+                    'monthlyVisits' => '۲.۵ میلیون کاربر هدف',
+                    'requiresOtp' => false,
+                    'authTier' => 'tier1_easy_email',
+                    'authMethod' => 'email_password',
+                    'emailVerificationRequired' => true,
+                    'supportsImage' => true,
+                    'formType' => 'classified',
+                    'trustScore' => 94,
+                    'sessionStatus' => 'authenticated',
+                    'sessionExpiresAt' => null,
+                    'sessionToken' => 'sess_payamsara_active'
+                ],
+                [
+                    'id' => 'plat_agahi24',
+                    'name' => 'Agahi24',
+                    'persianName' => 'آگهی ۲۴ (Agahi24.com)',
+                    'domain' => 'agahi24.com',
+                    'category' => 'classifieds',
+                    'monthlyVisits' => '۲ میلیون کاربر هدف',
+                    'requiresOtp' => false,
+                    'authTier' => 'tier1_easy_email',
+                    'authMethod' => 'email_password',
+                    'emailVerificationRequired' => true,
+                    'supportsImage' => true,
+                    'formType' => 'classified',
+                    'trustScore' => 92,
+                    'sessionStatus' => 'authenticated',
+                    'sessionExpiresAt' => null,
+                    'sessionToken' => 'sess_agahi24_active'
+                ],
+                [
+                    'id' => 'plat_baskool',
+                    'name' => 'Baskool',
+                    'persianName' => 'باسکول (Baskool.com)',
+                    'domain' => 'baskool.com',
+                    'category' => 'b2b',
+                    'monthlyVisits' => '۳.۲ میلیون کاربر هدف',
+                    'requiresOtp' => false,
+                    'authTier' => 'tier1_easy_email',
+                    'authMethod' => 'email_password',
+                    'emailVerificationRequired' => false,
+                    'supportsImage' => true,
+                    'formType' => 'directory_entry',
+                    'trustScore' => 96,
+                    'sessionStatus' => 'authenticated',
+                    'sessionExpiresAt' => null,
+                    'sessionToken' => 'sess_baskool_active'
+                ],
+                [
+                    'id' => 'plat_istgah',
+                    'name' => 'Istgah',
+                    'persianName' => 'ایستگاه (Istgah.com)',
+                    'domain' => 'istgah.com',
+                    'category' => 'classifieds',
+                    'monthlyVisits' => '۵ میلیون کاربر هدف',
+                    'requiresOtp' => false,
+                    'authTier' => 'tier1_easy_email',
+                    'authMethod' => 'email_password',
+                    'emailVerificationRequired' => true,
+                    'supportsImage' => true,
+                    'formType' => 'classified',
+                    'trustScore' => 95,
+                    'sessionStatus' => 'authenticated',
+                    'sessionExpiresAt' => null,
+                    'sessionToken' => 'sess_istgah_active'
+                ],
+                [
+                    'id' => 'plat_irantejarat',
+                    'name' => 'IranTejarat',
+                    'persianName' => 'ایران تجارت (Iran-Tejarat.com)',
+                    'domain' => 'iran-tejarat.com',
+                    'category' => 'b2b',
+                    'monthlyVisits' => '۲ میلیون کاربر صنعتی',
+                    'requiresOtp' => false,
+                    'authTier' => 'tier1_easy_email',
+                    'authMethod' => 'email_password',
+                    'emailVerificationRequired' => false,
+                    'supportsImage' => true,
+                    'formType' => 'directory_entry',
+                    'trustScore' => 90,
+                    'sessionStatus' => 'authenticated',
+                    'sessionExpiresAt' => null,
+                    'sessionToken' => null
+                ],
+                [
+                    'id' => 'plat_parscenter',
+                    'name' => 'ParsCenter',
+                    'persianName' => 'پارس سنتر (ParsCenter.com)',
+                    'domain' => 'parscenter.com',
+                    'category' => 'b2b',
+                    'monthlyVisits' => '۱.۸ میلیون بازدید تخصصی',
+                    'requiresOtp' => false,
+                    'authTier' => 'tier1_easy_email',
+                    'authMethod' => 'email_password',
+                    'emailVerificationRequired' => false,
+                    'supportsImage' => true,
+                    'formType' => 'directory_entry',
+                    'trustScore' => 93,
+                    'sessionStatus' => 'authenticated',
+                    'sessionExpiresAt' => null,
+                    'sessionToken' => null
+                ],
+                [
                     'id' => 'plat_divar',
                     'name' => 'Divar',
                     'persianName' => 'دیوار (Divar.ir)',
@@ -108,6 +216,8 @@ class Ashk24Db {
                     'category' => 'classifieds',
                     'monthlyVisits' => '۵۵ میلیون بازدید ماهانه',
                     'requiresOtp' => true,
+                    'authTier' => 'tier2_otp_mobile',
+                    'authMethod' => 'otp_sms',
                     'supportsImage' => true,
                     'formType' => 'classified',
                     'trustScore' => 98,
@@ -123,9 +233,28 @@ class Ashk24Db {
                     'category' => 'classifieds',
                     'monthlyVisits' => '۲۲ میلیون بازدید ماهانه',
                     'requiresOtp' => true,
+                    'authTier' => 'tier2_otp_mobile',
+                    'authMethod' => 'otp_sms',
                     'supportsImage' => true,
                     'formType' => 'classified',
                     'trustScore' => 94,
+                    'sessionStatus' => 'none',
+                    'sessionExpiresAt' => null,
+                    'sessionToken' => null
+                ],
+                [
+                    'id' => 'plat_torob',
+                    'name' => 'Torob',
+                    'persianName' => 'ترب (Torob.com)',
+                    'domain' => 'torob.com',
+                    'category' => 'b2b',
+                    'monthlyVisits' => '۴۰ میلیون بازدید ماهانه',
+                    'requiresOtp' => true,
+                    'authTier' => 'tier2_otp_mobile',
+                    'authMethod' => 'otp_sms',
+                    'supportsImage' => true,
+                    'formType' => 'directory_entry',
+                    'trustScore' => 97,
                     'sessionStatus' => 'none',
                     'sessionExpiresAt' => null,
                     'sessionToken' => null
@@ -138,54 +267,11 @@ class Ashk24Db {
                     'category' => 'classifieds',
                     'monthlyVisits' => '۱۲ میلیون بازدید ماهانه',
                     'requiresOtp' => true,
+                    'authTier' => 'tier2_otp_mobile',
+                    'authMethod' => 'otp_sms',
                     'supportsImage' => true,
                     'formType' => 'classified',
                     'trustScore' => 91,
-                    'sessionStatus' => 'none',
-                    'sessionExpiresAt' => null,
-                    'sessionToken' => null
-                ],
-                [
-                    'id' => 'plat_torob',
-                    'name' => 'Torob',
-                    'persianName' => 'ترب (Torob.com)',
-                    'domain' => 'torob.com',
-                    'category' => 'b2b',
-                    'monthlyVisits' => '۴۰ میلیون بازدید ماهانه',
-                    'requiresOtp' => false,
-                    'supportsImage' => true,
-                    'formType' => 'directory_entry',
-                    'trustScore' => 97,
-                    'sessionStatus' => 'none',
-                    'sessionExpiresAt' => null,
-                    'sessionToken' => null
-                ],
-                [
-                    'id' => 'plat_emalls',
-                    'name' => 'Emalls',
-                    'persianName' => 'ایمالز (Emalls.ir)',
-                    'domain' => 'emalls.ir',
-                    'category' => 'b2b',
-                    'monthlyVisits' => '۱۸ میلیون بازدید ماهانه',
-                    'requiresOtp' => false,
-                    'supportsImage' => true,
-                    'formType' => 'directory_entry',
-                    'trustScore' => 89,
-                    'sessionStatus' => 'none',
-                    'sessionExpiresAt' => null,
-                    'sessionToken' => null
-                ],
-                [
-                    'id' => 'plat_virgool',
-                    'name' => 'Virgool',
-                    'persianName' => 'ویرگول (Virgool.io)',
-                    'domain' => 'virgool.io',
-                    'category' => 'blog',
-                    'monthlyVisits' => '۱۵ میلیون بازدید ماهانه',
-                    'requiresOtp' => false,
-                    'supportsImage' => true,
-                    'formType' => 'article',
-                    'trustScore' => 93,
                     'sessionStatus' => 'none',
                     'sessionExpiresAt' => null,
                     'sessionToken' => null
@@ -1394,6 +1480,66 @@ class Ashk24Db {
             'cleanedJobs' => $cleanedJobs,
             'cleanedFiles' => $cleanedFiles,
             'timestamp' => date('c')
+        ];
+    }
+
+    public function wipeAllDataToRawState() {
+        $defaultPlatforms = $this->getDefaultDbStructure()['mediaPlatforms'];
+        $cleanDb = [
+            'companyProfile' => [
+                'id' => 'cmp_main',
+                'name' => 'مجتمع چاپ، کارتن‌سازی و بسته‌بندی حرفه‌ای اشک قلم',
+                'brandName' => 'اشک قلم (Ashk Ghalam)',
+                'nationalCode' => '10380456789',
+                'phoneNumber' => '09153108763',
+                'email' => 'info@ashkghalam.ir',
+                'website' => 'http://www.ashkghalam.ir',
+                'address' => 'مشهد، شهرک صنعتی کلات',
+                'sector' => 'industrial',
+                'defaultTone' => 'persuasive',
+                'keywords' => ['چاپ و بسته‌بندی اشک قلم', 'جعبه‌سازی سفارشی', 'چاپ افست حرفه‌ای', 'کارتن‌سازی مشهد', 'طراحی زینک اختصاصی', 'طراحی و چاپ لیبل صنعتی', 'شهرک صنعتی کلات'],
+                'targetAudience' => 'تولیدکنندگان کالا، کارخانجات صنعتی، سازمان‌ها و صاحبان کسب‌وکارها جهت صفر تا صد بسته‌بندی، کارتن و چاپ کاتالوگ',
+                'logoUrl' => '',
+                'contactPerson' => 'مهندس احسان آهنگر',
+                'taxId' => 'IR-98153108763',
+                'registrationNumber' => '584920',
+                'telegramChannel' => '@ashkghalam',
+                'instagramHandle' => '@ashkghalam',
+                'catalogPdfUrl' => '',
+                'productImages' => [],
+                'aboutUsSummary' => 'اشک قلم: همکار قابل‌اعتماد شما در بسته‌بندی و چاپ حرفه‌ای. از صفر تا صد خدمات چاپ و کارتن‌سازی، جعبه‌سازی سفارشی، چاپ افست کاتالوگ و بروشور، طراحی زینک اختصاصی و لیبل‌های صنعتی در مشهد، شهرک صنعتی کلات.',
+                'updatedAt' => date('c')
+            ],
+            'mediaPlatforms' => $defaultPlatforms,
+            'campaigns' => [],
+            'publicationJobs' => [],
+            'publicationReports' => [],
+            'uploadedAssets' => [],
+            'smsLogs' => [],
+            'emailLogs' => [],
+            'telemetryLogs' => [],
+            'autonomousLogs' => [],
+            'domWatcherEvents' => [],
+            'autoPatches' => [],
+            'testHarnessRuns' => [],
+            'testHarnessSteps' => []
+        ];
+        $this->writeDb($cleanDb);
+
+        try {
+            $pdo = $this->getMySQLPdo();
+            if ($pdo) {
+                $pdo->exec("TRUNCATE TABLE campaigns");
+                $pdo->exec("TRUNCATE TABLE publication_jobs");
+                $pdo->exec("TRUNCATE TABLE publication_reports");
+                $pdo->exec("TRUNCATE TABLE sms_logs");
+                $pdo->exec("TRUNCATE TABLE email_logs");
+            }
+        } catch (\Exception $e) {}
+
+        return [
+            'success' => true,
+            'message' => 'کلیه اطلاعات، آگهی‌ها، نوبت‌های کاری و لاگ‌های پیش‌فرض با موفقیت پاکسازی و سیستم به حالت خام (Raw State) درآمد.'
         ];
     }
 

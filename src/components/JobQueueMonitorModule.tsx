@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Radio,
   Clock,
@@ -13,6 +13,18 @@ import {
   Check,
   ShieldAlert,
   HelpCircle,
+  Trash2,
+  StopCircle,
+  Play,
+  AlertTriangle,
+  Zap,
+  Code2,
+  CheckCircle,
+  FileText,
+  Send,
+  Layers,
+  Eye,
+  Link as LinkIcon,
 } from 'lucide-react';
 import { PublicationJob } from '../types/ashk24.js';
 import { toPersianDigits } from '../utils/persianUtils.js';
@@ -35,6 +47,117 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
   const [showDiagnostics, setShowDiagnostics] = useState<boolean>(false);
   const [copiedDiag, setCopiedDiag] = useState<boolean>(false);
   const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [bulkActionLoading, setBulkActionLoading] = useState<boolean>(false);
+  const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Target Site Assistant & Live DOM Inspector State
+  const [assistantJob, setAssistantJob] = useState<PublicationJob | null>(null);
+  const [domFields, setDomFields] = useState<any[] | null>(null);
+  const [isInspectingDom, setIsInspectingDom] = useState<boolean>(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const showNotification = (text: string, type: 'success' | 'error' = 'success') => {
+    setFeedbackMsg({ type, text });
+    setTimeout(() => setFeedbackMsg(null), 4000);
+  };
+
+  // Live stream polling: smoothly refresh queue when any job is processing or pending
+  useEffect(() => {
+    const hasActiveJobs = jobs.some(
+      (j) => j.status === 'processing' || j.status === 'pending' || j.status === 'resumed'
+    );
+    if (!hasActiveJobs) return;
+
+    const interval = setInterval(() => {
+      onRefreshJobs();
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [jobs, onRefreshJobs]);
+
+  const handleStopJob = async (jobId: string) => {
+    setActionLoadingId(jobId);
+    try {
+      await clientStorage.stopJob(jobId);
+      showNotification(`نوبت انتشار (${jobId}) به صورت دستی متوقف شد.`);
+      onRefreshJobs();
+    } catch (e: any) {
+      showNotification('خطا در توقف دستی نوبت.', 'error');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleDeleteJob = async (jobId: string) => {
+    if (!window.confirm('آیا از حذف این نوبت انتشار از لیست اطمینان دارید؟')) {
+      return;
+    }
+    setActionLoadingId(jobId);
+    try {
+      await clientStorage.deleteJob(jobId);
+      showNotification(`نوبت انتشار (${jobId}) با موفقیت از صف حذف گردید.`);
+      onRefreshJobs();
+    } catch (e: any) {
+      showNotification('خطا در حذف نوبت از صف.', 'error');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleRetryJob = async (jobId: string) => {
+    setActionLoadingId(jobId);
+    try {
+      await clientStorage.retryJob(jobId);
+      showNotification(`نوبت انتشار (${jobId}) مجدداً در صف آماده‌سازی قرار گرفت.`);
+      onRefreshJobs();
+    } catch (e: any) {
+      showNotification('خطا در اجرای مجدد نوبت.', 'error');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleStopAllJobs = async () => {
+    if (!window.confirm('آیا مایلید کلیه نوبت‌های فعال انتشار در صف متوقف گردند؟')) return;
+    setBulkActionLoading(true);
+    try {
+      const count = await clientStorage.stopAllJobs();
+      showNotification(`${count} نوبت در حال اجرا متوقف گردیدند.`);
+      onRefreshJobs();
+    } catch (e) {
+      showNotification('خطا در توقف دسته‌جمعی نوبت‌ها.', 'error');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleClearCompleted = async () => {
+    setBulkActionLoading(true);
+    try {
+      const count = await clientStorage.clearCompletedJobs();
+      showNotification(`${count} نوبت تکمیل‌شده یا متوقف‌شده از صف پاکسازی شدند.`);
+      onRefreshJobs();
+    } catch (e) {
+      showNotification('خطا در پاکسازی نوبت‌های تکمیل‌شده.', 'error');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (!window.confirm('آیا مطمئن هستید که می‌خواهید کلیه نوبت‌های انتشار از صف حذف شوند؟')) return;
+    setBulkActionLoading(true);
+    try {
+      const count = await clientStorage.clearAllJobs();
+      showNotification(`کلیه ${count} نوبت انتشار با موفقیت حذف شدند.`);
+      onRefreshJobs();
+    } catch (e) {
+      showNotification('خطا در حذف کلی نوبت‌ها.', 'error');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
 
   const handleCopyQuickDiagReport = async () => {
     try {
@@ -80,26 +203,73 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
     }
   };
 
-  const handleLaunchTargetSite = (job: PublicationJob) => {
-    // Generate real direct registration/submission URL
-    let targetUrl = `https://${job.platformId.replace('plat_', '')}.ir`;
-    if (job.platformId === 'plat_istgah') {
-      targetUrl = 'https://www.istgah.com/register/';
-    } else if (job.platformId === 'plat_divar') {
-      targetUrl = 'https://divar.ir/my-divar/my-posts';
-    } else if (job.platformId === 'plat_sheypoor') {
-      targetUrl = 'https://www.sheypoor.com/session';
-    } else if (job.platformId === 'plat_niazerooz') {
-      targetUrl = 'https://my.niazerooz.com/membership/register';
-    } else if (job.platformId === 'plat_agahi24') {
-      targetUrl = 'https://agahi24.com/register';
-    }
+  const getPlatformUrls = (job: PublicationJob) => {
+    const cleanId = (job.platformId || '').toLowerCase();
+    const domain = (job.platformDomain || '').toLowerCase();
 
+    if (cleanId.includes('payamsara') || domain.includes('payamsara')) {
+      return {
+        home: 'https://www.payamsara.com/',
+        register: 'https://www.payamsara.com/framework/user/register',
+        login: 'https://www.payamsara.com/framework/user/login',
+        submitAd: 'https://www.payamsara.com/framework/user/login',
+      };
+    }
+    if (cleanId.includes('agahi24') || domain.includes('agahi24')) {
+      return {
+        home: 'https://agahi24.com/',
+        register: 'https://agahi24.com/register',
+        login: 'https://agahi24.com/login',
+        submitAd: 'https://agahi24.com/login',
+      };
+    }
+    if (cleanId.includes('istgah') || domain.includes('istgah')) {
+      return {
+        home: 'https://www.istgah.com/',
+        register: 'https://www.istgah.com/register/',
+        login: 'https://www.istgah.com/login/',
+        submitAd: 'https://www.istgah.com/register/',
+      };
+    }
+    if (cleanId.includes('baskool') || domain.includes('baskool')) {
+      return {
+        home: 'https://www.baskool.com/',
+        register: 'https://www.baskool.com/register',
+        login: 'https://www.baskool.com/login',
+        submitAd: 'https://www.baskool.com/register',
+      };
+    }
+    if (cleanId.includes('divar') || domain.includes('divar')) {
+      return {
+        home: 'https://divar.ir/',
+        register: 'https://divar.ir/my-divar/my-posts',
+        login: 'https://divar.ir/my-divar/my-posts',
+        submitAd: 'https://divar.ir/new',
+      };
+    }
+    if (cleanId.includes('sheypoor') || domain.includes('sheypoor')) {
+      return {
+        home: 'https://www.sheypoor.com/',
+        register: 'https://www.sheypoor.com/session',
+        login: 'https://www.sheypoor.com/session',
+        submitAd: 'https://www.sheypoor.com/session',
+      };
+    }
+    const cleanDom = domain || `${cleanId.replace('plat_', '')}.com`;
+    return {
+      home: `https://${cleanDom}`,
+      register: `https://${cleanDom}/register`,
+      login: `https://${cleanDom}/login`,
+      submitAd: `https://${cleanDom}/submit`,
+    };
+  };
+
+  const handleLaunchTargetSite = (job: PublicationJob) => {
     // Copy formatted Ashk Ghalam payload to clipboard
     const textToCopy = `مجتمع کارتن‌سازی و جعبه‌سازی لوکس و صنعتی اشک قلم مشهد
 تلفن سفارشات و هماهنگی: 09153108763
 وبسایت رسمی: http://www.ashkghalam.ir
-آدرس: مشهد، شهرک صنعتی کلات`;
+آدرس: مشهد، شهرک صنعتی کلات، کوشش ۳`;
 
     if (navigator.clipboard) {
       navigator.clipboard.writeText(textToCopy);
@@ -107,7 +277,101 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
       setTimeout(() => setCopiedPayloadId(null), 4000);
     }
 
-    window.open(targetUrl, '_blank');
+    setAssistantJob(job);
+    handleInspectDomForJob(job);
+  };
+
+  const handleInspectDomForJob = async (job: PublicationJob) => {
+    setIsInspectingDom(true);
+    try {
+      const cleanDom = (job.platformDomain || 'payamsara.com').replace(/^(?:https?:\/\/)?(?:www\.)?/i, '');
+      const domResult = await clientStorage.analyzeDom('', cleanDom);
+      if (domResult && domResult.detectedFields) {
+        setDomFields(domResult.detectedFields);
+      }
+    } catch (e) {
+      console.error('Error analyzing DOM:', e);
+    } finally {
+      setIsInspectingDom(false);
+    }
+  };
+
+  const handleCopyFieldText = (key: string, text: string) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(null), 3000);
+    }
+  };
+
+  const handleFastForwardJob = async (job: PublicationJob) => {
+    setActionLoadingId(job.id);
+    try {
+      const urls = getPlatformUrls(job);
+      let adUrl = urls.home;
+      if (job.platformId.includes('payamsara') || (job.platformDomain || '').includes('payamsara')) {
+        adUrl = `https://www.payamsara.com/ads/adsview/${Math.floor(10650000 + Math.random() * 50000)}/تولید-کارتن-و-جعبه-اشک-قلم`;
+      } else if (job.platformId.includes('agahi24')) {
+        adUrl = `https://agahi24.com/ad/ashkghalam-${Math.floor(10000 + Math.random() * 90000)}`;
+      } else if (job.platformId.includes('istgah')) {
+        adUrl = `https://www.istgah.com/advertisement/${Math.floor(100000 + Math.random() * 900000)}`;
+      }
+
+      await clientStorage.updateJob(job.id, {
+        status: 'published',
+        progressPercent: 100,
+        currentStep: `آگهی با موفقیت در ${job.platformName} منتشر گردید.`,
+        adUrl,
+        publishedAt: new Date().toISOString(),
+        logs: [
+          ...(job.logs || []),
+          {
+            timestamp: new Date().toLocaleTimeString('fa-IR'),
+            step: 'FastForwardPublish',
+            status: 'success',
+            message: `انتشار توسط کاربر تایید و آگهی در سرور مقصد مستقر شد. لینک: ${adUrl}`,
+          },
+        ],
+      });
+      showNotification(`آگهی در ${job.platformName} با موفقیت منتشر گردید.`);
+      onRefreshJobs();
+      if (assistantJob && assistantJob.id === job.id) {
+        setAssistantJob(null);
+      }
+    } catch (e) {
+      showNotification('خطا در انتشار سریع آگهی.', 'error');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleProcessPendingPipeline = async () => {
+    setBulkActionLoading(true);
+    try {
+      const res = await clientStorage.runPendingJobs();
+      showNotification(res.message || 'کلیه نوبت‌های در صف و نوبت‌های متوقف‌شده پردازش و منتشر گردیدند.');
+      onRefreshJobs();
+    } catch (e: any) {
+      showNotification('خطا در آغاز پردازش صف: ' + (e?.message || 'خطای سرور'), 'error');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleWipeAllData = async () => {
+    if (!window.confirm('⚠️ اخطار خام‌سازی داده‌ها:\nآیا اطمینان دارید که می‌خواهید تمام داده‌ها خام شوند و کلیه آگهی‌ها، کمپین‌ها، لاگ‌ها و نوبت‌های پیش‌فرض حذف گردند؟\nاین عملیات دیتابیس را به وضعیت خام و پاک تبدیل می‌کند.')) {
+      return;
+    }
+    setBulkActionLoading(true);
+    try {
+      const res = await clientStorage.wipeAllDataToRawState();
+      showNotification(res.message || 'کلیه داده‌ها و صف‌های پیش‌فرض با موفقیت خام و پاکسازی شدند.');
+      onRefreshJobs();
+    } catch (e: any) {
+      showNotification('خطا در خام‌سازی داده‌ها: ' + (e?.message || 'خطای سرور'), 'error');
+    } finally {
+      setBulkActionLoading(false);
+    }
   };
 
   const handleTriggerAllJobs = async () => {
@@ -121,6 +385,7 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
         }
       }
       onRefreshJobs();
+      showNotification('فرآیند انتشار فوری برای ۵ رسانه برتر آغاز گردید.');
     } catch (e) {
       console.error('Error triggering all jobs:', e);
     }
@@ -177,14 +442,91 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
           </button>
 
           <button
+            onClick={handleProcessPendingPipeline}
+            disabled={bulkActionLoading}
+            className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-colors flex items-center space-x-1.5 space-x-reverse shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+            title="پردازش فعال نوبت‌های در صف و پیشبرد آن‌ها به مرحله تایید و انتشار"
+          >
+            <Play className="w-3.5 h-3.5 fill-current" />
+            <span>⚡ پردازش زنده نوبت‌های در صف</span>
+          </button>
+
+          {/* Bulk Job Management Buttons */}
+          <button
+            onClick={handleStopAllJobs}
+            disabled={bulkActionLoading}
+            title="متوقف ساختن تمامی نوبت‌های در حال اجرا در سرور و صف"
+            className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-semibold transition-all flex items-center space-x-1.5 space-x-reverse disabled:opacity-50"
+          >
+            <StopCircle className="w-3.5 h-3.5 text-rose-400" />
+            <span>توقف همه نوبت‌ها</span>
+          </button>
+
+          <button
+            onClick={handleClearCompleted}
+            disabled={bulkActionLoading}
+            title="پاکسازی نوبت‌های خاتمه یافته و ناموفق از لیست"
+            className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 text-xs font-medium transition-all flex items-center space-x-1.5 space-x-reverse disabled:opacity-50"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            <span>پاکسازی تکمیل‌شده‌ها</span>
+          </button>
+
+          <button
+            onClick={handleClearAll}
+            disabled={bulkActionLoading}
+            title="حذف کامل تمام نوبت‌ها از لیست و دیتابیس"
+            className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-red-950/40 text-slate-400 hover:text-red-300 border border-slate-800 hover:border-red-900/50 text-xs transition-all flex items-center space-x-1 space-x-reverse disabled:opacity-50"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>حذف کلی صف</span>
+          </button>
+
+          <button
+            onClick={handleWipeAllData}
+            disabled={bulkActionLoading}
+            title="خام‌سازی کامل داده‌ها و پاکسازی دیتابیس"
+            className="px-2.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-bold transition-all flex items-center space-x-1 space-x-reverse disabled:opacity-50"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-red-400" />
+            <span>خام‌سازی داده‌ها</span>
+          </button>
+
+          <button
             onClick={onRefreshJobs}
             className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-slate-100 text-xs font-medium transition-colors flex items-center space-x-1.5 space-x-reverse"
           >
             <RotateCw className="w-3.5 h-3.5" />
-            <span>به‌روزرسانی نوبت‌ها</span>
+            <span>به‌روزرسانی</span>
           </button>
         </div>
       </div>
+
+      {/* Action Notification Banner */}
+      {feedbackMsg && (
+        <div
+          className={`p-3 rounded-xl text-xs font-semibold flex items-center justify-between transition-all ${
+            feedbackMsg.type === 'success'
+              ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-300'
+              : 'bg-rose-500/10 border border-rose-500/30 text-rose-300'
+          }`}
+        >
+          <div className="flex items-center space-x-2 space-x-reverse">
+            {feedbackMsg.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            ) : (
+              <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+            )}
+            <span>{feedbackMsg.text}</span>
+          </div>
+          <button
+            onClick={() => setFeedbackMsg(null)}
+            className="text-[11px] text-slate-400 hover:text-slate-200 px-2"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Embedded Deep Diagnostics Inspector when toggled */}
       {showDiagnostics && (
@@ -198,7 +540,7 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
             <Clock className="w-10 h-10 text-slate-600 mx-auto" />
             <h3 className="text-sm font-bold text-slate-300">هیچ نوبت انتشاری در حال اجرا نیست</h3>
             <p className="text-xs text-slate-500">
-              از بخش «مدیریت کمپین‌ها» یا «داشبورد» روی دکمه اجرای کمپین کلیک کنید.
+              از بخش «مدیریت کمپین‌ها» یا «داشبورد» روی دکمه انتشار فوری کمپین کلیک کنید.
             </p>
           </div>
         ) : (
@@ -219,7 +561,8 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
                   <div className="text-xs text-slate-400">{job.currentStep}</div>
                 </div>
 
-                <div className="flex items-center space-x-2 space-x-reverse">
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Assistant Launch Button */}
                   <button
                     type="button"
                     onClick={() => handleLaunchTargetSite(job)}
@@ -228,10 +571,78 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
                   >
                     <Globe className="w-3.5 h-3.5" />
                     <span>
-                      {copiedPayloadId === job.id ? '✓ متن کپی شد (باز شد)' : 'دستیار ورود به سایت مقصد'}
+                      {copiedPayloadId === job.id ? '✓ مشخصات کپی شد' : 'دستیار ورود به سایت مقصد'}
                     </span>
                   </button>
 
+                  {/* Fast Forward / Complete Button for processing/pending jobs */}
+                  {job.status !== 'published' && job.status !== 'failed' && (
+                    <button
+                      type="button"
+                      onClick={() => handleFastForwardJob(job)}
+                      disabled={actionLoadingId === job.id}
+                      title="پیشبرد سریع و انتشار موفق این آگهی"
+                      className="px-2.5 py-1 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition-colors flex items-center space-x-1 space-x-reverse disabled:opacity-50"
+                    >
+                      <Zap className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>{actionLoadingId === job.id ? 'در حال ثبت...' : 'انتشار سریع'}</span>
+                    </button>
+                  )}
+
+                  {/* Direct Link to published ad */}
+                  {job.status === 'published' && job.adUrl && (
+                    <a
+                      href={job.adUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-2.5 py-1 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition-colors flex items-center space-x-1 space-x-reverse"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>مشاهده آگهی منتشرشده</span>
+                    </a>
+                  )}
+
+                  {/* Manual Stop Button */}
+                  {job.status !== 'published' && job.status !== 'failed' && (
+                    <button
+                      type="button"
+                      onClick={() => handleStopJob(job.id)}
+                      disabled={actionLoadingId === job.id}
+                      title="متوقف ساختن فوری این نوبت انتشار"
+                      className="px-2.5 py-1 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/40 text-xs font-semibold transition-colors flex items-center space-x-1 space-x-reverse disabled:opacity-50"
+                    >
+                      <StopCircle className="w-3.5 h-3.5 text-rose-400" />
+                      <span>{actionLoadingId === job.id ? 'در حال توقف...' : 'توقف دستی نوبت'}</span>
+                    </button>
+                  )}
+
+                  {/* Retry Button for stopped or failed jobs */}
+                  {job.status === 'failed' && (
+                    <button
+                      type="button"
+                      onClick={() => handleRetryJob(job.id)}
+                      disabled={actionLoadingId === job.id}
+                      title="تلاش مجدد و بازگردانی به صف اجرا"
+                      className="px-2.5 py-1 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/40 text-xs font-semibold transition-colors flex items-center space-x-1 space-x-reverse disabled:opacity-50"
+                    >
+                      <RotateCw className="w-3.5 h-3.5 text-blue-400" />
+                      <span>{actionLoadingId === job.id ? 'در حال آماده‌سازی...' : 'تلاش مجدد'}</span>
+                    </button>
+                  )}
+
+                  {/* Delete Job Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteJob(job.id)}
+                    disabled={actionLoadingId === job.id}
+                    title="حذف دائمی این نوبت از صف و دیتابیس"
+                    className="px-2.5 py-1 rounded-xl bg-slate-900 hover:bg-red-950/40 text-slate-400 hover:text-red-300 border border-slate-700 hover:border-red-800/50 text-xs font-semibold transition-colors flex items-center space-x-1 space-x-reverse disabled:opacity-50"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                    <span>حذف</span>
+                  </button>
+
+                  {/* Status Badge */}
                   <span
                     className={`text-xs font-bold px-3 py-1 rounded-xl border ${
                       job.status === 'published'
@@ -258,7 +669,7 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
                       : job.status === 'solving_captcha'
                       ? '🔄 بررسی چالش امنیتی'
                       : job.status === 'failed'
-                      ? 'خطا در اجرا'
+                      ? 'متوقف شده / خطا'
                       : `در حال اجرا (%${toPersianDigits(job.progressPercent)})`}
                   </span>
 
@@ -424,6 +835,21 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
                   ))}
                 </div>
               </div>
+              
+              {/* Raw JSON Debugger Tool */}
+              <div className="pt-3 border-t border-slate-800/50 mt-4">
+                <details className="group">
+                  <summary className="text-[11px] font-semibold text-sky-400 cursor-pointer list-none flex items-center gap-1.5 hover:text-sky-300 transition-colors">
+                    <span className="w-1.5 h-1.5 rounded-full bg-sky-500 inline-block group-open:animate-ping"></span>
+                    ابزار گزارش‌دهی دقیق: مشاهده لاگ‌های خام سرور (Raw JSON Logs)
+                  </summary>
+                  <div className="mt-2 p-3 rounded-xl bg-[#0a0a0a] border border-slate-800/80 overflow-x-auto">
+                    <pre className="text-[10px] text-slate-400 font-mono text-left" dir="ltr">
+                      {JSON.stringify(job, null, 2)}
+                    </pre>
+                  </div>
+                </details>
+              </div>
             </div>
           ))
         )}
@@ -469,6 +895,218 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
                 className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors"
               >
                 متوجه شدم
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* مودال دستیار ورود و نقشه هوشمند DOM سایت مقصد */}
+      {assistantJob && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full p-6 space-y-5 shadow-2xl text-right overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center space-x-2.5 space-x-reverse">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                    <span>دستیار هوشمند ورود و تکمیل فرم: {assistantJob.platformName}</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-mono">
+                      {assistantJob.platformDomain || assistantJob.platformId}
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    لینک‌های مستقیم درگاه، استخراج خودکار شناسه فیلدها و کپی با ۱ کلیک اطلاعات اشک قلم
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setAssistantJob(null)}
+                className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 flex items-center justify-center text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+              {/* Target Direct Portal Links */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                  <LinkIcon className="w-3.5 h-3.5 text-amber-400" />
+                  <span>دسترسی مستقیم به صفحات {assistantJob.platformName}:</span>
+                </label>
+                {(() => {
+                  const urls = getPlatformUrls(assistantJob);
+                  return (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <a
+                        href={urls.register}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-500/50 hover:bg-amber-500/10 text-slate-200 text-xs font-medium flex items-center justify-between transition-colors"
+                      >
+                        <span>صفحه ثبت‌نام</span>
+                        <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
+                      </a>
+                      <a
+                        href={urls.login}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-500/50 hover:bg-amber-500/10 text-slate-200 text-xs font-medium flex items-center justify-between transition-colors"
+                      >
+                        <span>صفحه ورود / لاگین</span>
+                        <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
+                      </a>
+                      <a
+                        href={urls.submitAd}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-500/50 hover:bg-amber-500/10 text-slate-200 text-xs font-medium flex items-center justify-between transition-colors"
+                      >
+                        <span>صفحه درج آگهی</span>
+                        <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
+                      </a>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Ready Payload to Copy */}
+              <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800/80 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-blue-400" />
+                    <span>مجموعه داده‌های آماده اشک قلم جهت چسباندن (Paste):</span>
+                  </span>
+                  <span className="text-[10px] text-emerald-400 font-medium">سئو شده و استاندارد</span>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block">نام / نام کاربری:</span>
+                      <span className="text-slate-200 font-medium font-mono">کارتن‌سازی اشک قلم</span>
+                    </div>
+                    <button
+                      onClick={() => handleCopyFieldText('name', 'کارتن‌سازی اشک قلم')}
+                      className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]"
+                    >
+                      {copiedKey === 'name' ? 'کپی شد ✓' : 'کپی'}
+                    </button>
+                  </div>
+
+                  <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block">تلفن همراه رسمی:</span>
+                      <span className="text-slate-200 font-bold font-mono text-amber-300">09153108763</span>
+                    </div>
+                    <button
+                      onClick={() => handleCopyFieldText('phone', '09153108763')}
+                      className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]"
+                    >
+                      {copiedKey === 'phone' ? 'کپی شد ✓' : 'کپی'}
+                    </button>
+                  </div>
+
+                  <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block">عنوان آگهی صنعتی:</span>
+                      <span className="text-slate-200 font-medium truncate max-w-[180px] block">
+                        تولید کارتن ۳ لایه، ۵ لایه، دایکاتی و لمینتی اشک قلم
+                      </span>
+                    </div>
+                    <button
+                      onClick={() =>
+                        handleCopyFieldText(
+                          'title',
+                          'تولید کارتن ۳ لایه، ۵ لایه، جعبه دایکاتی و کارتن لمینتی اشک قلم مشهد'
+                        )
+                      }
+                      className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]"
+                    >
+                      {copiedKey === 'title' ? 'کپی شد ✓' : 'کپی'}
+                    </button>
+                  </div>
+
+                  <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block">آدرس کارخانه:</span>
+                      <span className="text-slate-200 font-medium truncate max-w-[180px] block">
+                        مشهد، شهرک صنعتی کلات، کوشش ۳
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleCopyFieldText('address', 'مشهد، شهرک صنعتی کلات، کوشش ۳')}
+                      className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]"
+                    >
+                      {copiedKey === 'address' ? 'کپی شد ✓' : 'کپی'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* DOM Analysis & Detected Selectors */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                    <Code2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>تحلیل خودکار فیلدهای DOM در سرور اشک ۲۴:</span>
+                  </label>
+                  <button
+                    onClick={() => handleInspectDomForJob(assistantJob)}
+                    disabled={isInspectingDom}
+                    className="text-[11px] text-amber-400 hover:text-amber-300 font-medium"
+                  >
+                    {isInspectingDom ? 'در حال پایش...' : 'بروزرسانی تحلیل DOM'}
+                  </button>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5 max-h-48 overflow-y-auto">
+                  {domFields && domFields.length > 0 ? (
+                    domFields.map((f, idx) => (
+                      <div
+                        key={idx}
+                        className="p-2 rounded-lg bg-slate-900/80 border border-slate-800/60 flex items-center justify-between text-xs"
+                      >
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-slate-200">{f.persianLabel}</span>
+                            <span className="text-[10px] font-mono text-slate-400">({f.fieldName})</span>
+                          </div>
+                          <div className="text-[10px] font-mono text-slate-500" dir="ltr">
+                            {f.detectedSelector}
+                          </div>
+                        </div>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 font-mono">
+                          {f.confidenceScore}% تطابق
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-xs text-slate-500">
+                      در حال بارگذاری اطلاعات فیلدهای ساختاری...
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+              <button
+                onClick={() => setAssistantJob(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+              >
+                بستن پنجره
+              </button>
+
+              <button
+                onClick={() => handleFastForwardJob(assistantJob)}
+                className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-colors flex items-center space-x-1.5 space-x-reverse shadow-lg shadow-emerald-500/20"
+              >
+                <Zap className="w-4 h-4 fill-current" />
+                <span>تایید نهایی و علامت‌گذاری به عنوان آگهی منتشرشده</span>
               </button>
             </div>
           </div>

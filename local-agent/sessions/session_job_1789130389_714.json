@@ -1,0 +1,109 @@
+{
+  "jobId": "job_1789130389_714",
+  "savedAt": "2026-09-11T12:40:05.223Z",
+  "timestamp": "2026-09-11T12:40:05.213Z",
+  "currentUrl": "https://divar.ir/new",
+  "currentStep": "چالش امنیتی آرکپچا شناسایی شد. نشست مرورگر ذخیره و دسترسی زنده به مرورگر فعال گردید.",
+  "platformId": "plat_divar",
+  "challengeType": "CAPTCHA_CHALLENGE",
+  "workflowStepIndex": null,
+  "storageState": {
+    "cookies": [
+      {
+        "name": "did",
+        "value": "3cf23eb8-0844-4734-a5bd-71a2359e08d3",
+        "domain": ".divar.ir",
+        "path": "/",
+        "expires": 1823690397.603784,
+        "httpOnly": false,
+        "secure": false,
+        "sameSite": "Lax"
+      },
+      {
+        "name": "cdid",
+        "value": "064a2848-cefe-49b2-87e9-ebb81e37c277",
+        "domain": ".divar.ir",
+        "path": "/",
+        "expires": 1823690397.604126,
+        "httpOnly": false,
+        "secure": false,
+        "sameSite": "Lax"
+      },
+      {
+        "name": "ff",
+        "value": "%7B%22f%22%3A%7B%22device_fp_enable%22%3Atrue%2C%22enable-places-selector-online-search-web%22%3Atrue%2C%22chat_message_disabled%22%3Atrue%2C%22web_sentry_sample_rate%22%3A0.2%2C%22web_sentry_traces_sample_rate%22%3A0.01%2C%22is_web_proactive_refresh_enabled%22%3Atrue%2C%22post-stats-batch-event-web-max-batch-size%22%3A%2220%22%2C%22post-stats-batch-event-web-flush-interval-sec%22%3A%2220%22%2C%22divar_default_call_center%22%3A%22neda%22%2C%22web_client_exporter_page_load_sample_rate%22%3A0.5%2C%22web_app_error_enabled%22%3Atrue%7D%2C%22e%22%3A1789133997488%2C%22r%22%3A1789216797488%7D",
+        "domain": ".divar.ir",
+        "path": "/",
+        "expires": 1789216797.604179,
+        "httpOnly": false,
+        "secure": false,
+        "sameSite": "Lax"
+      },
+      {
+        "name": "csid",
+        "value": "",
+        "domain": ".divar.ir",
+        "path": "/",
+        "expires": 1823690398.908955,
+        "httpOnly": false,
+        "secure": false,
+        "sameSite": "Lax"
+      },
+      {
+        "name": "theme",
+        "value": "light",
+        "domain": ".divar.ir",
+        "path": "/",
+        "expires": 1823690399.050961,
+        "httpOnly": false,
+        "secure": false,
+        "sameSite": "Lax"
+      },
+      {
+        "name": "resolution_width",
+        "value": "1280",
+        "domain": ".divar.ir",
+        "path": "/",
+        "expires": 1823690399.174368,
+        "httpOnly": false,
+        "secure": false,
+        "sameSite": "Lax"
+      }
+    ],
+    "origins": [
+      {
+        "origin": "https://divar.ir",
+        "localStorage": [
+          {
+            "name": "search-history-v2",
+            "value": "{\"records\":[]}"
+          },
+          {
+            "name": "event_queue",
+            "value": "[{\"action\":\"login\",\"action_login\":true,\"source_view\":\"submit\",\"status\":\"activated\",\"created_at\":1789130399080,\"traffic_data\":{\"source\":\"\",\"medium\":\"\",\"campaign\":\"\",\"term\":\"\",\"content\":\"\",\"referrer\":\"\"}}]"
+          },
+          {
+            "name": "my-viewed-posts",
+            "value": "[]"
+          },
+          {
+            "name": "is-store-reset",
+            "value": "true"
+          }
+        ]
+      }
+    ]
+  },
+  "metadata": {
+    "currentUrl": "https://divar.ir/new",
+    "currentStep": "چالش امنیتی آرکپچا شناسایی شد. نشست مرورگر ذخیره و دسترسی زنده به مرورگر فعال گردید.",
+    "challengeType": "CAPTCHA_CHALLENGE",
+    "platformId": "plat_divar",
+    "contactPhone": "09153108763",
+    "timestamp": "2026-09-11T12:40:05.213Z",
+    "savedAt": "2026-09-11T12:40:05.223Z",
+    "cookieCount": 6,
+    "originCount": 1,
+    "resume_supported": true
+  }
+}

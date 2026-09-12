@@ -1,7 +1,22 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Image as ImageIcon, X, Check, Loader2, Link as LinkIcon, HardDrive, FileText, Trash2 } from 'lucide-react';
+import {
+  Upload,
+  Image as ImageIcon,
+  X,
+  Check,
+  Loader2,
+  Link as LinkIcon,
+  HardDrive,
+  FileText,
+  Trash2,
+  Sparkles,
+  FolderOpen,
+  Eye,
+} from 'lucide-react';
 import { UploadedFileAsset } from '../types/ashk24.js';
 import { clientStorage } from '../services/clientStorageService.js';
+import { ImageUploadVaultModal } from './ImageUploadVaultModal.js';
+import { ImageAnalysisModal } from './ImageAnalysisModal.js';
 
 interface ImageUploaderProps {
   label?: string;
@@ -11,6 +26,9 @@ interface ImageUploaderProps {
   onUploadSuccess: (urls: string[], assets: UploadedFileAsset[]) => void;
   onRemoveUrl?: (url: string) => void;
   compact?: boolean;
+  adText?: string;
+  productName?: string;
+  keywords?: string[];
 }
 
 export const ImageUploader: React.FC<ImageUploaderProps> = ({
@@ -21,12 +39,19 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   onUploadSuccess,
   onRemoveUrl,
   compact = false,
+  adText = '',
+  productName = '',
+  keywords = [],
 }) => {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [dragActive, setDragActive] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
+
+  // Vault & AI Analysis Modals
+  const [showVaultModal, setShowVaultModal] = useState<boolean>(false);
+  const [analyzingImageUrl, setAnalyzingImageUrl] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,7 +61,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       return asset;
     } catch (err: any) {
       console.error('File upload failed on host:', err);
-      setErrorMsg('خطا در بارگذاری فایل در هاست سی‌پنل: ' + (err.message || 'عدم دسترسی به سرور'));
+      setErrorMsg('خطا در بارگذاری فایل در هاست: ' + (err.message || 'عدم دسترسی به سرور'));
       return null;
     }
   };
@@ -101,10 +126,25 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   };
 
   const copyToClipboard = (url: string) => {
-    const fullUrl = window.location.origin + url;
+    const fullUrl = url.startsWith('http') || url.startsWith('blob:') ? url : window.location.origin + url;
     navigator.clipboard.writeText(fullUrl);
     setCopiedUrl(url);
     setTimeout(() => setCopiedUrl(null), 2000);
+  };
+
+  const handleSelectFromVault = (selectedUrl: string) => {
+    onUploadSuccess([selectedUrl], [
+      {
+        id: `vault_${Date.now()}`,
+        fileName: selectedUrl.split('/').pop() || 'selected.png',
+        originalName: selectedUrl.split('/').pop() || 'selected.png',
+        url: selectedUrl,
+        mimeType: 'image/png',
+        sizeBytes: 10240,
+        category: 'ad_image',
+        uploadedAt: new Date().toISOString(),
+      },
+    ]);
   };
 
   return (
@@ -115,7 +155,16 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             <HardDrive className="w-4 h-4 text-amber-400" />
             <span>{label}</span>
           </label>
-          <span className="text-[11px] text-amber-400/80 font-mono">ذخیره‌سازی مستقیم روی هاست</span>
+          <div className="flex items-center space-x-2 space-x-reverse">
+            <button
+              type="button"
+              onClick={() => setShowVaultModal(true)}
+              className="text-[11px] px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold transition-all flex items-center space-x-1 space-x-reverse"
+            >
+              <FolderOpen className="w-3.5 h-3.5 ml-1" />
+              <span>انتخاب از مخزن تصاویر هاست</span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -167,10 +216,10 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             </div>
             <div>
               <p className="font-semibold text-slate-200">
-                جهت انتخاب و آپلود فایل کلیک کنید یا فایل را اینجا رها سازید
+                جهت آپلود عکس یا فایل کلیک کنید یا فایل را اینجا رها سازید
               </p>
               <p className="text-[11px] text-slate-400 mt-0.5">
-                پشتیبانی از فرمت‌های تصویری (PNG, JPG, WEBP, SVG) و PDF - ذخیره امن در پوشه `/uploads` هاست
+                پشتیبانی از PNG، JPG، WEBP، SVG و PDF - ذخیره خودکار در مخزن دائمی `/uploads` هاست
               </p>
             </div>
           </div>
@@ -188,7 +237,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       {currentUrls.length > 0 && (
         <div className="space-y-2">
           <div className="text-[11px] text-slate-400 font-semibold flex items-center justify-between">
-            <span>فایل‌های قرار گرفته در هاست ({currentUrls.length} مورد):</span>
+            <span>عکس‌های پیوست شده به آگهی ({currentUrls.length} تصویر):</span>
+            <span className="text-emerald-400 text-[10px]">آماده انتشار در پلتفرم‌ها</span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
@@ -206,54 +256,99 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                   ) : (
                     <img
                       src={url}
-                      alt={`تصویر هاست ${idx + 1}`}
+                      alt={`تصویر آگهی ${idx + 1}`}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       onError={(e) => {
-                        // Fallback if image fails
                         (e.target as HTMLImageElement).src =
-                          'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400';
+                          'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800';
                       }}
                     />
                   )}
 
                   {/* Actions overlay */}
-                  <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2 space-x-reverse">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        copyToClipboard(url);
-                      }}
-                      title="کپی لینک مستقیم هاست"
-                      className="p-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors"
-                    >
-                      {copiedUrl === url ? <Check className="w-3.5 h-3.5" /> : <LinkIcon className="w-3.5 h-3.5" />}
-                    </button>
-
-                    {onRemoveUrl && (
+                  <div className="absolute inset-0 bg-slate-950/75 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-1.5 space-y-1.5">
+                    {!url.endsWith('.pdf') && (
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onRemoveUrl(url);
+                          setAnalyzingImageUrl(url);
                         }}
-                        title="حذف از لیست"
-                        className="p-1.5 rounded-lg bg-red-500/80 hover:bg-red-500 text-white transition-colors"
+                        className="px-2 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-[10px] w-full flex items-center justify-center space-x-1 space-x-reverse shadow-md"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Sparkles className="w-3 h-3 ml-0.5" />
+                        <span>تحلیل هوشمند AI</span>
                       </button>
                     )}
+
+                    <div className="flex items-center space-x-1.5 space-x-reverse">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          copyToClipboard(url);
+                        }}
+                        title="کپی لینک عکس"
+                        className="p-1 rounded-md bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors"
+                      >
+                        {copiedUrl === url ? <Check className="w-3 h-3" /> : <LinkIcon className="w-3 h-3" />}
+                      </button>
+
+                      {onRemoveUrl && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemoveUrl(url);
+                          }}
+                          title="حذف از آگهی"
+                          className="p-1 rounded-md bg-red-500/80 hover:bg-red-500 text-white transition-colors"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
                 <div className="mt-1.5 flex items-center justify-between text-[10px] text-slate-400 font-mono">
-                  <span className="truncate max-w-[120px]">{url.split('/').pop()}</span>
-                  {copiedUrl === url && <span className="text-emerald-400 text-[9px] font-bold">کپی شد!</span>}
+                  <span className="truncate max-w-[100px]">{url.split('/').pop()}</span>
+                  <button
+                    type="button"
+                    onClick={() => setAnalyzingImageUrl(url)}
+                    className="text-amber-400 hover:text-amber-300 font-sans text-[9px] flex items-center space-x-0.5 space-x-reverse font-bold"
+                  >
+                    <span>تحلیل AI</span>
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         </div>
+      )}
+
+      {/* Vault Selection Modal */}
+      {showVaultModal && (
+        <ImageUploadVaultModal
+          isOpen={showVaultModal}
+          onClose={() => setShowVaultModal(false)}
+          onSelectUrl={(url) => {
+            handleSelectFromVault(url);
+            setShowVaultModal(false);
+          }}
+        />
+      )}
+
+      {/* AI Image & Text Analysis Modal */}
+      {analyzingImageUrl && (
+        <ImageAnalysisModal
+          isOpen={!!analyzingImageUrl}
+          onClose={() => setAnalyzingImageUrl(null)}
+          imageUrl={analyzingImageUrl}
+          adText={adText}
+          productName={productName}
+          keywords={keywords}
+        />
       )}
     </div>
   );

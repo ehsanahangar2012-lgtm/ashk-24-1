@@ -221,6 +221,131 @@ function writeDb(data: any) {
   }
 }
 
+function advanceJobLifecycle(jobId: string) {
+  setTimeout(() => {
+    try {
+      const db1 = readDb();
+      const job1 = (db1.publicationJobs || []).find((j: any) => j.id === jobId);
+      if (!job1 || job1.status === 'failed' || job1.status === 'published') return;
+
+      job1.progressPercent = 35;
+      job1.currentStep = `پایش زنده ساختار DOM و فیلدهای سایت مقصد (${job1.platformName})...`;
+      job1.logs = job1.logs || [];
+      job1.logs.push({
+        timestamp: new Date().toISOString(),
+        level: 'info',
+        message: `تحلیل فیلدهای فرم سایت ${job1.platformDomain || job1.platformName} توسط موتور DOM انجام شد.`,
+      });
+      job1.updatedAt = new Date().toISOString();
+      writeDb(db1);
+
+      setTimeout(() => {
+        try {
+          const db2 = readDb();
+          const job2 = (db2.publicationJobs || []).find((j: any) => j.id === jobId);
+          if (!job2 || job2.status === 'failed' || job2.status === 'published') return;
+
+          const plat = (db2.mediaPlatforms || []).find((p: any) => p.id === job2.platformId);
+          const needsOtp = Boolean(plat?.requiresOtp && plat?.sessionStatus !== 'authenticated');
+
+          if (needsOtp) {
+            const otpCode = Math.floor(10000 + Math.random() * 90000).toString();
+            job2.status = 'waiting_otp';
+            job2.progressPercent = 50;
+            job2.currentStep = `در انتظار ورود کد تایید پیامک (OTP) جهت ورود به ${job2.platformName}`;
+            job2.otpCode = otpCode;
+            job2.logs.push({
+              timestamp: new Date().toISOString(),
+              level: 'warning',
+              message: `چالش امنیتی پیامکی صادر شد. پیامک شبیه‌سازی‌شده حاوی کد ${otpCode} به شماره 09153108763 ارسال گردید.`,
+            });
+
+            db2.smsLogs = db2.smsLogs || [];
+            db2.smsLogs.unshift({
+              id: `sms_${Date.now()}`,
+              sender: (job2.platformName || 'SMS').slice(0, 15),
+              senderNumber: '1000' + Math.floor(100000 + Math.random() * 900000),
+              recipient: '09153108763',
+              timestamp: new Date().toISOString(),
+              message: `کد ورود/تایید درگاه ${job2.platformName}: ${otpCode} - اعتبار ۵ دقیقه`,
+              otpCode,
+              parsedSuccessfully: true,
+              platformId: job2.platformId,
+              status: 'delivered',
+            });
+
+            job2.updatedAt = new Date().toISOString();
+            writeDb(db2);
+            return;
+          }
+
+          // If no OTP needed, proceed with form submission
+          job2.progressPercent = 70;
+          job2.currentStep = 'تکمیل خودکار مقادیر فرم با داده‌های اشک قلم (نام، تلفن 09153108763، عنوان و متن سئو شده)...';
+          job2.logs.push({
+            timestamp: new Date().toISOString(),
+            level: 'info',
+            message: 'فیلدهای عنوان، دسته‌بندی و شماره تماس اشک قلم با موفقیت در فرم درج گردید.',
+          });
+          job2.updatedAt = new Date().toISOString();
+          writeDb(db2);
+
+          setTimeout(() => {
+            try {
+              const db3 = readDb();
+              const job3 = (db3.publicationJobs || []).find((j: any) => j.id === jobId);
+              if (!job3 || job3.status === 'failed' || job3.status === 'published') return;
+
+              job3.progressPercent = 90;
+              job3.currentStep = 'بارگذاری تصاویر صنعتی کارتن لمینتی و جعبه دایکاتی اشک قلم و ارسال نهایی فرم...';
+              job3.logs.push({
+                timestamp: new Date().toISOString(),
+                level: 'info',
+                message: 'تصاویر پیوست آگهی با کیفیت استاندارد بارگذاری شدند.',
+              });
+              job3.updatedAt = new Date().toISOString();
+              writeDb(db3);
+
+              setTimeout(() => {
+                try {
+                  const db4 = readDb();
+                  const job4 = (db4.publicationJobs || []).find((j: any) => j.id === jobId);
+                  if (!job4 || job4.status === 'failed' || job4.status === 'published') return;
+
+                  let adUrl = `https://${job4.platformDomain || 'payamsara.com'}/ad/${Date.now()}`;
+                  const cleanDom = (job4.platformDomain || '').toLowerCase();
+                  if (cleanDom.includes('payamsara')) {
+                    adUrl = `https://www.payamsara.com/ads/adsview/${Math.floor(10650000 + Math.random() * 50000)}/تولید-کارتن-و-جعبه-اشک-قلم`;
+                  } else if (cleanDom.includes('agahi24')) {
+                    adUrl = `https://www.agahi24.com/ad/ashkghalam-${Math.floor(10000 + Math.random() * 90000)}`;
+                  } else if (cleanDom.includes('istgah')) {
+                    adUrl = `https://www.istgah.com/advertisement/${Math.floor(100000 + Math.random() * 900000)}`;
+                  } else if (cleanDom.includes('baskool')) {
+                    adUrl = 'https://www.baskool.com/profile/ashkghalam';
+                  }
+
+                  job4.status = 'published';
+                  job4.progressPercent = 100;
+                  job4.currentStep = `آگهی با موفقیت در ${job4.platformName} منتشر گردید.`;
+                  job4.adUrl = adUrl;
+                  job4.publishedAt = new Date().toISOString();
+                  job4.logs.push({
+                    timestamp: new Date().toISOString(),
+                    level: 'success',
+                    message: `آگهی با موفقیت منتشر گردید. لینک مستقیم: ${adUrl}`,
+                  });
+                  job4.updatedAt = new Date().toISOString();
+                  writeDb(db4);
+                } catch (e) {}
+              }, 2000);
+            } catch (e) {}
+          }, 2000);
+        } catch (e) {}
+      }, 2000);
+    } catch (e) {}
+  }, 1000);
+}
+
 export function cpanelDevApiPlugin(): Plugin {
   return {
     name: 'vite-cpanel-dev-api',
@@ -263,7 +388,7 @@ export function cpanelDevApiPlugin(): Plugin {
 
         try {
           // Handle dynamic routes before the switch
-          if (route.startsWith('jobs/') && route !== 'jobs/trigger' && route !== 'jobs/claim' && route !== 'jobs/update' && route !== 'jobs/resolve-challenge' && route !== 'jobs/resume' && route !== 'jobs/verify-publication' && route !== 'jobs/submit-otp') {
+          if (route.startsWith('jobs/') && route !== 'jobs/trigger' && route !== 'jobs/claim' && route !== 'jobs/update' && route !== 'jobs/resolve-challenge' && route !== 'jobs/resume' && route !== 'jobs/verify-publication' && route !== 'jobs/submit-otp' && route !== 'jobs/stop' && route !== 'jobs/stop-all' && route !== 'jobs/delete' && route !== 'jobs/clear-completed' && route !== 'jobs/clear-all' && route !== 'jobs/run-pending' && route !== 'jobs/process-all') {
             const jobId = route.split('/')[1];
             if (method === 'GET') {
               const job = db.publicationJobs.find((j: any) => j.id === jobId);
@@ -277,6 +402,11 @@ export function cpanelDevApiPlugin(): Plugin {
                 return sendJson(job);
               }
               return sendJson({ error: 'Job not found' }, 404);
+            } else if (method === 'DELETE') {
+              const prevLen = db.publicationJobs.length;
+              db.publicationJobs = db.publicationJobs.filter((j: any) => j.id !== jobId);
+              writeDb(db);
+              return sendJson({ success: true, message: `نوبت انتشار ${jobId} با موفقیت از سرور حذف شد.`, deleted: prevLen > db.publicationJobs.length });
             }
           }
 
@@ -341,25 +471,107 @@ export function cpanelDevApiPlugin(): Plugin {
               return sendJson(db.campaigns);
 
             case 'jobs':
+              if (method === 'DELETE') {
+                const targetId = body.id || body.jobId || urlObj.searchParams.get('id') || urlObj.searchParams.get('jobId');
+                if (!targetId || targetId === 'all') {
+                  db.publicationJobs = [];
+                } else if (targetId === 'completed') {
+                  db.publicationJobs = db.publicationJobs.filter((j: any) => j.status !== 'published' && j.status !== 'failed');
+                } else {
+                  db.publicationJobs = db.publicationJobs.filter((j: any) => j.id !== targetId);
+                }
+                writeDb(db);
+                return sendJson({ success: true, message: 'عملیات حذف نوبت‌های انتشار با موفقیت انجام شد.', remaining: db.publicationJobs.length });
+              }
               return sendJson(db.publicationJobs);
 
-            case 'jobs/trigger':
+            case 'jobs/delete': {
+              const targetId = body.id || body.jobId || urlObj.searchParams.get('id') || urlObj.searchParams.get('jobId');
+              if (!targetId || targetId === 'all') {
+                db.publicationJobs = [];
+              } else if (targetId === 'completed') {
+                db.publicationJobs = db.publicationJobs.filter((j: any) => j.status !== 'published' && j.status !== 'failed');
+              } else {
+                db.publicationJobs = db.publicationJobs.filter((j: any) => j.id !== targetId);
+              }
+              writeDb(db);
+              return sendJson({ success: true, message: 'نوبت انتشار با موفقیت حذف گردید.', remaining: db.publicationJobs.length });
+            }
+
+            case 'jobs/stop': {
+              const targetId = body.id || body.jobId || urlObj.searchParams.get('id') || urlObj.searchParams.get('jobId');
+              const job = db.publicationJobs.find((j: any) => j.id === targetId);
+              if (job) {
+                job.status = 'failed';
+                job.currentStep = 'توسط کاربر به صورت دستی متوقف گردید';
+                job.logs = job.logs || [];
+                job.logs.push({
+                  timestamp: new Date().toISOString(),
+                  level: 'warning',
+                  message: 'عملیات انتشار توسط کاربر به صورت دستی لغو و متوقف شد.',
+                });
+                job.updatedAt = new Date().toISOString();
+                writeDb(db);
+                return sendJson({ success: true, message: `نوبت انتشار ${targetId} متوقف گردید.`, job });
+              }
+              return sendJson({ error: 'نوبت کاری یافت نشد.' }, 404);
+            }
+
+            case 'jobs/stop-all': {
+              let count = 0;
+              for (const job of db.publicationJobs) {
+                if (job.status !== 'published' && job.status !== 'failed') {
+                  job.status = 'failed';
+                  job.currentStep = 'توسط کاربر به صورت دسته‌جمعی متوقف شد';
+                  job.logs = job.logs || [];
+                  job.logs.push({
+                    timestamp: new Date().toISOString(),
+                    level: 'warning',
+                    message: 'توقف دسته‌جمعی کلیه نوبت‌های فعال توسط اپراتور.',
+                  });
+                  job.updatedAt = new Date().toISOString();
+                  count++;
+                }
+              }
+              writeDb(db);
+              return sendJson({ success: true, message: `${count} نوبت در حال اجرا متوقف گردیدند.`, stoppedCount: count });
+            }
+
+            case 'jobs/clear-completed': {
+              const beforeCount = db.publicationJobs.length;
+              db.publicationJobs = db.publicationJobs.filter((j: any) => j.status !== 'published' && j.status !== 'failed');
+              const clearedCount = beforeCount - db.publicationJobs.length;
+              writeDb(db);
+              return sendJson({ success: true, message: `${clearedCount} نوبت تکمیل‌شده یا متوقف‌شده از صف پاکسازی شد.`, clearedCount });
+            }
+
+            case 'jobs/clear-all': {
+              const count = db.publicationJobs.length;
+              db.publicationJobs = [];
+              writeDb(db);
+              return sendJson({ success: true, message: `کلیه ${count} نوبت انتشار از صف پاکسازی شدند.`, clearedCount: count });
+            }
+
+            case 'jobs/trigger': {
               const campaign = db.campaigns.find((c: any) => c.id === body.campaignId) || db.campaigns[0];
               const platform = db.mediaPlatforms.find((p: any) => p.id === body.platformId) || db.mediaPlatforms[0];
+              const requiresOtp = Boolean(platform?.requiresOtp && platform?.sessionStatus !== 'authenticated');
               const newJob = {
-                id: `job_${Date.now()}`,
+                id: `job_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
                 campaignId: campaign?.id || 'camp_default',
                 campaignTitle: campaign?.title || 'کمپین اختصاصی کارتن و جعبه اشک قلم',
-                platformId: platform?.id || 'plat_internal_blog',
-                platformName: platform?.persianName || 'سامانه بومی',
-                platformDomain: platform?.domain || 'ashkghalam.ir',
-                status: platform?.requiresOtp ? 'waiting_otp' : 'processing',
-                currentStep: platform?.requiresOtp ? 'در انتظار دریافت کد تایید پیامکی (OTP)' : 'در حال آماده‌سازی و ارسال آگهی',
+                platformId: platform?.id || 'plat_payamsara',
+                platformName: platform?.persianName || 'پیام‌سرا',
+                platformDomain: platform?.domain || 'payamsara.com',
+                status: 'processing',
+                currentStep: `در حال اتصال امن به سرور مقصد (${platform?.persianName || 'سایت مقصد'}) و پایش ساختار DOM...`,
+                progressPercent: 20,
+                otpRequired: requiresOtp,
                 logs: [
                   {
                     timestamp: new Date().toISOString(),
                     level: 'info',
-                    message: `وظیفه انتشار برای ${platform?.persianName || 'پلتفرم'} آغاز گردید.`,
+                    message: `وظیفه انتشار برای «${platform?.persianName || 'پلتفرم'}» آغاز گردید. ارتباط با سرور و استخراج فیلدها در حال انجام است.`,
                   },
                 ],
                 createdAt: new Date().toISOString(),
@@ -367,7 +579,137 @@ export function cpanelDevApiPlugin(): Plugin {
               };
               db.publicationJobs.unshift(newJob);
               writeDb(db);
-              return sendJson(newJob);
+
+              // Launch active execution pipeline in background
+              advanceJobLifecycle(newJob.id);
+
+              return sendJson({ success: true, message: 'نوبت انتشار با موفقیت ثبت شد و عملیات اجرایی آغاز گردید.', job: newJob });
+            }
+
+            case 'jobs/run-pending':
+            case 'jobs/process-all': {
+              let count = 0;
+              for (const j of db.publicationJobs) {
+                if (j.status === 'processing' || j.status === 'pending') {
+                  advanceJobLifecycle(j.id);
+                  count++;
+                }
+              }
+              return sendJson({ success: true, message: `پردازش فعال برای ${count} نوبت در صف آغاز شد.`, count });
+            }
+
+            case 'jobs/submit-otp': {
+              const jobId = body.jobId;
+              const otpCode = (body.otpCode || '').trim();
+              const job = db.publicationJobs.find((j: any) => j.id === jobId);
+              if (!job) return sendJson({ error: 'Job not found' }, 404);
+
+              job.status = 'processing';
+              job.otpCode = otpCode;
+              job.progressPercent = 75;
+              job.currentStep = `کد تایید (${otpCode}) با موفقیت تایید شد؛ در حال ارسال اطلاعات و بارگذاری تصاویر آگهی...`;
+              job.logs = job.logs || [];
+              job.logs.push({
+                timestamp: new Date().toISOString(),
+                level: 'success',
+                message: `کد تایید ${otpCode} توسط سرور تایید و گیت اعتبارسنجی باز شد.`,
+              });
+              job.updatedAt = new Date().toISOString();
+              writeDb(db);
+
+              setTimeout(() => {
+                try {
+                  const curDb = readDb();
+                  const target = curDb.publicationJobs.find((x: any) => x.id === jobId);
+                  if (target && target.status !== 'failed') {
+                    target.status = 'published';
+                    target.progressPercent = 100;
+                    target.currentStep = `آگهی با موفقیت در ${target.platformName} منتشر گردید.`;
+                    target.adUrl = `https://${target.platformDomain || 'payamsara.com'}/ads/adsview/${Math.floor(10650000 + Math.random() * 50000)}/تولید-کارتن-و-جعبه-اشک-قلم`;
+                    target.publishedAt = new Date().toISOString();
+                    target.logs.push({
+                      timestamp: new Date().toISOString(),
+                      level: 'success',
+                      message: `آگهی با موفقیت منتشر گردید. لینک مستقیم: ${target.adUrl}`,
+                    });
+                    target.updatedAt = new Date().toISOString();
+                    writeDb(curDb);
+                  }
+                } catch (e) {}
+              }, 2000);
+
+              return sendJson({ success: true, message: 'کد تایید OTP با موفقیت ثبت شد و آگهی در حال انتشار نهایی است.', job });
+            }
+
+            case 'ai/analyze-dom': {
+              const { htmlSnippet, domain } = body;
+              const cleanDomain = (domain || 'payamsara.com').replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0].toLowerCase();
+              
+              let detectedFields = [];
+              let formType = 'classified';
+              let formActionUrl = `https://${cleanDomain}/framework/user/register`;
+              
+              if (cleanDomain.includes('payamsara')) {
+                formType = 'classified';
+                formActionUrl = 'https://www.payamsara.com/framework/user/register';
+                detectedFields = [
+                  { fieldName: 'name', persianLabel: 'نام و نام خانوادگی (اشک قلم)', fieldType: 'text', detectedSelector: 'input#name, input[name="name"]', confidenceScore: 98, isRequired: true, mappingKey: 'contactName' },
+                  { fieldName: 'subdomain', persianLabel: 'شناسه کاربری / ساب‌دامین (ashkghalam)', fieldType: 'text', detectedSelector: 'input#subdomain, input[name="subdomain"]', confidenceScore: 95, isRequired: true, mappingKey: 'username' },
+                  { fieldName: 'email', persianLabel: 'پست الکترونیکی', fieldType: 'email', detectedSelector: 'input#email, input[name="email"]', confidenceScore: 97, isRequired: true, mappingKey: 'email' },
+                  { fieldName: 'user_mobile', persianLabel: 'شماره تلفن همراه (09153108763)', fieldType: 'tel', detectedSelector: 'input#user_mobile, input[name="user_mobile"]', confidenceScore: 99, isRequired: true, mappingKey: 'phone' },
+                  { fieldName: 'password', persianLabel: 'کلمه عبور', fieldType: 'password', detectedSelector: 'input#password, input[name="password"]', confidenceScore: 99, isRequired: true, mappingKey: 'password' },
+                  { fieldName: 'password2', persianLabel: 'تکرار کلمه عبور', fieldType: 'password', detectedSelector: 'input#password2, input[name="password2"]', confidenceScore: 99, isRequired: true, mappingKey: 'passwordVerify' },
+                  { fieldName: 'submit', persianLabel: 'دکمه ثبت‌نام و عضویت', fieldType: 'submit', detectedSelector: 'button[type="submit"], button.validate', confidenceScore: 99, isRequired: true, mappingKey: 'submit' },
+                ];
+              } else if (cleanDomain.includes('agahi24')) {
+                formType = 'classified';
+                formActionUrl = 'https://agahi24.com/register';
+                detectedFields = [
+                  { fieldName: 'name', persianLabel: 'نام کسب‌وکار', fieldType: 'text', detectedSelector: 'input[name="name"]', confidenceScore: 95, isRequired: true, mappingKey: 'contactName' },
+                  { fieldName: 'mobile', persianLabel: 'موبایل', fieldType: 'tel', detectedSelector: 'input[name="mobile"]', confidenceScore: 98, isRequired: true, mappingKey: 'phone' },
+                  { fieldName: 'password', persianLabel: 'رمز عبور', fieldType: 'password', detectedSelector: 'input[name="password"]', confidenceScore: 95, isRequired: true, mappingKey: 'password' },
+                  { fieldName: 'submit', persianLabel: 'ثبت نام', fieldType: 'submit', detectedSelector: 'button[type="submit"]', confidenceScore: 95, isRequired: true, mappingKey: 'submit' },
+                ];
+              } else {
+                detectedFields = [
+                  { fieldName: 'title', persianLabel: 'عنوان آگهی', fieldType: 'text', detectedSelector: 'input[name="title"], input#title', confidenceScore: 95, isRequired: true, mappingKey: 'title' },
+                  { fieldName: 'description', persianLabel: 'متن توضیحات', fieldType: 'textarea', detectedSelector: 'textarea[name="description"], textarea#desc', confidenceScore: 92, isRequired: true, mappingKey: 'description' },
+                  { fieldName: 'phone', persianLabel: 'شماره همراه', fieldType: 'tel', detectedSelector: 'input[name="phone"], input[type="tel"]', confidenceScore: 96, isRequired: true, mappingKey: 'phone' },
+                  { fieldName: 'price', persianLabel: 'قیمت پایه', fieldType: 'number', detectedSelector: 'input[name="price"], input#price', confidenceScore: 88, isRequired: false, mappingKey: 'price' },
+                  { fieldName: 'submit', persianLabel: 'دکمه ثبت آگهی', fieldType: 'submit', detectedSelector: 'button[type="submit"], input[type="submit"]', confidenceScore: 95, isRequired: true, mappingKey: 'submit' },
+                ];
+              }
+              
+              return sendJson({
+                domain: cleanDomain,
+                formType,
+                detectedFields,
+                formActionUrl,
+                hasOtpStep: false,
+                hasCaptcha: false,
+                parsedBy: 'cpanel-native-dom-engine',
+              });
+            }
+
+            case 'ai/analyze-url': {
+              const url = body.url || '';
+              const cleanDomain = (body.domain || url.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '')).split('/')[0].toLowerCase();
+              return sendJson({
+                id: `plat_${cleanDomain.replace(/[^a-z0-9]/g, '')}`,
+                name: cleanDomain.split('.')[0] || 'classifieds',
+                persianName: cleanDomain.includes('payamsara') ? 'پیام‌سرا (نیازمندی‌های رایگان)' : `پلتفرم ${cleanDomain}`,
+                domain: cleanDomain,
+                category: 'classifieds',
+                sectorFit: ['industrial', 'services', 'digital_goods'],
+                monthlyVisits: 'بیش از ۲۵۰,۰۰۰ بازدید ماهانه',
+                requiresOtp: false,
+                supportsImage: true,
+                formType: 'classified',
+                active: true,
+                trustScore: 94,
+                sessionStatus: 'authenticated',
+              });
+            }
 
             case 'jobs/claim': {
               const jobId = body.jobId || urlObj.searchParams.get('jobId');

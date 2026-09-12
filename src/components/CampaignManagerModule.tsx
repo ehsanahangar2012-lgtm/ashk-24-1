@@ -10,6 +10,7 @@ import {
   AlertCircle,
   DollarSign,
   RefreshCw,
+  RotateCw,
   ImageIcon,
   Sparkles,
   Zap,
@@ -22,10 +23,15 @@ import {
   ExternalLink,
   ChevronRight,
   Filter,
+  FolderOpen,
+  Eye,
+  AlertTriangle,
 } from 'lucide-react';
 import { Campaign, MediaPlatform, BrandTone, BusinessSector, CompanyProfile } from '../types/ashk24.js';
 import { toPersianDigits, toTomanFormat, getCurrentJalaliDate } from '../utils/persianUtils.js';
 import { ImageUploader } from './ImageUploader.js';
+import { ImageUploadVaultModal } from './ImageUploadVaultModal.js';
+import { ImageAnalysisModal } from './ImageAnalysisModal.js';
 import { clientStorage } from '../services/clientStorageService.js';
 import { SmartHelpButton } from './SmartHelpModal.js';
 
@@ -35,6 +41,7 @@ interface CampaignManagerModuleProps {
   onCreateCampaign: (newCamp: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Campaign | undefined> | void;
   onDeleteCampaign: (id: string) => void;
   onTriggerJob: (campaignId: string, platformId: string) => void;
+  onRefreshAll?: () => void;
 }
 
 export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
@@ -43,11 +50,16 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
   onCreateCampaign,
   onDeleteCampaign,
   onTriggerJob,
+  onRefreshAll,
 }) => {
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
+  const [showVaultModal, setShowVaultModal] = useState<boolean>(false);
+  const [analyzingImage, setAnalyzingImage] = useState<{ url: string; text: string; name: string } | null>(null);
   const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
   const [quickPublishLoading, setQuickPublishLoading] = useState<boolean>(false);
   const [quickPublishSuccess, setQuickPublishSuccess] = useState<string | null>(null);
+  const [publishingCampaignId, setPublishingCampaignId] = useState<string | null>(null);
+  const [wipeLoading, setWipeLoading] = useState<boolean>(false);
 
   // Fast-track Preset Templates
   const presetTemplates = [
@@ -83,13 +95,7 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
   const [priceToman, setPriceToman] = useState<number>(0);
   const [sector, setSector] = useState<BusinessSector>('industrial');
   const [tone, setTone] = useState<BrandTone>('persuasive');
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([
-    'plat_test_site',
-    'plat_istgah',
-    'plat_niazerooz',
-    'plat_agahi24',
-    'plat_niazchi',
-  ]);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [scheduleDate, setScheduleDate] = useState<string>(getCurrentJalaliDate());
   const [scheduleTime, setScheduleTime] = useState<string>('10:30');
   const [isRenewalScheduled, setIsRenewalScheduled] = useState<boolean>(true);
@@ -146,6 +152,13 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
     }
   };
 
+  const handleSelectPhase1Platforms = () => {
+    const phase1Ids = (platforms || [])
+      .filter((p) => p.authTier === 'tier1_easy_email' || !p.requiresOtp)
+      .map((p) => p.id);
+    setSelectedPlatforms(phase1Ids);
+  };
+
   // 1-Click Fast Express Ad Launcher
   const handleExecute1ClickFastPublish = async () => {
     setQuickPublishLoading(true);
@@ -194,6 +207,26 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
     }
   };
 
+  const handleWipeAllData = async () => {
+    if (!window.confirm('⚠️ اخطار مهم:\nآیا اطمینان دارید که می‌خواهید تمام داده‌ها خام شوند و کلیه کمپین‌ها، تصاویر و نوبت‌های پیش‌فرض پاکسازی گردند؟\nاین عملیات غیرقابل بازگشت است.')) {
+      return;
+    }
+    setWipeLoading(true);
+    try {
+      const res = await clientStorage.wipeAllDataToRawState();
+      alert(res.message || 'کلیه داده‌ها با موفقیت خام و پاکسازی شدند.');
+      if (onRefreshAll) {
+        onRefreshAll();
+      } else {
+        window.location.reload();
+      }
+    } catch (e: any) {
+      alert('خطا در خام‌سازی داده‌ها: ' + (e?.message || 'خطای سرور'));
+    } finally {
+      setWipeLoading(false);
+    }
+  };
+
   const handleSubmitNewCampaign = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !productName) return;
@@ -217,9 +250,76 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
       lastRenewalDate: '',
       nextRenewalDate: '۱۴۰۵/۰۶/۲۵',
       renewalCount: 0,
+      images: campaignImages,
+      productImages: campaignImages,
     });
 
     setShowCreateModal(false);
+    setCampaignImages([]);
+  };
+
+  const handleInstantPublishCampaign = async (camp: Campaign) => {
+    setPublishingCampaignId(camp.id);
+    try {
+      const targetPlatformIds = (camp.selectedPlatformIds && camp.selectedPlatformIds.length > 0)
+        ? camp.selectedPlatformIds
+        : platforms.slice(0, 5).map((p) => p.id);
+
+      for (const pid of targetPlatformIds) {
+        await onTriggerJob(camp.id, pid);
+      }
+
+      setQuickPublishSuccess(`🚀 انتشار فوری کمپین «${camp.title}» به ${toPersianDigits(targetPlatformIds.length)} رسانه با موفقیت ارسال شد و در صف اجرای خودکار قرار گرفت.`);
+      setTimeout(() => setQuickPublishSuccess(null), 7000);
+    } catch (e: any) {
+      alert('خطا در انتشار فوری کمپین: ' + (e?.message || 'خطای نامشخص'));
+    } finally {
+      setPublishingCampaignId(null);
+    }
+  };
+
+  const handleCreateAndInstantPublish = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!title || !productName) {
+      alert('لطفاً عنوان کمپین و نام محصول را وارد فرمایید.');
+      return;
+    }
+
+    const targetPlatforms = selectedPlatforms.length > 0 ? selectedPlatforms : platforms.slice(0, 5).map((p) => p.id);
+    const newCampData = {
+      title,
+      companyId: 'cmp_default_01',
+      selectedPlatformIds: targetPlatforms,
+      productName,
+      productDescription,
+      priceToman,
+      sector,
+      tone,
+      targetKeywords: ['اشک قلم', 'کارتن سازی', 'بسته بندی', 'جعبه مقوایی'],
+      jalaliScheduleDate: getCurrentJalaliDate(),
+      jalaliScheduleTime: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }),
+      status: 'scheduled' as const,
+      autoRetryCount: 3,
+      isRenewalScheduled,
+      renewalIntervalDays,
+      lastRenewalDate: '',
+      nextRenewalDate: '۱۴۰۵/۰۶/۲۵',
+      renewalCount: 0,
+      images: campaignImages,
+      productImages: campaignImages,
+    };
+
+    setShowCreateModal(false);
+    setCampaignImages([]);
+    const created = await onCreateCampaign(newCampData);
+
+    if (created) {
+      for (const pid of targetPlatforms) {
+        await onTriggerJob(created.id, pid);
+      }
+      setQuickPublishSuccess(`🚀 کمپین «${title}» ایجاد شد و انتشار فوری آن به ${toPersianDigits(targetPlatforms.length)} رسانه آغاز گردید.`);
+      setTimeout(() => setQuickPublishSuccess(null), 7000);
+    }
   };
 
   return (
@@ -238,6 +338,7 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
                 summary: 'این بخش ثبت و ارسال آگهی‌ها به چندین سایت نیازمندی‌ها و وبلاگ سئو را با یک کلیک انجام می‌دهد.',
                 steps: [
                   'عنوان محصول و متن آگهی را درج کرده یا از الگوهای پیش‌فرض انتخاب کنید.',
+                  'تصاویر آگهی را آپلود کرده یا از مخزن هاست انتخاب و تحلیل AI فرمایید.',
                   'سایت‌های نیازمندی‌های وب هدف را تیک بزنید.',
                   'بر روی دکمه «ارسال و انتشار نهایی» کلیک کنید تا نوبت اجرا در موتور هدلس ایجاد شود.'
                 ],
@@ -250,7 +351,27 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Open Image Vault Button */}
+          <button
+            onClick={() => setShowVaultModal(true)}
+            className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-300 font-bold text-xs transition-all flex items-center space-x-1.5 space-x-reverse"
+          >
+            <FolderOpen className="w-4 h-4 ml-1" />
+            <span>مخزن تصاویر هاست</span>
+          </button>
+
+          {/* Reset Raw Data Button */}
+          <button
+            onClick={handleWipeAllData}
+            disabled={wipeLoading}
+            className="px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 font-bold text-xs transition-all flex items-center space-x-1.5 space-x-reverse disabled:opacity-50"
+            title="حذف کلیه آیتم‌های پیش‌فرض و خام‌سازی دیتابیس"
+          >
+            <Trash2 className="w-3.5 h-3.5 ml-1 text-red-400" />
+            <span>{wipeLoading ? 'در حال خام‌سازی...' : 'خام‌سازی داده‌ها'}</span>
+          </button>
+
           <button
             onClick={() => setShowCreateModal(true)}
             className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 transition-all flex items-center space-x-1.5 space-x-reverse"
@@ -332,31 +453,49 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
 
         {/* Fast Platform Selection Badges */}
         <div className="space-y-2 pt-1">
-          <div className="flex items-center justify-between text-xs text-slate-300">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-300">
             <span className="font-semibold">سایت‌های هدف برای انتشار ({toPersianDigits(selectedPlatforms.length)} سایت انتخاب شده):</span>
-            <button
-              onClick={handleSelectAllPlatforms}
-              className="text-amber-400 hover:text-amber-300 text-[11px] font-bold"
-            >
-              {selectedPlatforms.length === (platforms || []).length ? 'لغو انتخاب همه' : 'انتخاب همه سایت‌ها'}
-            </button>
+            <div className="flex items-center space-x-2 space-x-reverse">
+              <button
+                type="button"
+                onClick={handleSelectPhase1Platforms}
+                className="text-emerald-300 hover:text-emerald-200 text-[11px] font-bold bg-emerald-500/15 hover:bg-emerald-500/25 px-2.5 py-1 rounded-lg border border-emerald-500/30 transition-all flex items-center space-x-1 space-x-reverse"
+                title="سایت‌های فاز ۱ نیازی به OTP نداشته و با نام کاربری و رمز ثبت می‌شوند"
+              >
+                <span>📧 فقط سایت‌های ایمیل‌محور (فاز ۱)</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleSelectAllPlatforms}
+                className="text-amber-400 hover:text-amber-300 text-[11px] font-bold bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700"
+              >
+                {selectedPlatforms.length === (platforms || []).length ? 'لغو انتخاب همه' : 'انتخاب همه سایت‌ها'}
+              </button>
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
             {(platforms || []).map((p) => {
               const isSelected = selectedPlatforms.includes(p.id);
+              const isEmailTier = p.authTier === 'tier1_easy_email' || !p.requiresOtp;
               const hasSession = p.sessionStatus === 'authenticated';
               return (
                 <button
                   key={p.id}
+                  type="button"
                   onClick={() => handleTogglePlatform(p.id)}
                   className={`px-3 py-1.5 rounded-xl border text-xs flex items-center space-x-1.5 space-x-reverse transition-all ${
                     isSelected
-                      ? 'bg-slate-950 border-amber-500/40 text-amber-300 font-bold'
-                      : 'bg-slate-950/50 border-slate-800 text-slate-500 line-through'
+                      ? isEmailTier
+                        ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-200 font-bold shadow-sm'
+                        : 'bg-slate-950 border-amber-500/40 text-amber-300 font-bold'
+                      : 'bg-slate-950/50 border-slate-800 text-slate-500 line-through opacity-60'
                   }`}
                 >
-                  <span className={`w-2 h-2 rounded-full ${hasSession ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
+                  <span className={`w-2 h-2 rounded-full ${isEmailTier ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
                   <span>{p.persianName}</span>
+                  <span className="text-[10px] opacity-75 font-mono">
+                    {isEmailTier ? '[ایمیل]' : '[OTP گوشی]'}
+                  </span>
                 </button>
               );
             })}
@@ -394,11 +533,49 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
                 </button>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 space-y-1">
-                <div>قیمت پیشنهادی: {camp.priceToman ? toTomanFormat(camp.priceToman) : 'توافقی / استعلام قیمت'}</div>
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span>قیمت پیشنهادی:</span>
+                  <span className="font-bold text-amber-400">{camp.priceToman ? toTomanFormat(camp.priceToman) : 'توافقی / استعلام قیمت'}</span>
+                </div>
                 <div className="text-slate-400 text-[11px] line-clamp-2 leading-relaxed">
                   {camp.productDescription}
                 </div>
+
+                {/* Attached Campaign Images Preview with AI Vision Analysis */}
+                {((camp.images && camp.images.length > 0) || (camp.productImages && camp.productImages.length > 0)) && (
+                  <div className="pt-2 border-t border-slate-900 space-y-1.5">
+                    <span className="text-[10px] text-slate-400 font-semibold block">تصاویر آگهی در هاست:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {(camp.images || camp.productImages || []).map((imgUrl, imgIdx) => (
+                        <div
+                          key={imgIdx}
+                          className="group relative w-14 h-14 rounded-lg bg-slate-900 border border-slate-800 overflow-hidden shrink-0"
+                        >
+                          <img
+                            src={imgUrl}
+                            alt="عکس آگهی"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src =
+                                'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800';
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-slate-950/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <button
+                              type="button"
+                              onClick={() => setAnalyzingImage({ url: imgUrl, text: camp.productDescription, name: camp.productName })}
+                              title="تحلیل هوشمند تصویر با AI"
+                              className="p-1 rounded bg-amber-500 text-slate-950 hover:bg-amber-400 transition-colors"
+                            >
+                              <Sparkles className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Schedule and Platform badges */}
@@ -449,9 +626,29 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
             </div>
 
             {/* Platform Quick Action Triggers */}
-            <div className="border-t border-slate-800/80 pt-3 space-y-2">
+            <div className="border-t border-slate-800/80 pt-3 space-y-2.5">
+              {/* Prominent Instant Publish All Platforms Button */}
+              <button
+                type="button"
+                onClick={() => handleInstantPublishCampaign(camp)}
+                disabled={publishingCampaignId === camp.id}
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-extrabold text-xs shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center space-x-2 space-x-reverse disabled:opacity-50"
+              >
+                {publishingCampaignId === camp.id ? (
+                  <>
+                    <RotateCw className="w-4 h-4 animate-spin text-slate-950" />
+                    <span>در حال صف‌بندی و انتشار فوری...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 text-slate-950 fill-slate-950" />
+                    <span>🚀 انتشار فوری این کمپین (ارسال همزمان به کلیه رسانه‌ها)</span>
+                  </>
+                )}
+              </button>
+
               <span className="text-[11px] text-slate-400 font-semibold block">
-                ارسال فوری و ثبت آگهی در پلتفرم منتخب:
+                یا ارسال فوری تکی به پلتفرم منتخب:
               </span>
               <div className="flex flex-col gap-1.5">
                 {(camp.selectedPlatformIds || []).map((pid) => {
@@ -552,10 +749,13 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
               {/* Upload Campaign Ad Images */}
               <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
                 <ImageUploader
-                  label="بارگذاری تصاویر آگهی کمپین در هاست:"
+                  label="بارگذاری یا انتخاب تصاویر آگهی در هاست:"
                   category="ad_image"
                   multiple={true}
                   currentUrls={campaignImages}
+                  adText={productDescription}
+                  productName={productName}
+                  keywords={['کارتن سازی', 'بسته بندی', 'اشک قلم']}
                   onUploadSuccess={(urls) => {
                     setCampaignImages((prev) => [...prev, ...urls]);
                   }}
@@ -625,12 +825,23 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
                 />
               </div>
 
-              <button
-                type="submit"
-                className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 transition-all"
-              >
-                ذخیره و ایجاد کمپین
-              </button>
+              <div className="flex flex-col sm:flex-row items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={handleCreateAndInstantPublish}
+                  className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-extrabold text-xs shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center space-x-2 space-x-reverse"
+                >
+                  <Sparkles className="w-4 h-4 text-slate-950 fill-slate-950" />
+                  <span>🚀 ایجاد و انتشار فوری (همین حالا)</span>
+                </button>
+
+                <button
+                  type="submit"
+                  className="w-full sm:w-auto py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition-all"
+                >
+                  <span>📅 ذخیره در تقویم زمان‌بندی</span>
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -673,6 +884,30 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
             </button>
           </div>
         </div>
+      )}
+
+      {/* Media Vault Modal */}
+      {showVaultModal && (
+        <ImageUploadVaultModal
+          isOpen={showVaultModal}
+          onClose={() => setShowVaultModal(false)}
+          onSelectUrl={(url) => {
+            setCampaignImages((prev) => [...prev, url]);
+            setShowVaultModal(false);
+          }}
+        />
+      )}
+
+      {/* AI Image & Text Analysis Modal */}
+      {analyzingImage && (
+        <ImageAnalysisModal
+          isOpen={!!analyzingImage}
+          onClose={() => setAnalyzingImage(null)}
+          imageUrl={analyzingImage.url}
+          adText={analyzingImage.text}
+          productName={analyzingImage.name}
+          keywords={['کارتن سازی', 'بسته بندی', 'اشک قلم']}
+        />
       )}
     </div>
   );

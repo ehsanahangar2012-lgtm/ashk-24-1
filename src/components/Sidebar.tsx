@@ -8,13 +8,15 @@ import {
   FileCheck2,
   ShieldCheck,
   Sparkles,
+  Smartphone,
 } from 'lucide-react';
 
 export type TabType =
   | 'company'
   | 'platforms'
   | 'campaigns'
-  | 'jobs';
+  | 'jobs'
+  | 'mobile_companion';
 
 interface SidebarProps {
   activeTab: TabType;
@@ -63,6 +65,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Radio,
       badge: activeJobsCount > 0 ? `${activeJobsCount} جاب` : null,
       badgeColor: 'bg-amber-500 text-slate-950 font-bold',
+    },
+    {
+      id: 'mobile_companion' as TabType,
+      label: '۵. همراه اندروید & پل OTP',
+      icon: Smartphone,
+      badge: 'IP ایران',
+      badgeColor: 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30',
     },
   ];
 

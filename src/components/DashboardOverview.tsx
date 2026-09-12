@@ -212,15 +212,32 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2 space-x-reverse">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={async () => {
+                      const pids = (camp.selectedPlatformIds && camp.selectedPlatformIds.length > 0)
+                        ? camp.selectedPlatformIds
+                        : ['plat_divar', 'plat_sheypoor', 'plat_baskool', 'plat_payamsara'];
+                      for (const pid of pids) {
+                        onTriggerJob(camp.id, pid);
+                      }
+                      onNavigateTab('jobs');
+                    }}
+                    title="ارسال و انتشار آنی در تمامی پلتفرم‌های منتخب این کمپین"
+                    className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition-colors flex items-center space-x-1.5 space-x-reverse shadow-md shadow-amber-500/10"
+                  >
+                    <Play className="w-3 h-3 fill-slate-950" />
+                    <span>🚀 انتشار فوری به کلیه سایت‌ها</span>
+                  </button>
+
                   {(camp.selectedPlatformIds || []).slice(0, 2).map((pid) => (
                     <button
                       key={pid}
                       onClick={() => onTriggerJob(camp.id, pid)}
-                      className="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-medium transition-colors flex items-center space-x-1 space-x-reverse"
+                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-medium transition-colors flex items-center space-x-1 space-x-reverse"
                     >
-                      <Play className="w-3 h-3 fill-amber-400" />
-                      <span>اجرا در {pid.replace('plat_', '')}</span>
+                      <Play className="w-3 h-3 fill-slate-300" />
+                      <span>{pid.replace('plat_', '')}</span>
                     </button>
                   ))}
                 </div>
