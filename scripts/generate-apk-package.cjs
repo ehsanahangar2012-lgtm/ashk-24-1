@@ -12,6 +12,24 @@ async function buildApkAndProject() {
     fs.mkdirSync(downloadsDir, { recursive: true });
   }
 
+  const cpanelUploads = path.resolve('cpanel-backend/uploads');
+  if (!fs.existsSync(cpanelUploads)) {
+    fs.mkdirSync(cpanelUploads, { recursive: true });
+  }
+
+  // Purge obsolete old versions from downloadsDir and cpanelUploads
+  [downloadsDir, cpanelUploads].forEach(dir => {
+    if (fs.existsSync(dir)) {
+      fs.readdirSync(dir).forEach(file => {
+        if ((file.startsWith('Ashk24_Android_Project_v') || file.startsWith('Ashk24_OTP_Companion_v')) && !file.includes(version)) {
+          try {
+            fs.unlinkSync(path.join(dir, file));
+          } catch (e) {}
+        }
+      });
+    }
+  });
+
   // 1. Generate real Android APK (APK is a valid ZIP with Android manifest, dex header, resources, assets, META-INF)
   const apkZip = new JSZip();
 
@@ -332,10 +350,14 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
         type: "HttpRequest",
         method: "POST",
         url: "https://secret.ashkghalam.ir/api/webhooks/sms",
+        headers: {
+          "X-Gateway-Secret": "ashk24_cron_secret"
+        },
         body: JSON.stringify({
           senderNumber: "{sms_number}",
           receiverNumber: "09153108763",
-          messageText: "{sms_body}"
+          messageText: "{sms_body}",
+          gatewaySecret: "ashk24_cron_secret"
         }),
         contentType: "application/json"
       }
@@ -344,7 +366,6 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
   fs.writeFileSync(path.join(downloadsDir, 'Ashk24_MacroDroid_Relay.json'), JSON.stringify(macroJson, null, 2));
 
   // Also copy to cpanel-backend/uploads/ so /uploads/Ashk24_OTP_Companion_v... works seamlessly
-  const cpanelUploads = path.resolve('cpanel-backend/uploads');
   if (!fs.existsSync(cpanelUploads)) {
     fs.mkdirSync(cpanelUploads, { recursive: true });
   }

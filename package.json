@@ -1,7 +1,7 @@
 {
   "name": "ashk24-automation",
   "private": true,
-  "version": "4.0.16-autonomous-engine",
+  "version": "4.0.21-optimized",
   "type": "module",
   "scripts": {
     "dev": "vite",

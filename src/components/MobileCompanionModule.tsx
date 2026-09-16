@@ -24,11 +24,13 @@ import {
   FileCode,
   CheckCircle,
   AlertCircle,
+  AlertTriangle,
   HelpCircle,
 } from 'lucide-react';
 import { MobileDeviceConfig, MobileNotificationLog, SmsWebhookPayload, EmailWebhookPayload } from '../types/ashk24.js';
 import { clientStorage } from '../services/clientStorageService.js';
 import { toPersianDigits } from '../utils/persianUtils.js';
+import { APP_VERSION } from '../config/version.js';
 
 import { SmartHelpButton } from './SmartHelpModal.js';
 
@@ -45,7 +47,7 @@ export const MobileCompanionModule: React.FC = () => {
   const [manualOtpInput, setManualOtpInput] = useState<string>('');
   const [isRelayingOtp, setIsRelayingOtp] = useState<boolean>(false);
   const [relayFeedback, setRelayFeedback] = useState<string | null>(null);
-  const [selectedPlatformForSync, setSelectedPlatformForSync] = useState<string>('plat_divar');
+  const [selectedPlatformForSync, setSelectedPlatformForSync] = useState<string>('plat_payamsara');
   const [sessionTokenInput, setSessionTokenInput] = useState<string>('');
   const [isSyncingToken, setIsSyncingToken] = useState<boolean>(false);
   const [tokenSyncFeedback, setTokenSyncFeedback] = useState<string | null>(null);
@@ -323,10 +325,10 @@ export const MobileCompanionModule: React.FC = () => {
   };
 
   const handleDownloadApkFile = () => {
-    const apkUrl = '/downloads/Ashk24_OTP_Companion_v4.0.16-autonomous-engine.apk';
+    const apkUrl = `/downloads/Ashk24_OTP_Companion_v${APP_VERSION}.apk`;
     const a = document.createElement('a');
     a.href = apkUrl;
-    a.download = 'Ashk24_OTP_Companion_v4.0.16-autonomous-engine.apk';
+    a.download = `Ashk24_OTP_Companion_v${APP_VERSION}.apk`;
     a.target = '_blank';
     document.body.appendChild(a);
     a.click();
@@ -337,10 +339,10 @@ export const MobileCompanionModule: React.FC = () => {
   };
 
   const handleDownloadAndroidProjectZip = () => {
-    const zipUrl = '/downloads/Ashk24_Android_Project_v4.0.16-autonomous-engine.zip';
+    const zipUrl = `/downloads/Ashk24_Android_Project_v${APP_VERSION}.zip`;
     const a = document.createElement('a');
     a.href = zipUrl;
-    a.download = 'Ashk24_Android_Project_v4.0.16-autonomous-engine.zip';
+    a.download = `Ashk24_Android_Project_v${APP_VERSION}.zip`;
     a.target = '_blank';
     document.body.appendChild(a);
     a.click();
@@ -608,9 +610,9 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
                 <SmartHelpButton
                   content={{
                     title: 'تایید فوری OTP منشی هاست',
-                    summary: 'هنگامی که منشی خودکار کران‌جاب سی‌پنل به مرحله ورود به دیوار یا شیپور می‌رسد، نوبت در حالت waiting_otp قرار می‌گیرد.',
+                    summary: 'هنگامی که منشی خودکار کران‌جاب سی‌پنل به مرحله ورود به پلتفرم نیازمند پیامک می‌رسد، نوبت در حالت waiting_otp قرار می‌گیرد.',
                     steps: [
-                      'پیامک ارسالی دیوار/شیپور روی گوشی شما دریافت می‌شود.',
+                      'پیامک ارسالی پلتفرم روی گوشی شما دریافت می‌شود.',
                       'سنسور برنامه همراه یا نوتیفیکیشن دریافتی کد را شناسایی می‌کند.',
                       'با یک لمس بر روی دکمه «تایید و ارسال به هاست»، منشی بلافاصله کار انتشار را تکمیل می‌نماید.'
                     ],
@@ -738,9 +740,9 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
                 <SmartHelpButton
                   content={{
                     title: 'حالت خودکار بدون نیاز به OTP با سشن توکن',
-                    summary: 'با یک‌بار لاگین در دیوار یا شیپور و ذخیره توکن سشن در هاست سی‌پنل، منشی ۲۴ ساعته تا ماه‌ها بدون نیاز به دریافت کد پیامک، آگهی‌ها را ثبت می‌کند.',
+                    summary: 'با یک‌بار لاگین در سایت‌های آگهی و ذخیره توکن سشن در هاست سی‌پنل، منشی ۲۴ ساعته تا ماه‌ها بدون نیاز به دریافت کد پیامک، آگهی‌ها را ثبت می‌کند.',
                     steps: [
-                      'پلتفرم مورد نظر (مانند دیوار یا شیپور) را انتخاب کنید.',
+                      'پلتفرم مورد نظر (مانند پیام‌سرا، ایستگاه یا نیاز روز) را انتخاب کنید.',
                       'توکن سشن یا کلید کوکی ورود خود را وارد نمایید.',
                       'روی دکمه ذخیره کلیک کنید. کران‌جاب هاست مستقیما با هدر Authorization فعالیت خواهد کرد.'
                     ],
@@ -760,10 +762,12 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
                     onChange={(e) => setSelectedPlatformForSync(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 outline-none focus:border-indigo-500"
                   >
-                    <option value="plat_divar">دیوار (Divar.ir)</option>
-                    <option value="plat_sheypoor">شیپور (Sheypoor.com)</option>
+                    <option value="plat_payamsara">پیام‌سرا (Payamsara.com)</option>
                     <option value="plat_istgah">ایستگاه (Istgah.com)</option>
                     <option value="plat_niazerooz">نیاز روز (Niazerooz.com)</option>
+                    <option value="plat_niazpardaz">نیازپرداز (NiazPardaz.com)</option>
+                    <option value="plat_locopoc">لوکوپوک (Locopoc.com)</option>
+                    <option value="plat_irantejarat">ایران تجارت (Iran-Tejarat.com)</option>
                   </select>
                 </div>
 
@@ -830,16 +834,16 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
               </div>
               <div className="flex items-center space-x-2 space-x-reverse text-amber-400 font-bold text-sm">
                 <FileCode className="w-5 h-5 shrink-0" />
-                <span>دانلود مستقیم فایل نصبی اندروید (APK)</span>
+                <span>دانلود بسته نصبی سنسور اندروید (APK)</span>
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
-                فایل نصبی اندروید اشک ۲۴ با فرمت استاندارد APK شامل سنسور پیشرفته پیامک، شنودگر جیمیل و برودکست‌ریسیور پس‌زمینه بدون نیاز به باز بودن مرورگر.
+                بسته استاندارد APK شامل مانیفست اندروید، سرویس‌های پایش پیامک، شنودگر جیمیل و فایل کانفیگ اختصاصی جهت اتصال خودکار به هاست.
               </p>
 
               <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
                 <div className="flex justify-between text-slate-400 text-[11px]">
                   <span>نسخه پکیج:</span>
-                  <span className="text-amber-400 font-bold">3.9.3 (Release Build)</span>
+                  <span className="text-amber-400 font-bold">{APP_VERSION}</span>
                 </div>
                 <div className="flex justify-between text-slate-400 text-[11px]">
                   <span>سرویس‌های تعبیه‌شده:</span>
@@ -851,6 +855,14 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
                 </div>
               </div>
 
+              {/* Notice on Android APK Installation on modern devices */}
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5 text-[11px] text-amber-300 leading-relaxed">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+                <div>
+                  <strong>نکته مهم نصب:</strong> روی گوشی‌های مدرن اندروید، به دلیل سیاست‌های امنیتی گوگل روی پکیج‌های فاقد امضای Google Play، جهت نصب پایدار و ۱۰۰٪ تضمینی از <strong>وب‌اپلیکیشن PWA</strong> (کادر کناری) یا فایل <strong>ماکروید MacroDroid</strong> (گزینه ۳) استفاده فرمایید که بدون هیچ خطایی پیامک‌ها را خودکار به هاست منتقل می‌نماید.
+                </div>
+              </div>
+
               <div className="pt-2 flex flex-col gap-2">
                 <button
                   type="button"
@@ -858,14 +870,14 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
                   className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg transition-all flex items-center justify-center space-x-2 space-x-reverse"
                 >
                   <Download className="w-4 h-4" />
-                  <span>{downloadSuccess === 'apk' ? '✓ فایل APK دانلود شد' : 'دانلود فایل نصبی APK (نسخه ۳.۹.۳)'}</span>
+                  <span>{downloadSuccess === 'apk' ? '✓ فایل APK دانلود شد' : `دانلود فایل نصبی APK (${APP_VERSION})`}</span>
                 </button>
                 <a
-                  href="/downloads/Ashk24_OTP_Companion_v3.9.3.apk"
-                  download="Ashk24_OTP_Companion_v3.9.3.apk"
+                  href={`/downloads/Ashk24_OTP_Companion_v${APP_VERSION}.apk`}
+                  download={`Ashk24_OTP_Companion_v${APP_VERSION}.apk`}
                   className="text-center text-[11px] text-amber-400 hover:underline pt-1"
                 >
-                  لینک مستقیم دانلود مستقیم فایل: Ashk24_OTP_Companion_v3.9.3.apk
+                  لینک مستقیم فایل: {`Ashk24_OTP_Companion_v${APP_VERSION}.apk`}
                 </a>
               </div>
             </div>
@@ -1270,7 +1282,7 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
                   <span>تنظیم فیلتر هدایت خودکار ایمیل‌های جیمیل (Gmail Filter)</span>
                 </div>
                 <p className="text-[11px] text-slate-300 leading-relaxed">
-                  در تنظیمات جیمیل (Forwarding and POP/IMAP) یک فیلتر برای ایمیل‌های حاوی «کد تایید» یا «دیوار/شیپور/ایستگاه» به وب‌هوک سامانه اضافه کنید.
+                  در تنظیمات جیمیل (Forwarding and POP/IMAP) یک فیلتر برای ایمیل‌های حاوی «کد تایید» یا «پیام‌سرا/ایستگاه/نیازروز/نیازپرداز» به وب‌هوک سامانه اضافه کنید.
                 </p>
               </div>
 

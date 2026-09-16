@@ -1,6 +1,6 @@
 {
   "macroName": "انتقال خودکار پیامک OTP به سامانه اشک ۲۴",
-  "version": "4.0.16-autonomous-engine",
+  "version": "4.0.21-optimized",
   "description": "به محض دریافت پیامک، کد تایید را استخراج و به وب‌هوک هاست secret.ashkghalam.ir ارسال می‌کند.",
   "triggers": [
     {
@@ -13,7 +13,10 @@
       "type": "HttpRequest",
       "method": "POST",
       "url": "https://secret.ashkghalam.ir/api/webhooks/sms",
-      "body": "{\"senderNumber\":\"{sms_number}\",\"receiverNumber\":\"09153108763\",\"messageText\":\"{sms_body}\"}",
+      "headers": {
+        "X-Gateway-Secret": "ashk24_cron_secret"
+      },
+      "body": "{\"senderNumber\":\"{sms_number}\",\"receiverNumber\":\"09153108763\",\"messageText\":\"{sms_body}\",\"gatewaySecret\":\"ashk24_cron_secret\"}",
       "contentType": "application/json"
     }
   ]

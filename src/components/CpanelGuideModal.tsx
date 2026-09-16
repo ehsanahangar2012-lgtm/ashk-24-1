@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { ServerDiagnosticReport, ServerDiagnosticItem } from '../types/ashk24.js';
 import { clientStorage } from '../services/clientStorageService.js';
+import { APP_VERSION } from '../config/version.js';
 
 interface CpanelGuideModalProps {
   isOpen: boolean;
@@ -359,18 +360,34 @@ extension = pdo_sqlite`;
 
             <div className="space-y-3">
               {/* Step 1 */}
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
-                <div className="flex items-center space-x-2 space-x-reverse">
-                  <span className="w-5 h-5 rounded-full bg-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center">
-                    ۱
-                  </span>
-                  <span className="text-xs font-bold text-slate-100">آپلود فایل‌های برنامه در پوشه `public_html`</span>
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <span className="w-5 h-5 rounded-full bg-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center">
+                      ۱
+                    </span>
+                    <span className="text-xs font-bold text-slate-100">دانلود پکیج ZIP و آپلود در پوشه `public_html` هاست</span>
+                  </div>
+
+                  <a
+                    href={`/downloads/ashk24-cpanel-v${APP_VERSION}.zip`}
+                    download={`ashk24-cpanel-v${APP_VERSION}.zip`}
+                    className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-bold shadow-md transition-all flex items-center space-x-1.5 space-x-reverse"
+                  >
+                    <FolderDown className="w-4 h-4 shrink-0" />
+                    <span>دانلود پکیج ZIP استقرار cPanel (نسخه {APP_VERSION})</span>
+                  </a>
                 </div>
+
+                <p className="text-[11px] text-slate-300 leading-relaxed pr-7">
+                  پکیج ZIP کامل شامل تمامی فایل‌های کامپایل‌شده فرانت‌اند، پوشه <code>cpanel-backend</code>، فایل <code>.htaccess</code> و تنظیمات آپاچی است.
+                </p>
+
                 <ul className="text-[11px] text-slate-400 space-y-1 list-disc list-inside pr-7 leading-relaxed">
+                  <li>فایل ZIP بالا را دانلود کنید.</li>
                   <li>وارد File Manager هاست cPanel خود شوید.</li>
                   <li>به مسیر <code className="text-amber-400 font-mono">public_html</code> (یا ساب‌دامین مدنظرتان) بروید.</li>
-                  <li>تمام فایل‌های خروجی ساخت فرانت‌اند (محتویات پوشه dist شامل index.html و assets) را مستقیماً داخل public_html آپلود و Extract کنید.</li>
-                  <li>پوشه <code className="text-amber-400 font-mono">cpanel-backend</code> را نیز بدون تغییر در کنار index.html قرار دهید.</li>
+                  <li>فایل ZIP را آپلود و مستقیماً داخل public_html گزینه <strong>Extract</strong> را بزنید.</li>
                 </ul>
               </div>
 
