@@ -28,7 +28,7 @@ class Ashk24Db {
         }
     }
 
-    private function readDb() {
+    public function readDb() {
         if (!file_exists(DB_FILE)) {
             $this->seedInitialDatabase();
         }
@@ -47,7 +47,7 @@ class Ashk24Db {
         return is_array($data) ? $data : $this->getDefaultDbStructure();
     }
 
-    private function writeDb($data) {
+    public function writeDb($data) {
         if (!file_exists(DATA_DIR)) {
             @mkdir(DATA_DIR, 0775, true);
         }
@@ -637,6 +637,26 @@ class Ashk24Db {
             return $updated;
         }
         return null;
+    }
+
+    public function clearCompletedJobs() {
+        $db = $this->readDb();
+        $remaining = [];
+        foreach (($db['publicationJobs'] ?? []) as $job) {
+            if ($job['status'] !== 'published' && $job['status'] !== 'failed') {
+                $remaining[] = $job;
+            }
+        }
+        $db['publicationJobs'] = $remaining;
+        $this->writeDb($db);
+        return true;
+    }
+
+    public function clearAllJobs() {
+        $db = $this->readDb();
+        $db['publicationJobs'] = [];
+        $this->writeDb($db);
+        return true;
     }
 
     public function addSmsLog($log) {

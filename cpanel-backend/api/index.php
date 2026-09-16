@@ -590,23 +590,12 @@ try {
             break;
 
         case ($route === 'jobs/clear-completed'):
-            $jobs = $db->getJobs();
-            $remaining = [];
-            foreach ($jobs as $job) {
-                if ($job['status'] !== 'published' && $job['status'] !== 'failed') {
-                    $remaining[] = $job;
-                }
-            }
-            $all = $db->readDb();
-            $all['publicationJobs'] = $remaining;
-            $db->writeDb($all);
+            $db->clearCompletedJobs();
             echo json_encode(['success' => true, 'message' => 'نوبت‌های تکمیل شده یا ناموفق پاکسازی شدند.'], JSON_UNESCAPED_UNICODE);
             break;
 
         case ($route === 'jobs/clear-all'):
-            $all = $db->readDb();
-            $all['publicationJobs'] = [];
-            $db->writeDb($all);
+            $db->clearAllJobs();
             echo json_encode(['success' => true, 'message' => 'کلیه نوبت‌های کاری پاکسازی شدند.'], JSON_UNESCAPED_UNICODE);
             break;
 
@@ -809,18 +798,25 @@ try {
                 ? "ارسال بسته اولیه به {$platform['persianName']} ({$platform['domain']}) انجام شد. منتظر دریافت کد OTP برای شماره " . ($company['phoneNumber'] ?? '') 
                 : "بررسی نهایی ساختار فرم {$platform['persianName']} و آماده‌سازی داده‌ها جهت ثبت...";
 
+            $contactPhone = $company['phoneNumber'] ?? '09153108763';
             $job = $db->createJob([
                 'campaignId' => $campaignId,
                 'platformId' => $platformId,
                 'platformName' => $platform['persianName'],
+                'platformDomain' => $platform['domain'] ?? '',
+                'contactPhone' => $contactPhone,
+                'contactEmail' => $company['email'] ?? 'info@ashkghalam.ir',
+                'contactPerson' => $company['contactPerson'] ?? 'مهندس احسان آهنگر',
+                'campaignTitle' => $campaign['title'] ?? '',
+                'campaignContent' => $campaign['content'] ?? '',
                 'status' => $jobStatus,
                 'currentStep' => $stepDesc,
                 'progressPercent' => $requiresOtp ? 30 : 20,
                 'adUrl' => null, // NO FABRICATED URL
                 'logs' => [
                     ['timestamp' => date('H:i:s'), 'step' => 'HTTP_DISPATCH', 'status' => 'info', 'message' => "ارتباط واقعی شبکه با {$platform['domain']} برقرار شد (کد وضعیت HTTP {$httpCode})"],
-                    ['timestamp' => date('H:i:s'), 'step' => 'DATA_MAPPING', 'status' => 'info', 'message' => "نگاشت داده‌های کمپین «{$campaign['title']}» روی الگوی ثبت پلتفرم"],
-                    ['timestamp' => date('H:i:s'), 'step' => $requiresOtp ? 'OTP_WAIT' : 'PREPARING', 'status' => 'info', 'message' => $requiresOtp ? "درخواست کد OTP ثبت گردید. در انتظار ورود کد..." : "آماده‌سازی ارسال خودکار داده‌ها..."]
+                    ['timestamp' => date('H:i:s'), 'step' => 'DATA_MAPPING', 'status' => 'info', 'message' => "نگاشت داده‌های کمپین «{$campaign['title']}» روی الگوی ثبت پلتفرم با شماره {$contactPhone}"],
+                    ['timestamp' => date('H:i:s'), 'step' => $requiresOtp ? 'OTP_WAIT' : 'PREPARING', 'status' => 'info', 'message' => $requiresOtp ? "درخواست کد OTP برای شماره {$contactPhone} ثبت گردید. در انتظار ورود کد..." : "آماده‌سازی ارسال خودکار داده‌ها..."]
                 ],
                 'otpRequired' => $requiresOtp,
                 'usedEngine' => 'offline-heuristic-iran'

@@ -300,10 +300,16 @@ async function executeJob(job, claimData) {
 
     let targetUrl = (restoredSessionData && restoredSessionData.currentUrl) || job.targetUrl;
     if (!targetUrl) {
-      if (job.platformId === 'plat_divar' || (job.platformDomain && job.platformDomain.includes('divar'))) {
-        targetUrl = 'https://divar.ir/new';
-      } else if (job.platformId === 'plat_sheypoor' || (job.platformDomain && job.platformDomain.includes('sheypoor'))) {
+      const pid = (job.platformId || '').toLowerCase();
+      const pdom = (job.platformDomain || '').toLowerCase();
+      if (pid.includes('agahi24') || pdom.includes('agahi24')) {
+        targetUrl = 'https://www.agahi24.com/register';
+      } else if (pid.includes('payamsara') || pdom.includes('payamsara')) {
+        targetUrl = 'https://payamsara.com/framework/user/register';
+      } else if (pid.includes('sheypoor') || pdom.includes('sheypoor')) {
         targetUrl = 'https://www.sheypoor.com/session';
+      } else if (pid.includes('istgah') || pdom.includes('istgah')) {
+        targetUrl = 'https://www.istgah.com/register/';
       } else {
         targetUrl = 'https://divar.ir/new';
       }
@@ -322,7 +328,7 @@ async function executeJob(job, claimData) {
     // If this is a resumed job with human resolution already provided
     if (isResumingJob && job.otpCode) {
       console.log(`🔑 [Resume Processing] Applying human provided OTP code: ${job.otpCode}...`);
-      const otpInput = await page.$('input[autocomplete="one-time-code"], input[type="number"], input[type="tel"]');
+      const otpInput = await page.$('input[autocomplete="one-time-code"], input[name="digits_otp"], input[type="number"], input[type="tel"]');
       if (otpInput) {
         await otpInput.fill(job.otpCode);
         await page.keyboard.press('Enter');
@@ -330,11 +336,14 @@ async function executeJob(job, claimData) {
       }
     }
 
-    // Check for phone input with dynamic DOM hydration wait
-    const phoneSelector = 'input[type="tel"], input[name="phone"], input[name="mobile"], input[autocomplete="tel-national"]';
+    // Comprehensive selector list matching real Iranian classified platforms:
+    // Agahi24: input[name="digits_phone"], input.mobile_field
+    // Payamsara: input[name="user_mobile"], input#user_mobile
+    // Divar/Sheypoor: input[type="tel"], input[name="phone"], input[name="mobile"]
+    const phoneSelector = 'input[name="digits_phone"], input[name="user_mobile"], input#user_mobile, input[type="tel"], input[name="phone"], input[name="mobile"], input[autocomplete="tel-national"]';
     let phoneInput = null;
     try {
-      console.log('⏳ [DOM Interaction] Checking for phone input field...');
+      console.log('⏳ [DOM Interaction] Checking for phone input field with platform-aware selectors...');
       phoneInput = await page.waitForSelector(phoneSelector, { state: 'visible', timeout: 8000 });
     } catch (e) {
       console.log('ℹ️ Phone input not found or already past login step. Inspecting page state...');
@@ -347,25 +356,46 @@ async function executeJob(job, claimData) {
       await phoneInput.fill(contactPhone);
       console.log(`✅ [Form Interaction] Filled phone: ${contactPhone}`);
 
+      // If email input is also present on registration forms (e.g. Agahi24, Payamsara)
+      const emailInput = await page.$('input[name="digits_email"], input[name="email"], input[type="email"]');
+      if (emailInput) {
+        const contactEmail = job.contactEmail || 'info@ashkghalam.ir';
+        await emailInput.fill(contactEmail);
+        console.log(`✅ [Form Interaction] Filled email: ${contactEmail}`);
+      }
+
+      // If name input is present (e.g. Payamsara)
+      const nameInput = await page.$('input[name="name"]');
+      if (nameInput) {
+        await nameInput.fill(job.contactPerson || 'مهندس احسان آهنگر');
+        console.log(`✅ [Form Interaction] Filled name`);
+      }
+
       // Save screenshot
       const screen1 = path.join(EVIDENCE_DIR, `job_${job.id}_step1.png`);
       await page.screenshot({ path: screen1 });
 
-      // Click next button
-      const buttons = await page.$$('button');
-      let submitBtn = null;
-      for (const btn of buttons) {
-        const txt = (await btn.innerText()).trim();
-        if (txt.includes('بعدی') || txt.includes('تایید') || txt.includes('ورود') || txt.includes('ارسال')) {
-          submitBtn = btn;
-          break;
+      // Click submit / send OTP button:
+      // Agahi24 uses button.digits-form_submit, button.digits-form_button
+      // Payamsara uses button:has-text("ثبت نام")
+      const digitsBtn = await page.$('button.digits-form_submit, button.digits-form_button');
+      let submitBtn = digitsBtn;
+
+      if (!submitBtn) {
+        const buttons = await page.$$('button, input[type="submit"]');
+        for (const btn of buttons) {
+          const txt = (await btn.innerText ? await btn.innerText() : await btn.getAttribute('value') || '').trim();
+          if (txt.includes('بعدی') || txt.includes('تایید') || txt.includes('ورود') || txt.includes('ارسال') || txt.includes('ثبت نام') || txt.includes('ادامه')) {
+            submitBtn = btn;
+            break;
+          }
         }
       }
 
       if (submitBtn) {
-        console.log('👉 [Form Interaction] Submitting step 1 to inspect challenge...');
+        console.log('👉 [Form Interaction] Submitting step 1 (triggering real OTP dispatch)...');
         await submitBtn.click();
-        await page.waitForTimeout(4000);
+        await page.waitForTimeout(4500);
       }
     }
 

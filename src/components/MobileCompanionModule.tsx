@@ -323,10 +323,10 @@ export const MobileCompanionModule: React.FC = () => {
   };
 
   const handleDownloadApkFile = () => {
-    const apkUrl = '/downloads/Ashk24_OTP_Companion_v3.9.3.apk';
+    const apkUrl = '/downloads/Ashk24_OTP_Companion_v4.0.16-autonomous-engine.apk';
     const a = document.createElement('a');
     a.href = apkUrl;
-    a.download = 'Ashk24_OTP_Companion_v3.9.3.apk';
+    a.download = 'Ashk24_OTP_Companion_v4.0.16-autonomous-engine.apk';
     a.target = '_blank';
     document.body.appendChild(a);
     a.click();
@@ -337,10 +337,10 @@ export const MobileCompanionModule: React.FC = () => {
   };
 
   const handleDownloadAndroidProjectZip = () => {
-    const zipUrl = '/downloads/Ashk24_Android_Project_v3.9.3.zip';
+    const zipUrl = '/downloads/Ashk24_Android_Project_v4.0.16-autonomous-engine.zip';
     const a = document.createElement('a');
     a.href = zipUrl;
-    a.download = 'Ashk24_Android_Project_v3.9.3.zip';
+    a.download = 'Ashk24_Android_Project_v4.0.16-autonomous-engine.zip';
     a.target = '_blank';
     document.body.appendChild(a);
     a.click();
