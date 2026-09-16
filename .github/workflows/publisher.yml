@@ -1,11 +1,16 @@
 name: Ashk24 Autonomous Publisher
 
 on:
-  schedule:
-    # Run every 10 minutes to poll for new jobs
-    - cron: '*/10 * * * *'
+  # Workflow is triggered manually from GitHub Actions tab or when dispatched by an event.
+  # To enable scheduled runs after cPanel deployment, uncomment the schedule block below.
+  # schedule:
+  #   - cron: '*/30 * * * *'
   workflow_dispatch:
     inputs:
+      cpanel_url:
+        description: 'cPanel API URL (optional override)'
+        required: false
+        default: 'https://secret.ashkghalam.ir/cpanel-backend/api/index.php'
       headless:
         description: 'Run headless'
         required: true
@@ -13,6 +18,7 @@ on:
 
 jobs:
   publish-job:
+    name: Run Autonomous Publisher Agent
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -21,18 +27,26 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'local-agent/package.json'
 
       - name: Install Dependencies
         run: |
           cd local-agent
-          npm install
+          npm install --no-audit
+
+      - name: Install Playwright Chromium with OS Dependencies
+        run: |
+          cd local-agent
+          npx playwright install --with-deps chromium
 
       - name: Run Autonomous Agent
         env:
-          CPANEL_URL: "https://secret.ashkghalam.ir/cpanel-backend/api/index.php"
+          CPANEL_URL: ${{ inputs.cpanel_url || secrets.CPANEL_URL || 'https://secret.ashkghalam.ir/cpanel-backend/api/index.php' }}
           CPANEL_AGENT_TOKEN: ${{ secrets.CPANEL_AGENT_TOKEN || 'secret_9153108763' }}
-          HEADLESS: "true"
+          HEADLESS: ${{ inputs.headless || 'true' }}
+          CI: "true"
         run: |
           cd local-agent
           node index.js --once

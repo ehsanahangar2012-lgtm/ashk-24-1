@@ -11,9 +11,9 @@ on:
         description: 'Target platform (e.g. divar, sheypoor)'
         required: false
         default: 'divar'
-  schedule:
-    # Autonomous periodic run: every 4 hours
-    - cron: '0 */4 * * *'
+  # Autonomous periodic run: uncomment after cPanel deployment
+  # schedule:
+  #   - cron: '0 */4 * * *'
 
 concurrency:
   group: ashk24-worker-execution

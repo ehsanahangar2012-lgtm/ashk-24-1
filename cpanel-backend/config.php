@@ -39,7 +39,7 @@ define('UPLOADS_DIR', __DIR__ . '/uploads');
  */
 define('SITE_URL', 'https://secret.ashkghalam.ir');
 define('APP_NAME', 'سامانه هوش مصنوعی اشک ۲۴');
-define('APP_VERSION', '4.0.11-e2e-ready');
+define('APP_VERSION', '4.0.13-stable');
 
 /**
  * Security Secrets

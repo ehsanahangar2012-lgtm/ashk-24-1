@@ -993,7 +993,7 @@ class Ashk24AiEngine {
         ];
 
         // استخراج لینک‌ها از تگ‌های <a> و استخراج لینک‌های هدایت گوگل
-        preg_match_all("/<as+[^>]*href=["']([^"']+)["'][^>]*>(.*?)</a>/is", $html, $matches, PREG_SET_ORDER);
+        preg_match_all('~<a\s+[^>]*href=[\'"]([^\'"]+)[\'"][^>]*>(.*?)</a>~is', $html, $matches, PREG_SET_ORDER);
 
         foreach ($matches as $m) {
             $rawHref = $m[1];
@@ -1013,12 +1013,12 @@ class Ashk24AiEngine {
                 }
             }
 
-            if (!preg_match("/^https?:///i", $targetUrl)) continue;
+            if (!preg_match('~^https?://~i', $targetUrl)) continue;
 
             $parsedHost = parse_url($targetUrl, PHP_URL_HOST);
             if (empty($parsedHost)) continue;
 
-            $cleanDomain = strtolower(preg_replace("/^www./i", "", $parsedHost));
+            $cleanDomain = strtolower(preg_replace('~^www\.~i', '', $parsedHost));
 
             // فیلتر کردن دامنه‌های موتورهای جستجو و شبکه‌های اجتماعی
             $isIgnored = false;
@@ -1063,7 +1063,7 @@ class Ashk24AiEngine {
         $inputTrimmed = trim($input);
 
         // اگر آدرس URL گوگل ارسال شده باشد، با cURL محتوای نتایج دریافت می‌شود
-        if (preg_match("/^https?:///i", $inputTrimmed)) {
+        if (preg_match('~^https?://~i', $inputTrimmed)) {
             $ch = curl_init($inputTrimmed);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);

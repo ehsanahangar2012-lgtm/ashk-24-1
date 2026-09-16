@@ -13,10 +13,49 @@ require_once __DIR__ . '/../ai_engine.php';
 require_once __DIR__ . '/../ocr_engine.php';
 require_once __DIR__ . '/../test_harness.php';
 
+// ثبت مدیریت سراسری خطاها برای جلوگیری از خطای گنگ 500
+set_exception_handler(function(Throwable $e) {
+    if (!headers_sent()) {
+        http_response_code(500);
+        header('Content-Type: application/json; charset=UTF-8');
+    }
+    echo json_encode([
+        'error' => 'خطای داخلی سرور در سیستم سی‌پنل (PHP Exception)',
+        'message' => $e->getMessage(),
+        'file' => basename($e->getFile()),
+        'line' => $e->getLine()
+    ], JSON_UNESCAPED_UNICODE);
+    exit(0);
+});
+
+// تابع ایمن دریافت هدرها در تمام محیط‌های PHP-FPM / CGI / FastCGI
+function getRequestHeadersSafe() {
+    $headers = [];
+    if (function_exists('getallheaders')) {
+        $res = @getallheaders();
+        if (is_array($res)) {
+            foreach ($res as $k => $v) {
+                $headers[strtolower($k)] = $v;
+                $headers[$k] = $v;
+            }
+        }
+    }
+    foreach ($_SERVER as $name => $value) {
+        if (substr($name, 0, 5) === 'HTTP_') {
+            $key = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))));
+            $headers[strtolower($key)] = $value;
+            $headers[$key] = $value;
+        }
+    }
+    if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+        $headers['authorization'] = $_SERVER['HTTP_AUTHORIZATION'];
+        $headers['Authorization'] = $_SERVER['HTTP_AUTHORIZATION'];
+    }
+    return $headers;
+}
+
 // ارسال هدرهای CORS
 sendCorsHeaders();
-
-$db = Ashk24Db::getInstance();
 
 // دریافت مسیر درخواست (Route)
 $route = $_GET['route'] ?? '';
@@ -33,6 +72,8 @@ $body = json_decode($inputJSON, true) ?? [];
 
 // مسیریابی اکشن‌ها
 try {
+    $db = Ashk24Db::getInstance();
+
     // مسیرهای گیت‌وی عیب‌یابی و پایش امن
     if (strpos($route, 'gateway/') === 0) {
         require_once __DIR__ . '/../diagnostic_gateway.php';
@@ -40,28 +81,27 @@ try {
         exit(0);
     }
 
-    
-        // --- Added Authentication Check for Agent Endpoints ---
-        $agentEndpoints = ['jobs', 'jobs/claim', 'jobs/update', 'bridge/handshake/init', 'bridge/handshake/complete'];
-        $isAgentRegex = preg_match('/^jobs\/([^\/]+)$/', $route);
-        if (in_array($route, $agentEndpoints) || $isAgentRegex) {
-            $headers = getallheaders();
-            $authHeader = $headers['Authorization'] ?? ($headers['authorization'] ?? '');
-            $expectedToken = defined('CPANEL_AGENT_TOKEN') ? CPANEL_AGENT_TOKEN : (getenv('CPANEL_AGENT_TOKEN') ?: '');
-            
-            $isValid = false;
-            if (preg_match('/Bearer\s+(.*)/i', $authHeader, $matches)) {
-                if (trim($matches[1]) === $expectedToken) {
-                    $isValid = true;
-                }
-            }
-            if (!$isValid && !empty($expectedToken)) {
-                http_response_code(401);
-                echo json_encode(['error' => 'Unauthorized: Invalid or missing CPANEL_AGENT_TOKEN'], JSON_UNESCAPED_UNICODE);
-                exit(0);
+    // --- Added Authentication Check for Agent Endpoints ---
+    $agentEndpoints = ['jobs', 'jobs/claim', 'jobs/update', 'bridge/handshake/init', 'bridge/handshake/complete'];
+    $isAgentRegex = preg_match('/^jobs\/([^\/]+)$/', $route);
+    if (in_array($route, $agentEndpoints) || $isAgentRegex) {
+        $headers = getRequestHeadersSafe();
+        $authHeader = $headers['authorization'] ?? ($headers['Authorization'] ?? '');
+        $expectedToken = defined('CPANEL_AGENT_TOKEN') ? CPANEL_AGENT_TOKEN : (getenv('CPANEL_AGENT_TOKEN') ?: '');
+        
+        $isValid = false;
+        if (preg_match('/Bearer\s+(.*)/i', $authHeader, $matches)) {
+            if (trim($matches[1]) === $expectedToken) {
+                $isValid = true;
             }
         }
-        // -----------------------------------------------------
+        if (!$isValid && !empty($expectedToken)) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Unauthorized: Invalid or missing CPANEL_AGENT_TOKEN'], JSON_UNESCAPED_UNICODE);
+            exit(0);
+        }
+    }
+    // -----------------------------------------------------
 
     switch (true) {
 
@@ -1882,10 +1922,15 @@ try {
             break;
     }
 
-} catch (Exception $e) {
-    http_response_code(500);
+} catch (Throwable $e) {
+    if (!headers_sent()) {
+        http_response_code(500);
+        header('Content-Type: application/json; charset=UTF-8');
+    }
     echo json_encode([
         'error' => 'خطای داخلی سرور در سیستم سی‌پنل',
-        'details' => $e->getMessage()
+        'details' => $e->getMessage(),
+        'file' => basename($e->getFile()),
+        'line' => $e->getLine()
     ], JSON_UNESCAPED_UNICODE);
 }
