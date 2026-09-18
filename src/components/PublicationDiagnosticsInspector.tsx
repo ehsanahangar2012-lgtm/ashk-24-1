@@ -164,13 +164,12 @@ export const PublicationDiagnosticsInspector: React.FC<PublicationDiagnosticsIns
         const body = await res.json();
         setCustomOcrResult(body.result || body);
       } else {
-        // Local engine test result
         setCustomOcrResult({
-          text: randomDigits,
-          persianDigits: toPersianDigits(randomDigits),
-          confidence: 97.4,
-          speedMs: 11,
-          method: 'موتور OCR بومی محلی اشک ۲۴ (Matrix Classifier)',
+          text: '---',
+          persianDigits: '---',
+          confidence: 0,
+          speedMs: 0,
+          method: 'تصویر کپچای معتبر ارسال نشده است. لطفاً تصویر را بارگذاری فرمایید.',
         });
       }
     } catch (e) {

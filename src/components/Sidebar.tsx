@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Sparkles,
   Smartphone,
+  BookOpen,
 } from 'lucide-react';
 
 export type TabType =
@@ -26,6 +27,7 @@ interface SidebarProps {
   reportsCount?: number;
   isOpenMobile?: boolean;
   onCloseMobile?: () => void;
+  onOpenStepByStepGuide?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -36,6 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   reportsCount = 4,
   isOpenMobile = false,
   onCloseMobile,
+  onOpenStepByStepGuide,
 }) => {
   const menuItems = [
     {
@@ -128,8 +131,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
         })}
       </div>
 
-      {/* System info box & Test Button */}
+      {/* System info box & Step-by-Step Guide Button */}
       <div className="mt-4 space-y-2">
+        {onOpenStepByStepGuide && (
+          <button
+            onClick={() => {
+              onOpenStepByStepGuide();
+              if (onCloseMobile) onCloseMobile();
+            }}
+            className="w-full p-3 rounded-2xl bg-gradient-to-r from-amber-500/20 to-amber-600/10 border border-amber-500/40 text-amber-300 hover:border-amber-400 text-xs font-bold transition-all text-right flex items-center justify-between group shadow-sm"
+          >
+            <div className="flex items-center space-x-2 space-x-reverse">
+              <div className="w-7 h-7 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
+                <BookOpen className="w-4 h-4" />
+              </div>
+              <div>
+                <div>راهنمای ۵ مرحله‌ای</div>
+                <div className="text-[10px] text-slate-400 font-normal">از نصب تا انتشار قطعی</div>
+              </div>
+            </div>
+            <span className="text-amber-400 font-bold text-xs">←</span>
+          </button>
+        )}
+
         <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800/80 text-xs text-slate-400 space-y-1.5">
           <div className="flex items-center space-x-1.5 space-x-reverse text-amber-400 font-semibold">
             <Sparkles className="w-3.5 h-3.5" />

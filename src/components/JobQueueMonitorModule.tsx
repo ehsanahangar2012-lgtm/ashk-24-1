@@ -305,41 +305,39 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
   };
 
   const handleFastForwardJob = async (job: PublicationJob) => {
+    const urls = getPlatformUrls(job);
+    const enteredUrl = window.prompt(
+      `لطفاً آدرس لینک مستقیم و واقعی آگهی ثبت‌شده در ${job.platformName} را وارد فرمایید:`,
+      job.adUrl || urls.home
+    );
+    if (enteredUrl === null) return;
+
+    const adUrl = enteredUrl.trim() || urls.home;
     setActionLoadingId(job.id);
     try {
-      const urls = getPlatformUrls(job);
-      let adUrl = urls.home;
-      if (job.platformId.includes('payamsara') || (job.platformDomain || '').includes('payamsara')) {
-        adUrl = `https://www.payamsara.com/ads/adsview/${Math.floor(10650000 + Math.random() * 50000)}/تولید-کارتن-و-جعبه-اشک-قلم`;
-      } else if (job.platformId.includes('agahi24')) {
-        adUrl = `https://agahi24.com/ad/ashkghalam-${Math.floor(10000 + Math.random() * 90000)}`;
-      } else if (job.platformId.includes('istgah')) {
-        adUrl = `https://www.istgah.com/advertisement/${Math.floor(100000 + Math.random() * 900000)}`;
-      }
-
       await clientStorage.updateJob(job.id, {
         status: 'published',
         progressPercent: 100,
-        currentStep: `آگهی با موفقیت در ${job.platformName} منتشر گردید.`,
+        currentStep: `آگهی با لینک واقعی در ${job.platformName} تایید گردید.`,
         adUrl,
         publishedAt: new Date().toISOString(),
         logs: [
           ...(job.logs || []),
           {
             timestamp: new Date().toLocaleTimeString('fa-IR'),
-            step: 'FastForwardPublish',
+            step: 'ManualVerification',
             status: 'success',
-            message: `انتشار توسط کاربر تایید و آگهی در سرور مقصد مستقر شد. لینک: ${adUrl}`,
+            message: `لینک واقعی انتشار توسط کاربر ثبت شد: ${adUrl}`,
           },
         ],
       });
-      showNotification(`آگهی در ${job.platformName} با موفقیت منتشر گردید.`);
+      showNotification(`آگهی در ${job.platformName} با موفقیت ثبت گردید.`);
       onRefreshJobs();
       if (assistantJob && assistantJob.id === job.id) {
         setAssistantJob(null);
       }
     } catch (e) {
-      showNotification('خطا در انتشار سریع آگهی.', 'error');
+      showNotification('خطا در ثبت آگهی.', 'error');
     } finally {
       setActionLoadingId(null);
     }

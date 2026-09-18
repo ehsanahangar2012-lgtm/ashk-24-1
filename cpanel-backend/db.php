@@ -313,7 +313,7 @@ class Ashk24Db {
                     'createdAt' => date('c'),
                     'lastLoginAt' => date('c'),
                     'isActive' => true,
-                    'passwordHash' => password_hash('ashk24', PASSWORD_DEFAULT)
+                    'passwordHash' => password_hash('123', PASSWORD_DEFAULT)
                 ],
                 [
                     'id' => 'usr_op_02',
@@ -323,7 +323,7 @@ class Ashk24Db {
                     'createdAt' => date('c'),
                     'lastLoginAt' => date('c'),
                     'isActive' => true,
-                    'passwordHash' => password_hash('ashk24', PASSWORD_DEFAULT)
+                    'passwordHash' => password_hash('123', PASSWORD_DEFAULT)
                 ]
             ]
         ];
@@ -809,7 +809,7 @@ class Ashk24Db {
                 'username' => 'admin',
                 'fullName' => 'مدیر ارشد سیستم',
                 'role' => 'admin',
-                'passwordHash' => password_hash('ashk24', PASSWORD_DEFAULT),
+                'passwordHash' => password_hash('123', PASSWORD_DEFAULT),
                 'createdAt' => date('c'),
                 'isActive' => true
             ],
@@ -818,7 +818,7 @@ class Ashk24Db {
                 'username' => 'operator',
                 'fullName' => 'اپراتور اتوماسیون',
                 'role' => 'operator',
-                'passwordHash' => password_hash('ashk24', PASSWORD_DEFAULT),
+                'passwordHash' => password_hash('123', PASSWORD_DEFAULT),
                 'createdAt' => date('c'),
                 'isActive' => true
             ]

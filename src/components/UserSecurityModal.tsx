@@ -48,14 +48,6 @@ export function UserSecurityModal({ currentUser, onClose, onLogout }: UserSecuri
         createdAt: new Date().toISOString(),
         isActive: true,
       },
-      {
-        id: 'usr_operator',
-        username: 'operator',
-        fullName: 'اپراتور اتوماسیون',
-        role: 'operator',
-        createdAt: new Date().toISOString(),
-        isActive: true,
-      },
     ];
 
     // Merge with server users if available

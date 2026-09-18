@@ -71,7 +71,24 @@ export function LoginGate({ currentUser, onLoginSuccess, onLogout, children }: L
   // Helper to get locally stored users
   const getLocalStoredUsers = (): any[] => {
     try {
-      return JSON.parse(localStorage.getItem('ashk24_local_users') || '[]');
+      const stored = localStorage.getItem('ashk24_local_users');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+      // Initial default admin user with password 123
+      const initialUsers = [
+        {
+          id: 'usr_admin',
+          username: 'admin',
+          fullName: 'مدیر ارشد سامانه',
+          role: 'admin',
+          password: '123',
+          createdAt: new Date().toISOString(),
+          isActive: true,
+        },
+      ];
+      localStorage.setItem('ashk24_local_users', JSON.stringify(initialUsers));
+      return initialUsers;
     } catch (e) {
       return [];
     }
@@ -162,7 +179,7 @@ export function LoginGate({ currentUser, onLoginSuccess, onLogout, children }: L
         setLoading(false);
         return;
       } else {
-        setErrorMsg('نام کاربری یا رمز عبور نامعتبر است. برای ورود سریع می‌توانید از دکمه‌های ورود سریع زیر استفاده کنید.');
+        setErrorMsg('نام کاربری یا کلمه عبور وارد شده نادرست است. لطفاً مشخصات کاربری معتبر سامانه را وارد نمایید.');
       }
     } catch (err: any) {
       setErrorMsg('خطایی در فرآیند احراز هویت رخ داد. لطفاً مجدداً تلاش نمایید.');
@@ -176,12 +193,6 @@ export function LoginGate({ currentUser, onLoginSuccess, onLogout, children }: L
     executeLogin(username, password);
   };
 
-  const handleQuickLogin = (uname: string, pass: string) => {
-    setUsername(uname);
-    setPassword(pass);
-    executeLogin(uname, pass);
-  };
-
   const handleResetDefaultPasswords = async () => {
     setResetting(true);
     setErrorMsg('');
@@ -191,34 +202,25 @@ export function LoginGate({ currentUser, onLoginSuccess, onLogout, children }: L
       // 1. Reset on cPanel server
       await fetch('/cpanel-backend/api/index.php?route=auth/reset-passwords', { method: 'POST' }).catch(() => {});
 
-      // 3. Reset in local storage
+      // 2. Reset in local storage to admin: 123
       const defaultLocal = [
         {
           id: 'usr_admin',
           username: 'admin',
-          fullName: 'مدیر ارشد سیستم',
+          fullName: 'مدیر ارشد سامانه',
           role: 'admin',
-          password: 'ashk24',
-          createdAt: new Date().toISOString(),
-          isActive: true,
-        },
-        {
-          id: 'usr_operator',
-          username: 'operator',
-          fullName: 'اپراتور اتوماسیون',
-          role: 'operator',
-          password: 'ashk24',
+          password: '123',
           createdAt: new Date().toISOString(),
           isActive: true,
         },
       ];
       localStorage.setItem('ashk24_local_users', JSON.stringify(defaultLocal));
 
-      setInfoMsg('کلمات عبور پیش‌فرض (admin و operator) با موفقیت به ashk24 بازنشانی شد.');
+      setInfoMsg('حساب مدیر ارشد با نام کاربری admin و رمز عبور پیش‌فرض 123 با موفقیت فعال و بازنشانی شد.');
       setUsername('admin');
-      setPassword('ashk24');
+      setPassword('123');
     } catch (e) {
-      setErrorMsg('خطا در بازنشانی کلمات عبور.');
+      setErrorMsg('خطا در بازنشانی حساب کاربری.');
     } finally {
       setResetting(false);
     }
@@ -359,9 +361,10 @@ export function LoginGate({ currentUser, onLoginSuccess, onLogout, children }: L
               disabled={resetting}
               onClick={handleResetDefaultPasswords}
               className="text-amber-400/80 hover:text-amber-300 text-[11px] underline flex items-center space-x-1 space-x-reverse cursor-pointer disabled:opacity-50"
+              title="در صورت فراموشی رمز، حساب مدیر اصلی به حالت پیش‌فرض بازنشانی می‌شود"
             >
               <RotateCcw className="w-3 h-3 ml-1" />
-              <span>{resetting ? 'در حال بازنشانی...' : 'بازیابی رمزهای پیش‌فرض'}</span>
+              <span>{resetting ? 'در حال بازنشانی...' : 'بازیابی دسترسی اولیه مدیر'}</span>
             </button>
           </div>
 
@@ -384,30 +387,12 @@ export function LoginGate({ currentUser, onLoginSuccess, onLogout, children }: L
           </button>
         </form>
 
-        {/* Quick Access Credentials Buttons */}
-        <div className="pt-3 border-t border-slate-800/80 space-y-2">
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="text-slate-400 font-medium">ورود سریع با حساب‌های پیش‌فرض:</span>
-            <span className="text-slate-500 font-mono text-[10px]">رمز: ashk24</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('admin', 'ashk24')}
-              className="py-2.5 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-amber-400 border border-slate-700/50 text-xs transition-colors font-semibold flex items-center justify-center space-x-1.5 space-x-reverse cursor-pointer"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-400 ml-1 shrink-0" />
-              <span className="truncate">مدیر کل (admin)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('operator', 'ashk24')}
-              className="py-2.5 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-emerald-400 border border-slate-700/50 text-xs transition-colors font-semibold flex items-center justify-center space-x-1.5 space-x-reverse cursor-pointer"
-            >
-              <User className="w-3.5 h-3.5 text-emerald-400 ml-1 shrink-0" />
-              <span className="truncate">اپراتور (operator)</span>
-            </button>
-          </div>
+        <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+          <span className="flex items-center space-x-1.5 space-x-reverse">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 ml-1 shrink-0" />
+            <span>احراز هویت رمزنگاری شده چندلایه</span>
+          </span>
+          <span className="text-[10px] text-slate-500 font-mono">cPanel PHP 8.x + Vault</span>
         </div>
 
         <div className="text-center text-[10px] text-slate-500 pt-1">

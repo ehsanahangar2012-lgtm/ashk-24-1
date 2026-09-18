@@ -1135,6 +1135,50 @@ try {
                 foreach ($jobs as $job) {
                     if ($job['status'] === 'waiting_otp' || $job['status'] === 'paused_user_action') {
                         $matchedJobId = $job['id'];
+                        $platId = strtolower($job['platformId'] ?? '');
+                        $platDom = strtolower($job['platformDomain'] ?? '');
+
+                        if (strpos($platId, 'divar') !== false || strpos($platDom, 'divar') !== false) {
+                            // Automatically confirm OTP with Divar server directly
+                            $ch = curl_init('https://api.divar.ir/v5/auth/confirm');
+                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                            curl_setopt($ch, CURLOPT_POST, true);
+                            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                                'Content-Type: application/json',
+                                'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0.0.0 Safari/537.36'
+                            ]);
+                            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+                                'phone' => '09153108763',
+                                'code' => (string)$otp
+                            ]));
+                            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+                            $divarRes = curl_exec($ch);
+                            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                            curl_close($ch);
+
+                            $divarData = json_decode($divarRes, true);
+                            if ($httpCode === 200 && !empty($divarData['token'])) {
+                                $token = $divarData['token'];
+                                $db->updatePlatformSession($job['platformId'], [
+                                    'sessionStatus' => 'authenticated',
+                                    'sessionToken' => $token,
+                                    'lastLoginAt' => date('c')
+                                ]);
+                                $db->addJobLog($job['id'], [
+                                    'step' => 'Mobile SMS Auto-Relay',
+                                    'status' => 'success',
+                                    'message' => "کد تایید OTP ($otp) از موبایل دریافت و نشست واقعی در دیوار فعال گردید."
+                                ]);
+                                $db->updateJob($job['id'], [
+                                    'status' => 'authenticated',
+                                    'progressPercent' => 85,
+                                    'currentStep' => "احراز هویت خودکار در دیوار با موفقیت تایید شد و نشست کاری فعال گردید.",
+                                    'otpCode' => $otp
+                                ]);
+                                break;
+                            }
+                        }
+
                         $db->addJobLog($job['id'], [
                             'step' => 'Mobile SMS Auto-Relay',
                             'status' => 'success',
@@ -1604,7 +1648,7 @@ try {
         case ($route === 'auth/reset-passwords'):
             $users = $db->resetDefaultUsers();
             echo json_encode([
-                'message' => 'کلمات عبور پیش‌فرض (admin و operator) به ashk24 بازنشانی گردید.',
+                'message' => 'کلمات عبور پیش‌فرض (admin و operator) به 123 بازنشانی گردید.',
                 'users' => $users
             ], JSON_UNESCAPED_UNICODE);
             break;

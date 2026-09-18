@@ -12,6 +12,7 @@ import { CompanyProfileView } from './components/CompanyProfileView';
 import { CompanyProfileModal } from './components/CompanyProfileModal';
 import { ImageUploadVaultModal } from './components/ImageUploadVaultModal';
 import { CpanelGuideModal } from './components/CpanelGuideModal';
+import { StepByStepGuideModal } from './components/StepByStepGuideModal';
 import { MobileCompanionModule } from './components/MobileCompanionModule';
 import { LoginGate, UserSecurityModal } from './components/LoginGate';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -35,6 +36,7 @@ export default function App() {
   const [showSecurityModal, setShowSecurityModal] = useState<boolean>(false);
   const [showMediaVaultModal, setShowMediaVaultModal] = useState<boolean>(false);
   const [showCpanelModal, setShowCpanelModal] = useState<boolean>(false);
+  const [showStepByStepGuideModal, setShowStepByStepGuideModal] = useState<boolean>(false);
 
   // Authentication state initialized only with saved localStorage or null (force login gate)
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
@@ -197,6 +199,7 @@ export default function App() {
           onOpenCompanyModal={() => setShowCompanyModal(true)}
           onOpenMediaVault={() => setShowMediaVaultModal(true)}
           onOpenCpanelGuide={() => setShowCpanelModal(true)}
+          onOpenStepByStepGuide={() => setShowStepByStepGuideModal(true)}
           onOpenSecurityModal={() => setShowSecurityModal(true)}
           onLogout={handleLogout}
           onRefreshData={fetchAllData}
@@ -240,6 +243,7 @@ export default function App() {
             unreadSmsCount={smsLogs.length}
             isOpenMobile={mobileSidebarOpen}
             onCloseMobile={() => setMobileSidebarOpen(false)}
+            onOpenStepByStepGuide={() => setShowStepByStepGuideModal(true)}
           />
 
           {/* Dynamic Main View & Footer in Vertical Column */}
@@ -350,6 +354,16 @@ export default function App() {
         <CpanelGuideModal
           isOpen={showCpanelModal}
           onClose={() => setShowCpanelModal(false)}
+        />
+
+        {/* Modal for 5-Step Execution & Publishing Guide */}
+        <StepByStepGuideModal
+          isOpen={showStepByStepGuideModal}
+          onClose={() => setShowStepByStepGuideModal(false)}
+          onNavigateTab={(tab) => {
+            setActiveTab(tab);
+            setShowStepByStepGuideModal(false);
+          }}
         />
       </div>
     </LoginGate>

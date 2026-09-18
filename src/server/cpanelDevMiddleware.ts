@@ -222,128 +222,130 @@ function writeDb(data: any) {
 }
 
 function advanceJobLifecycle(jobId: string) {
-  setTimeout(() => {
+  // Real processing: No fake timeouts, no fake OTPs, no fake ad URLs.
+  setTimeout(async () => {
     try {
-      const db1 = readDb();
-      const job1 = (db1.publicationJobs || []).find((j: any) => j.id === jobId);
-      if (!job1 || job1.status === 'failed' || job1.status === 'published') return;
+      const db = readDb();
+      const job = (db.publicationJobs || []).find((j: any) => j.id === jobId);
+      if (!job || job.status === 'failed' || job.status === 'published') return;
 
-      job1.progressPercent = 35;
-      job1.currentStep = `پایش زنده ساختار DOM و فیلدهای سایت مقصد (${job1.platformName})...`;
-      job1.logs = job1.logs || [];
-      job1.logs.push({
-        timestamp: new Date().toISOString(),
-        level: 'info',
-        message: `تحلیل فیلدهای فرم سایت ${job1.platformDomain || job1.platformName} توسط موتور DOM انجام شد.`,
-      });
-      job1.updatedAt = new Date().toISOString();
-      writeDb(db1);
+      const plat = (db.mediaPlatforms || []).find((p: any) => p.id === job.platformId);
+      const cleanDom = (job.platformDomain || plat?.domain || '').toLowerCase();
+      const phone = '09153108763';
 
-      setTimeout(() => {
+      if (cleanDom.includes('divar') || job.platformId?.includes('divar')) {
+        // Send REAL OTP request to Divar
         try {
-          const db2 = readDb();
-          const job2 = (db2.publicationJobs || []).find((j: any) => j.id === jobId);
-          if (!job2 || job2.status === 'failed' || job2.status === 'published') return;
+          const resp = await fetch('https://api.divar.ir/v5/auth/authenticate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0.0.0 Safari/537.36'
+            },
+            body: JSON.stringify({ phone })
+          });
+          const respData: any = await resp.json().catch(() => ({}));
 
-          const plat = (db2.mediaPlatforms || []).find((p: any) => p.id === job2.platformId);
-          const needsOtp = Boolean(plat?.requiresOtp && plat?.sessionStatus !== 'authenticated');
-
-          if (needsOtp) {
-            const otpCode = Math.floor(10000 + Math.random() * 90000).toString();
-            job2.status = 'waiting_otp';
-            job2.progressPercent = 50;
-            job2.currentStep = `در انتظار ورود کد تایید پیامک (OTP) جهت ورود به ${job2.platformName}`;
-            job2.otpCode = otpCode;
-            job2.logs.push({
+          if (resp.ok) {
+            job.status = 'waiting_otp';
+            job.progressPercent = 45;
+            job.otpRequired = true;
+            job.currentStep = `پیامک کد تایید واقعی از طرف دیوار به شماره ${phone} ارسال شد. لطفاً کد دریافتی را وارد کنید.`;
+            job.logs = job.logs || [];
+            job.logs.push({
               timestamp: new Date().toISOString(),
               level: 'warning',
-              message: `چالش امنیتی پیامکی صادر شد. پیامک شبیه‌سازی‌شده حاوی کد ${otpCode} به شماره 09153108763 ارسال گردید.`,
+              message: `درخواست واقعی ارسال کد تایید به سرور دیوار ارسال شد. پیامک به شماره ${phone} مخابره گردید.`
             });
 
-            db2.smsLogs = db2.smsLogs || [];
-            db2.smsLogs.unshift({
+            db.smsLogs = db.smsLogs || [];
+            db.smsLogs.unshift({
               id: `sms_${Date.now()}`,
-              sender: (job2.platformName || 'SMS').slice(0, 15),
-              senderNumber: '1000' + Math.floor(100000 + Math.random() * 900000),
-              recipient: '09153108763',
+              sender: 'دیوار (Divar)',
+              senderNumber: 'Divar-OTP',
+              recipient: phone,
               timestamp: new Date().toISOString(),
-              message: `کد ورود/تایید درگاه ${job2.platformName}: ${otpCode} - اعتبار ۵ دقیقه`,
-              otpCode,
-              parsedSuccessfully: true,
-              platformId: job2.platformId,
-              status: 'delivered',
+              message: `درخواست احراز هویت دیوار به سرور ارسال شد. پیامک واقعی به شماره همراه ${phone} صادر گردید.`,
+              parsedSuccessfully: false,
+              platformId: job.platformId,
+              status: 'pending_input'
             });
 
-            job2.updatedAt = new Date().toISOString();
-            writeDb(db2);
-            return;
+            job.updatedAt = new Date().toISOString();
+            writeDb(db);
+          } else {
+            job.status = 'failed';
+            job.currentStep = 'خطا در برقراری ارتباط با درگاه احراز هویت دیوار.';
+            job.logs = job.logs || [];
+            job.logs.push({
+              timestamp: new Date().toISOString(),
+              level: 'error',
+              message: `پاسخ سرور دیوار: ${JSON.stringify(respData)}`
+            });
+            job.updatedAt = new Date().toISOString();
+            writeDb(db);
           }
-
-          // If no OTP needed, proceed with form submission
-          job2.progressPercent = 70;
-          job2.currentStep = 'تکمیل خودکار مقادیر فرم با داده‌های اشک قلم (نام، تلفن 09153108763، عنوان و متن سئو شده)...';
-          job2.logs.push({
+        } catch (fetchErr: any) {
+          job.status = 'failed';
+          job.currentStep = 'عدم دسترسی به سرور دیوار به دلیل اختلال شبکه.';
+          job.logs = job.logs || [];
+          job.logs.push({
+            timestamp: new Date().toISOString(),
+            level: 'error',
+            message: `خطای اتصال: ${fetchErr.message}`
+          });
+          job.updatedAt = new Date().toISOString();
+          writeDb(db);
+        }
+      } else if (cleanDom.includes('agahi24')) {
+        // Real probe to agahi24.com
+        try {
+          const resp = await fetch('https://www.agahi24.com/login?login=true', {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0.0.0 Safari/537.36'
+            }
+          });
+          job.status = 'paused_user_action';
+          job.progressPercent = 40;
+          job.currentStep = 'ارتباط با سرور آگهی ۲۴ برقرار است. جهت تکمیل ورود، استفاده از افزونه مرورگر یا ورود مستقیم الزامی است.';
+          job.logs = job.logs || [];
+          job.logs.push({
             timestamp: new Date().toISOString(),
             level: 'info',
-            message: 'فیلدهای عنوان، دسته‌بندی و شماره تماس اشک قلم با موفقیت در فرم درج گردید.',
+            message: `اتصال واقعی به agahi24.com بررسی شد (HTTP ${resp.status}). سیستم نیازمند تعامل با فرم ورود/افزونه مرورگر است.`
           });
-          job2.updatedAt = new Date().toISOString();
-          writeDb(db2);
-
-          setTimeout(() => {
-            try {
-              const db3 = readDb();
-              const job3 = (db3.publicationJobs || []).find((j: any) => j.id === jobId);
-              if (!job3 || job3.status === 'failed' || job3.status === 'published') return;
-
-              job3.progressPercent = 90;
-              job3.currentStep = 'بارگذاری تصاویر صنعتی کارتن لمینتی و جعبه دایکاتی اشک قلم و ارسال نهایی فرم...';
-              job3.logs.push({
-                timestamp: new Date().toISOString(),
-                level: 'info',
-                message: 'تصاویر پیوست آگهی با کیفیت استاندارد بارگذاری شدند.',
-              });
-              job3.updatedAt = new Date().toISOString();
-              writeDb(db3);
-
-              setTimeout(() => {
-                try {
-                  const db4 = readDb();
-                  const job4 = (db4.publicationJobs || []).find((j: any) => j.id === jobId);
-                  if (!job4 || job4.status === 'failed' || job4.status === 'published') return;
-
-                  let adUrl = `https://${job4.platformDomain || 'payamsara.com'}/ad/${Date.now()}`;
-                  const cleanDom = (job4.platformDomain || '').toLowerCase();
-                  if (cleanDom.includes('payamsara')) {
-                    adUrl = `https://www.payamsara.com/ads/adsview/${Math.floor(10650000 + Math.random() * 50000)}/تولید-کارتن-و-جعبه-اشک-قلم`;
-                  } else if (cleanDom.includes('agahi24')) {
-                    adUrl = `https://www.agahi24.com/ad/ashkghalam-${Math.floor(10000 + Math.random() * 90000)}`;
-                  } else if (cleanDom.includes('istgah')) {
-                    adUrl = `https://www.istgah.com/advertisement/${Math.floor(100000 + Math.random() * 900000)}`;
-                  } else if (cleanDom.includes('baskool')) {
-                    adUrl = 'https://www.baskool.com/profile/ashkghalam';
-                  }
-
-                  job4.status = 'published';
-                  job4.progressPercent = 100;
-                  job4.currentStep = `آگهی با موفقیت در ${job4.platformName} منتشر گردید.`;
-                  job4.adUrl = adUrl;
-                  job4.publishedAt = new Date().toISOString();
-                  job4.logs.push({
-                    timestamp: new Date().toISOString(),
-                    level: 'success',
-                    message: `آگهی با موفقیت منتشر گردید. لینک مستقیم: ${adUrl}`,
-                  });
-                  job4.updatedAt = new Date().toISOString();
-                  writeDb(db4);
-                } catch (e) {}
-              }, 2000);
-            } catch (e) {}
-          }, 2000);
-        } catch (e) {}
-      }, 2000);
-    } catch (e) {}
-  }, 1000);
+          job.updatedAt = new Date().toISOString();
+          writeDb(db);
+        } catch (probeErr: any) {
+          job.status = 'failed';
+          job.currentStep = 'عدم دسترسی به سرور agahi24.com';
+          job.logs = job.logs || [];
+          job.logs.push({
+            timestamp: new Date().toISOString(),
+            level: 'error',
+            message: `خطای شبکه: ${probeErr.message}`
+          });
+          job.updatedAt = new Date().toISOString();
+          writeDb(db);
+        }
+      } else {
+        // Other platforms stay in pending waiting for extension or local agent
+        job.status = 'pending';
+        job.progressPercent = 25;
+        job.currentStep = `در انتظار دریافت و اجرای نوبت کاری توسط ورکر محلی / افزونه اشک ۲۴ برای ${job.platformName}`;
+        job.logs = job.logs || [];
+        job.logs.push({
+          timestamp: new Date().toISOString(),
+          level: 'info',
+          message: `نوبت انتشار در صف قرار گرفت و آماده تحویل به ورکر یا افزونه است.`
+        });
+        job.updatedAt = new Date().toISOString();
+        writeDb(db);
+      }
+    } catch (e) {
+      console.error('Real lifecycle error:', e);
+    }
+  }, 500);
 }
 
 export function cpanelDevApiPlugin(): Plugin {
@@ -604,41 +606,201 @@ export function cpanelDevApiPlugin(): Plugin {
               const job = db.publicationJobs.find((j: any) => j.id === jobId);
               if (!job) return sendJson({ error: 'Job not found' }, 404);
 
-              job.status = 'processing';
+              const cleanDom = (job.platformDomain || '').toLowerCase();
+              const phone = '09153108763';
+
+              if (cleanDom.includes('divar') || job.platformId?.includes('divar')) {
+                try {
+                  const confirmResp = await fetch('https://api.divar.ir/v5/auth/confirm', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0.0.0 Safari/537.36'
+                    },
+                    body: JSON.stringify({ phone, code: otpCode })
+                  });
+
+                  const confirmData: any = await confirmResp.json().catch(() => ({}));
+
+                  if (confirmResp.ok && confirmData.token) {
+                    const token = confirmData.token;
+                    const plat = db.mediaPlatforms.find((p: any) => p.id === job.platformId);
+                    if (plat) {
+                      plat.sessionStatus = 'authenticated';
+                      plat.sessionToken = token;
+                    }
+
+                    job.status = 'authenticated';
+                    job.otpCode = otpCode;
+                    job.progressPercent = 80;
+                    job.currentStep = 'احراز هویت واقعی در دیوار با کد تایید پیامک انجام شد. نشست امن ذخیره گردید.';
+                    job.logs = job.logs || [];
+                    job.logs.push({
+                      timestamp: new Date().toISOString(),
+                      level: 'success',
+                      message: `کد تایید ${otpCode} توسط سرور رسمی دیوار تایید گردید و نشست اختصاصی معتبر صادر شد.`
+                    });
+                    job.updatedAt = new Date().toISOString();
+                    writeDb(db);
+
+                    return sendJson({
+                      success: true,
+                      message: 'احراز هویت واقعی در دیوار با موفقیت انجام شد.',
+                      sessionToken: token,
+                      job
+                    });
+                  } else {
+                    job.status = 'waiting_otp';
+                    job.logs = job.logs || [];
+                    job.logs.push({
+                      timestamp: new Date().toISOString(),
+                      level: 'error',
+                      message: `کد تایید وارد شده (${otpCode}) توسط سرور دیوار پذیرفته نشد: ${confirmData.message || 'کد نامعتبر است'}`
+                    });
+                    job.updatedAt = new Date().toISOString();
+                    writeDb(db);
+
+                    return sendJson({
+                      success: false,
+                      error: 'کد تایید وارد شده توسط سرور دیوار تایید نشد. لطفاً کد صحیح را مجدداً وارد فرمایید.',
+                      rawResponse: confirmData
+                    }, 400);
+                  }
+                } catch (netErr: any) {
+                  return sendJson({ success: false, error: `خطا در ارتباط با دیوار: ${netErr.message}` }, 500);
+                }
+              }
+
+              // Non-divar platforms: save verified code and await agent or manual form submission
+              job.status = 'authenticated';
               job.otpCode = otpCode;
               job.progressPercent = 75;
-              job.currentStep = `کد تایید (${otpCode}) با موفقیت تایید شد؛ در حال ارسال اطلاعات و بارگذاری تصاویر آگهی...`;
+              job.currentStep = `کد تایید (${otpCode}) ثبت شد. آماده تکمیل مرحله ارسال آگهی توسط ورکر محلی یا کاربر.`;
               job.logs = job.logs || [];
               job.logs.push({
                 timestamp: new Date().toISOString(),
                 level: 'success',
-                message: `کد تایید ${otpCode} توسط سرور تایید و گیت اعتبارسنجی باز شد.`,
+                message: `کد تایید ${otpCode} در پرونده ثبت شد.`
               });
               job.updatedAt = new Date().toISOString();
               writeDb(db);
 
-              setTimeout(() => {
-                try {
-                  const curDb = readDb();
-                  const target = curDb.publicationJobs.find((x: any) => x.id === jobId);
-                  if (target && target.status !== 'failed') {
-                    target.status = 'published';
-                    target.progressPercent = 100;
-                    target.currentStep = `آگهی با موفقیت در ${target.platformName} منتشر گردید.`;
-                    target.adUrl = `https://${target.platformDomain || 'payamsara.com'}/ads/adsview/${Math.floor(10650000 + Math.random() * 50000)}/تولید-کارتن-و-جعبه-اشک-قلم`;
-                    target.publishedAt = new Date().toISOString();
-                    target.logs.push({
-                      timestamp: new Date().toISOString(),
-                      level: 'success',
-                      message: `آگهی با موفقیت منتشر گردید. لینک مستقیم: ${target.adUrl}`,
-                    });
-                    target.updatedAt = new Date().toISOString();
-                    writeDb(curDb);
-                  }
-                } catch (e) {}
-              }, 2000);
+              return sendJson({ success: true, message: 'کد تایید OTP با موفقیت ثبت شد.', job });
+            }
 
-              return sendJson({ success: true, message: 'کد تایید OTP با موفقیت ثبت شد و آگهی در حال انتشار نهایی است.', job });
+            case 'puppet/request-otp': {
+              const platformId = body.platformId || '';
+              const domain = (body.domain || '').toLowerCase();
+              const phone = body.phoneNumber || '09153108763';
+
+              if (!phone) {
+                return sendJson({ success: false, error: 'شماره موبایل الزامی است.' }, 400);
+              }
+
+              if (domain.includes('divar') || platformId.includes('divar')) {
+                try {
+                  const resp = await fetch('https://api.divar.ir/v5/auth/authenticate', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0.0.0 Safari/537.36'
+                    },
+                    body: JSON.stringify({ phone })
+                  });
+                  const respData: any = await resp.json().catch(() => ({}));
+                  if (resp.ok) {
+                    return sendJson({
+                      success: true,
+                      message: `کد تایید پیامکی از طرف سرور دیوار به شماره ${phone} ارسال گردید.`,
+                      rawResponse: respData
+                    });
+                  } else {
+                    return sendJson({
+                      success: false,
+                      error: 'خطا در ارسال درخواست OTP به دیوار',
+                      rawResponse: respData
+                    }, resp.status || 500);
+                  }
+                } catch (e: any) {
+                  return sendJson({ success: false, error: e.message }, 500);
+                }
+              } else if (domain.includes('sheypoor') || platformId.includes('sheypoor')) {
+                try {
+                  const resp = await fetch('https://www.sheypoor.com/api/v10.0.0/auth/send', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0.0.0 Safari/537.36'
+                    },
+                    body: JSON.stringify({ username: phone })
+                  });
+                  const respData: any = await resp.json().catch(() => ({}));
+                  return sendJson({
+                    success: resp.ok,
+                    message: resp.ok ? 'کد تایید پیامکی شیپور ارسال شد.' : 'خطا در ارتباط با شیپور',
+                    rawResponse: respData
+                  }, resp.status || 200);
+                } catch (e: any) {
+                  return sendJson({ success: false, error: e.message }, 500);
+                }
+              } else {
+                return sendJson({
+                  success: false,
+                  error: `پلتفرم ${domain || platformId} نیازمند تعامل با افزونه مرورگر است و درگاه پیامکی بدون افزونه ندارد.`
+                }, 422);
+              }
+            }
+
+            case 'puppet/verify-otp': {
+              const platformId = body.platformId || '';
+              const domain = (body.domain || '').toLowerCase();
+              const phone = body.phoneNumber || '09153108763';
+              const code = body.otpCode || '';
+
+              if (!phone || !code) {
+                return sendJson({ success: false, error: 'شماره موبایل و کد تایید الزامی است.' }, 400);
+              }
+
+              if (domain.includes('divar') || platformId.includes('divar')) {
+                try {
+                  const resp = await fetch('https://api.divar.ir/v5/auth/confirm', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0.0.0 Safari/537.36'
+                    },
+                    body: JSON.stringify({ phone, code })
+                  });
+                  const respData: any = await resp.json().catch(() => ({}));
+                  if (resp.ok && respData.token) {
+                    const plat = db.mediaPlatforms.find((p: any) => p.id === platformId || p.domain.includes('divar'));
+                    if (plat) {
+                      plat.sessionStatus = 'authenticated';
+                      plat.sessionToken = respData.token;
+                      writeDb(db);
+                    }
+                    return sendJson({
+                      success: true,
+                      message: 'احراز هویت واقعی در دیوار با موفقیت انجام شد.',
+                      token: respData.token,
+                      rawResponse: respData
+                    });
+                  } else {
+                    return sendJson({
+                      success: false,
+                      error: 'کد تایید توسط سرور دیوار رد شد.',
+                      rawResponse: respData
+                    }, 400);
+                  }
+                } catch (e: any) {
+                  return sendJson({ success: false, error: e.message }, 500);
+                }
+              } else {
+                return sendJson({
+                  success: false,
+                  error: 'اعتبارسنجی خودکار برای این دامنه نیازمند افزونه مرورگر است.'
+                }, 400);
+              }
             }
 
             case 'ai/analyze-dom': {
@@ -895,10 +1057,43 @@ export function cpanelDevApiPlugin(): Plugin {
                   const targetJob = db.publicationJobs.find((j: any) => j.status === 'waiting_otp' || j.status === 'paused_user_action');
                   if (targetJob) {
                     matchedJobId = targetJob.id;
-                    targetJob.status = 'resumed';
-                    targetJob.humanActionVerified = true;
-                    targetJob.otpCode = extractedOtp;
-                    targetJob.currentStep = `کد تایید OTP (${extractedOtp}) از وب‌هوک معتبر گیت‌وی دریافت و نشست کاری ازسر گرفته شد.`;
+                    const cleanDom = (targetJob.platformDomain || targetJob.platformId || '').toLowerCase();
+                    if (cleanDom.includes('divar')) {
+                      try {
+                        const confirmResp = await fetch('https://api.divar.ir/v5/auth/confirm', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0.0.0 Safari/537.36'
+                          },
+                          body: JSON.stringify({ phone: '09153108763', code: extractedOtp })
+                        });
+                        const confirmData: any = await confirmResp.json().catch(() => ({}));
+                        if (confirmResp.ok && confirmData.token) {
+                          const plat = db.mediaPlatforms.find((p: any) => p.id === targetJob.platformId || p.domain.includes('divar'));
+                          if (plat) {
+                            plat.sessionStatus = 'authenticated';
+                            plat.sessionToken = confirmData.token;
+                          }
+                          targetJob.status = 'authenticated';
+                          targetJob.progressPercent = 85;
+                          targetJob.currentStep = 'احراز هویت خودکار در دیوار با موفقیت انجام شد و توکن معتبر ذخیره گردید.';
+                          targetJob.logs = targetJob.logs || [];
+                          targetJob.logs.push({
+                            timestamp: new Date().toISOString(),
+                            level: 'success',
+                            message: `کد تایید ${extractedOtp} به صورت خودکار از پل موبایل دریافت و در سرور دیوار تایید گردید.`
+                          });
+                        }
+                      } catch (err: any) {
+                        console.error('Divar auto confirm error:', err);
+                      }
+                    } else {
+                      targetJob.status = 'resumed';
+                      targetJob.humanActionVerified = true;
+                      targetJob.otpCode = extractedOtp;
+                      targetJob.currentStep = `کد تایید OTP (${extractedOtp}) از وب‌هوک معتبر گیت‌وی دریافت و نشست کاری ازسر گرفته شد.`;
+                    }
                     targetJob.updatedAt = new Date().toISOString();
                   }
                 }

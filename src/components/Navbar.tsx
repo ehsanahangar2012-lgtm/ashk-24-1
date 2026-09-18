@@ -10,6 +10,7 @@ import {
   Server,
   Menu,
   ChevronDown,
+  BookOpen,
 } from 'lucide-react';
 import { ResilienceStatus, CompanyProfile, UserAccount } from '../types/ashk24.js';
 
@@ -20,6 +21,7 @@ interface NavbarProps {
   onOpenCompanyModal: () => void;
   onOpenMediaVault?: () => void;
   onOpenCpanelGuide?: () => void;
+  onOpenStepByStepGuide?: () => void;
   onOpenSecurityModal: () => void;
   onLogout: () => void;
   onRefreshData: () => void;
@@ -32,6 +34,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCompanyModal,
   onOpenMediaVault,
   onOpenCpanelGuide,
+  onOpenStepByStepGuide,
   onOpenSecurityModal,
   onLogout,
   onRefreshData,
@@ -97,6 +100,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
           </div>
 
+          {/* Step-by-Step Guide Button */}
+          {onOpenStepByStepGuide && (
+            <button
+              onClick={onOpenStepByStepGuide}
+              className="flex items-center space-x-1.5 space-x-reverse px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-xs font-bold transition-all shrink-0"
+              title="مشاهده راهنمای گام‌به‌گام سامانه از نصب تا انتشار قطعی"
+            >
+              <BookOpen className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>راهنمای گام‌به‌گام</span>
+            </button>
+          )}
+
           {/* Refresh Button */}
           <button
             onClick={onRefreshData}
@@ -159,6 +174,19 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {mobileMenuOpen && (
             <div className="absolute left-0 top-full mt-2 w-64 bg-slate-900 border border-slate-800 rounded-2xl p-2 shadow-2xl z-50 space-y-1 text-xs">
+              {onOpenStepByStepGuide && (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenStepByStepGuide();
+                  }}
+                  className="w-full text-right px-3 py-2.5 rounded-xl hover:bg-slate-800 text-amber-300 flex items-center space-x-2 space-x-reverse font-bold"
+                >
+                  <BookOpen className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>راهنمای گام‌به‌گام سامانه</span>
+                </button>
+              )}
+
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);

@@ -126,7 +126,7 @@ export const SessionVaultModule: React.FC<SessionVaultModuleProps> = ({
       const uName = usernameState[plat.id] || plat.accountUsername || 'info@ashkghalam.ir';
       const pWord = passwordState[plat.id] || plat.accountPassword || 'Ashk24Pass!';
 
-      const token = `sid_auto_${Math.random().toString(36).substring(2, 10)}_${plat.id}_active`;
+      const token = plat.sessionToken || `cred_${plat.id}_saved`;
       
       await clientStorage.updatePlatformSession(plat.id, {
         accountPhoneNumber: pNum,
@@ -138,14 +138,14 @@ export const SessionVaultModule: React.FC<SessionVaultModuleProps> = ({
         sessionExpiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000).toLocaleDateString('fa-IR'),
       });
 
-      // Also trigger/complete any active publication job
+      // Trigger job for platform with real parameters
       const campaigns = await clientStorage.getCampaigns();
       const targetCamp = campaigns[0];
       if (targetCamp) {
         await clientStorage.triggerJob(targetCamp.id, plat.id);
       }
       
-      setSuccessMsg(`تبریک! احراز هویت و ورود هوشمند به ${plat.persianName} انجام گرفت. سشن فعال شد و آگهی کمپین آماده انتشار گردید.`);
+      setSuccessMsg(`اطلاعات ورود و کاربری ${plat.persianName} ثبت شد و فرآیند اتصال آغاز گردید.`);
       setTimeout(() => setSuccessMsg(null), 5000);
       onRefreshPlatforms();
     } catch (e) {

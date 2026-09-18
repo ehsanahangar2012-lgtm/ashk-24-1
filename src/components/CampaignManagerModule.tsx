@@ -34,6 +34,8 @@ import { ImageUploadVaultModal } from './ImageUploadVaultModal.js';
 import { ImageAnalysisModal } from './ImageAnalysisModal.js';
 import { clientStorage } from '../services/clientStorageService.js';
 import { SmartHelpButton } from './SmartHelpModal.js';
+import { CampaignSmartAssistantModal } from './CampaignSmartAssistantModal.js';
+import { CampaignSmartBlueprint } from '../services/localCampaignAiEngine.js';
 
 interface CampaignManagerModuleProps {
   campaigns: Campaign[];
@@ -102,6 +104,16 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
   const [renewalIntervalDays, setRenewalIntervalDays] = useState<number>(30);
   const [campaignImages, setCampaignImages] = useState<string[]>([]);
   const [isGeneratingAi, setIsGeneratingAi] = useState<boolean>(false);
+  const [showSmartAssistantModal, setShowSmartAssistantModal] = useState<boolean>(false);
+
+  const handleApplySmartBlueprint = (blueprint: CampaignSmartBlueprint) => {
+    if (blueprint.title) setTitle(blueprint.title);
+    if (blueprint.bodyText) setProductDescription(blueprint.bodyText);
+    if (blueprint.matchedImages && blueprint.matchedImages.length > 0) {
+      const newUrls = blueprint.matchedImages.map((m) => m.url);
+      setCampaignImages((prev) => Array.from(new Set([...prev, ...newUrls])));
+    }
+  };
 
   const handleGenerateAiAdContent = async () => {
     if (!productName.trim()) {
@@ -418,17 +430,28 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
 
         {/* Quick Presets Selection & AI Generator Button */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-300 block">انتخاب سریع قالب محتوا یا تولید با هوش مصنوعی:</span>
-            <button
-              type="button"
-              onClick={handleGenerateAiAdContent}
-              disabled={isGeneratingAi}
-              className="text-[11px] px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 font-bold transition-all flex items-center space-x-1.5 space-x-reverse"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>{isGeneratingAi ? 'در حال نگارش هوشمند...' : 'نگارش خودکار آگهی با AI'}</span>
-            </button>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-slate-300 block">انتخاب سریع قالب محتوا یا تولید هوشمند:</span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowSmartAssistantModal(true)}
+                className="text-[11px] px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 font-bold transition-all flex items-center space-x-1.5 space-x-reverse shadow-sm"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>دستیار هوشمند کمپین (متن، عکس و نکات وب)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleGenerateAiAdContent}
+                disabled={isGeneratingAi}
+                className="text-[11px] px-2.5 py-1.5 rounded-xl bg-slate-900 text-slate-300 hover:text-slate-100 hover:bg-slate-850 border border-slate-800 font-bold transition-all flex items-center space-x-1.5 space-x-reverse"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>{isGeneratingAi ? 'در حال نگارش...' : 'نگارش سریع متن'}</span>
+              </button>
+            </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {(presetTemplates || []).map((p) => {
@@ -907,6 +930,20 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
           adText={analyzingImage.text}
           productName={analyzingImage.name}
           keywords={['کارتن سازی', 'بسته بندی', 'اشک قلم']}
+        />
+      )}
+
+      {/* Offline Campaign Smart Assistant Modal */}
+      {showSmartAssistantModal && (
+        <CampaignSmartAssistantModal
+          isOpen={showSmartAssistantModal}
+          onClose={() => setShowSmartAssistantModal(false)}
+          productName={productName}
+          productDescription={productDescription}
+          priceToman={priceToman}
+          sector={sector}
+          tone={tone}
+          onApplyBlueprint={handleApplySmartBlueprint}
         />
       )}
     </div>
