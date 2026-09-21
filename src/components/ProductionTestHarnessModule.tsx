@@ -399,8 +399,8 @@ export const ProductionTestHarnessModule: React.FC<ProductionTestHarnessModulePr
                 className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
               >
                 <option value="plat_internal_blog">وبلاگ و تارگت داخلی اشک قلم (امن و معتبر)</option>
-                <option value="plat_sheypoor">شیپور (سنجش چالش کپچا و شماره تستی)</option>
-                <option value="plat_divar">دیوار (سنجش ورود پیامکی و لایو استیت)</option>
+                <option value="plat_agahi24">آگهی ۲۴ (تست فرم عمومی آگهی)</option>
+                <option value="plat_shahrema">شهر ما (سنجش ورود پیامکی و لایو استیت)</option>
               </select>
             </div>
           </div>

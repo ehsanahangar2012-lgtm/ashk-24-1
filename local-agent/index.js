@@ -29,7 +29,7 @@ const POLL_INTERVAL_MS = parseInt(process.env.POLL_INTERVAL_MS || '5000', 10);
 const IS_ONCE = process.argv.includes('--once');
 const IS_HEADLESS = process.env.HEADLESS === 'true' || process.argv.includes('--headless');
 const TARGET_JOB_ID = process.env.TARGET_JOB_ID || null;
-const PLATFORM_TARGET = process.env.PLATFORM_TARGET || process.env.TARGET_PLATFORM || 'divar';
+const PLATFORM_TARGET = process.env.PLATFORM_TARGET || process.env.TARGET_PLATFORM || 'agahi24';
 
 const EVIDENCE_DIR = path.resolve(__dirname, 'evidence');
 if (!fs.existsSync(EVIDENCE_DIR)) {
@@ -220,7 +220,7 @@ async function executeJob(job, claimData) {
 
   let browser = null;
   const startTime = Date.now();
-  const platformKey = job.platformId || 'plat_divar';
+  const platformKey = job.platformId || 'plat_agahi24';
   const isResumingJob = job.status === 'resumed' || Boolean(job.humanActionVerified);
 
   let sessionRestored = false;
@@ -311,7 +311,7 @@ async function executeJob(job, claimData) {
       } else if (pid.includes('istgah') || pdom.includes('istgah')) {
         targetUrl = 'https://www.istgah.com/register/';
       } else {
-        targetUrl = 'https://divar.ir/new';
+        targetUrl = 'https://www.agahi24.com/register';
       }
     }
 

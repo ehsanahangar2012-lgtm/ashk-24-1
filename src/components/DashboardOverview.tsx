@@ -217,7 +217,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                     onClick={async () => {
                       const pids = (camp.selectedPlatformIds && camp.selectedPlatformIds.length > 0)
                         ? camp.selectedPlatformIds
-                        : ['plat_divar', 'plat_sheypoor', 'plat_baskool', 'plat_payamsara'];
+                        : ['plat_agahi24', 'plat_payamsara', 'plat_baskool', 'plat_istgah'];
                       for (const pid of pids) {
                         onTriggerJob(camp.id, pid);
                       }

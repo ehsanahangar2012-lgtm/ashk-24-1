@@ -120,17 +120,11 @@ foreach ($jobs as $job) {
             curl_close($ch);
             $executedJobs++;
             continue;
-        } elseif (strpos($targetDomain, 'divar') !== false) {
-            curl_setopt($ch, CURLOPT_URL, 'https://api.divar.ir/v8/post/publish');
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['title' => $job['title'] ?? 'بدون عنوان', 'desc' => 'توضیحات']));
-        } elseif (strpos($targetDomain, 'sheypoor') !== false) {
-            curl_setopt($ch, CURLOPT_URL, 'https://www.sheypoor.com/api/v10.0.0/listings');
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['title' => $job['title'] ?? 'بدون عنوان']));
         } else {
-            // سایر سایت‌ها نیازمند تعامل افزونه یا ورود سشن اختصاصی
+            // وب دایرکتوری‌های عمومی (آگهی ۲۴، شهر ما، ایستگاه و...) نیازمند تعامل ورکر گیت‌هاب (GitHub Actions Headless Runner) یا افزونه مرورگر بر روی آی‌پی تمیز ایران هستند.
             $db->updateJob($job['id'], [
-                'status' => 'blocked_user_action',
-                'currentStep' => "نیازمند تکمیل از طریق افزونه مرورگر بر روی آی‌پی ایران یا ورود نشست کاربری"
+                'status' => 'pending',
+                'currentStep' => "در انتظار واکشی خودکار توسط ورکر گیت‌هاب (GitHub Worker) یا دستیار مرورگر اشک ۲۴ جهت ارسال واقعی پیامک و ثبت آگهی..."
             ]);
             curl_close($ch);
             continue;

@@ -40,8 +40,8 @@ interface ExtractedDomElement {
 export const LiveFormAutomationVisualizer: React.FC = () => {
   const [company, setCompany] = useState<CompanyProfile | null>(null);
   const [platforms, setPlatforms] = useState<MediaPlatform[]>([]);
-  const [selectedPlatformId, setSelectedPlatformId] = useState<string>('plat_divar');
-  const [targetUrl, setTargetUrl] = useState<string>('https://divar.ir/new');
+  const [selectedPlatformId, setSelectedPlatformId] = useState<string>('plat_agahi24');
+  const [targetUrl, setTargetUrl] = useState<string>('https://agahi24.com');
   const [phoneNumber, setPhoneNumber] = useState<string>('09121111111');
   const [otpCode, setOtpCode] = useState<string>('');
 
@@ -85,7 +85,7 @@ export const LiveFormAutomationVisualizer: React.FC = () => {
           setAdDescription(cmp.aboutUsSummary || 'توضیحات رسمی خدمات و محصولات.');
         }
 
-        const selected = plats.find((p) => p.id === 'plat_divar') || plats[0];
+        const selected = plats.find((p) => p.id === 'plat_agahi24') || plats[0];
         if (selected) {
           setTargetUrl(`https://${selected.domain}`);
         }

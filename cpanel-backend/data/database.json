@@ -174,93 +174,26 @@
       "sessionStatus": "authenticated"
     },
     {
-      "id": "plat_divar",
-      "name": "Divar",
-      "persianName": "دیوار (بزرگترین پلتفرم نیازمندی‌های ایران)",
-      "domain": "divar.ir",
+      "id": "plat_shahrema",
+      "name": "ShahreMa",
+      "persianName": "شهر ما (نیازمندی‌های پویا و وب دایرکتوری عمومی)",
+      "domain": "shahrema.com",
       "category": "classifieds",
       "sectorFit": [
         "industrial",
         "services",
-        "digital_goods",
-        "real_estate",
-        "home_appliances",
-        "fashion"
-      ],
-      "monthlyVisits": "۵۵ میلیون کاربر فعال",
-      "requiresOtp": true,
-      "authTier": "tier2_otp_mobile",
-      "authMethod": "otp_sms",
-      "supportsImage": true,
-      "formType": "classified",
-      "active": true,
-      "trustScore": 98,
-      "sessionStatus": "none"
-    },
-    {
-      "id": "plat_sheypoor",
-      "name": "Sheypoor",
-      "persianName": "شیپور (خرید و فروش بی‌واسطه و خدمات)",
-      "domain": "sheypoor.com",
-      "category": "classifieds",
-      "sectorFit": [
-        "services",
-        "digital_goods",
-        "real_estate",
-        "home_appliances",
-        "fashion",
-        "industrial"
-      ],
-      "monthlyVisits": "۱۵ میلیون کاربر فعال",
-      "requiresOtp": true,
-      "authTier": "tier2_otp_mobile",
-      "authMethod": "otp_sms",
-      "supportsImage": true,
-      "formType": "classified",
-      "active": true,
-      "trustScore": 94,
-      "sessionStatus": "none"
-    },
-    {
-      "id": "plat_torob",
-      "name": "Torob",
-      "persianName": "ترب (موتور جستجوی خرید کالا)",
-      "domain": "torob.com",
-      "category": "b2b",
-      "sectorFit": [
-        "industrial",
-        "digital_goods",
         "home_appliances"
       ],
-      "monthlyVisits": "۴۰ میلیون بازدید ماهانه",
-      "requiresOtp": true,
-      "authTier": "tier2_otp_mobile",
-      "authMethod": "otp_sms",
-      "supportsImage": true,
-      "formType": "directory_entry",
-      "active": true,
-      "trustScore": 97,
-      "sessionStatus": "none"
-    },
-    {
-      "id": "plat_bama",
-      "name": "Bama",
-      "persianName": "باما (نیازمندی‌های وسایل نقلیه و صنعتی)",
-      "domain": "bama.ir",
-      "category": "classifieds",
-      "sectorFit": [
-        "industrial",
-        "services"
-      ],
-      "monthlyVisits": "۱۲ میلیون بازدید ماهانه",
-      "requiresOtp": true,
-      "authTier": "tier2_otp_mobile",
-      "authMethod": "otp_sms",
+      "monthlyVisits": "۱.۲ میلیون کاربر فعال",
+      "requiresOtp": false,
+      "authTier": "tier1_easy_email",
+      "authMethod": "email_password",
+      "emailVerificationRequired": false,
       "supportsImage": true,
       "formType": "classified",
       "active": true,
-      "trustScore": 91,
-      "sessionStatus": "none"
+      "trustScore": 89,
+      "sessionStatus": "authenticated"
     }
   ],
   "campaigns": [
@@ -272,7 +205,55 @@
       "status": "draft"
     }
   ],
-  "publicationJobs": [],
+  "publicationJobs": [
+    {
+      "id": "job_1790001995195_616",
+      "campaignId": "camp_test_001",
+      "campaignTitle": "تست آگهی اتوماسیون اشک قلم",
+      "platformId": "plat_shahrema",
+      "platformName": "شهر ما (نیازمندی‌های پویا و وب دایرکتوری عمومی)",
+      "platformDomain": "shahrema.com",
+      "status": "processing",
+      "currentStep": "در حال اتصال امن به سرور مقصد (شهر ما (نیازمندی‌های پویا و وب دایرکتوری عمومی)) و پایش ساختار DOM...",
+      "progressPercent": 20,
+      "otpRequired": false,
+      "logs": [
+        {
+          "timestamp": "2026-09-21T14:46:35.195Z",
+          "level": "info",
+          "message": "وظیفه انتشار برای «شهر ما (نیازمندی‌های پویا و وب دایرکتوری عمومی)» آغاز گردید. ارتباط با سرور و استخراج فیلدها در حال انجام است."
+        }
+      ],
+      "createdAt": "2026-09-21T14:46:35.195Z",
+      "updatedAt": "2026-09-21T14:46:35.195Z"
+    },
+    {
+      "id": "job_1790001965940_859",
+      "campaignId": "camp_test_001",
+      "campaignTitle": "تست آگهی اتوماسیون اشک قلم",
+      "platformId": "plat_agahi24",
+      "platformName": "آگهی ۲۴ (نیازمندی‌های رایگان اینترنتی و مشاغل)",
+      "platformDomain": "agahi24.com",
+      "status": "paused_user_action",
+      "currentStep": "ارتباط با سرور آگهی ۲۴ برقرار است. جهت تکمیل ورود، استفاده از افزونه مرورگر یا ورود مستقیم الزامی است.",
+      "progressPercent": 40,
+      "otpRequired": false,
+      "logs": [
+        {
+          "timestamp": "2026-09-21T14:46:05.941Z",
+          "level": "info",
+          "message": "وظیفه انتشار برای «آگهی ۲۴ (نیازمندی‌های رایگان اینترنتی و مشاغل)» آغاز گردید. ارتباط با سرور و استخراج فیلدها در حال انجام است."
+        },
+        {
+          "timestamp": "2026-09-21T14:46:07.812Z",
+          "level": "info",
+          "message": "اتصال واقعی به agahi24.com بررسی شد (HTTP 200). سیستم نیازمند تعامل با فرم ورود/افزونه مرورگر است."
+        }
+      ],
+      "createdAt": "2026-09-21T14:46:05.941Z",
+      "updatedAt": "2026-09-21T14:46:07.812Z"
+    }
+  ],
   "publicationReports": [],
   "uploadedAssets": [],
   "smsLogs": [],
