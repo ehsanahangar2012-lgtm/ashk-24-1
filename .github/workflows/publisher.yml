@@ -4,7 +4,7 @@ on:
   # Workflow is triggered manually from GitHub Actions tab or when dispatched by an event.
   # To enable scheduled runs after cPanel deployment, uncomment the schedule block below.
   # schedule:
-  #   - cron: '*/30 * * * *'
+  #   - cron: '*/30 * * * *'  
   workflow_dispatch:
     inputs:
       cpanel_url:
