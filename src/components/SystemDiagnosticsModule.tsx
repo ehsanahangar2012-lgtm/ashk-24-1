@@ -268,6 +268,41 @@ export function SystemDiagnosticsModule() {
       {/* Dedicated Publication & Registration Deep Diagnostics Inspector */}
       <PublicationDiagnosticsInspector onRefreshAll={fetchDiagnosticsAndLogs} />
 
+      {/* OTP Bridge Test UI */}
+      <div className="p-5 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
+        <h3 className="text-sm font-bold text-white flex items-center space-x-2 space-x-reverse">
+          <Key className="w-5 h-5 text-amber-400" />
+          <span>تست پل ارتباطی OTP (اندروید به سامانه)</span>
+        </h3>
+        <div className="flex gap-4 items-center">
+            <button 
+                onClick={async () => {
+                    const code = prompt("کد تایید تستی را وارد کنید (مثال: 12345):");
+                    if (!code) return;
+                    await fetch('/cpanel-backend/api/index.php?route=otp/receive', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({code})
+                    });
+                    alert("کد ارسال شد. حالا دکمه چک کردن را بزنید.");
+                }}
+                className="px-4 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold transition-all border border-amber-500/30"
+            >
+                ارسال کد تستی (شبیه‌ساز اپلیکیشن)
+            </button>
+            <button 
+                onClick={async () => {
+                    const res = await fetch('/cpanel-backend/api/index.php?route=otp/read');
+                    const data = await res.json();
+                    alert(`آخرین کد دریافت شده: ${data.code || 'هیچ کدی دریافت نشده'}\nزمان ثبت: ${data.timestamp ? new Date(data.timestamp * 1000).toLocaleString('fa-IR') : '-'}`);
+                }}
+                className="px-4 py-2 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 text-xs font-bold transition-all border border-sky-500/30"
+            >
+                چک کردن وضعیت OTP
+            </button>
+        </div>
+      </div>
+
       {/* Subsystems Diagnostic Cards Grid */}
       {diagnostics?.subsystems && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

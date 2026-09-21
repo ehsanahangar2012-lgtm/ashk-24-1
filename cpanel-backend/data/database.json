@@ -263,7 +263,15 @@
       "sessionStatus": "none"
     }
   ],
-  "campaigns": [],
+  "campaigns": [
+    {
+      "id": "camp_test_001",
+      "title": "تست آگهی اتوماسیون اشک قلم",
+      "content": "تست اتوماسیون انتشار آگهی",
+      "productName": "کارتن بسته‌بندی تست",
+      "status": "draft"
+    }
+  ],
   "publicationJobs": [],
   "publicationReports": [],
   "uploadedAssets": [],

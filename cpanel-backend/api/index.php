@@ -248,6 +248,33 @@ try {
             ], JSON_UNESCAPED_UNICODE);
             break;
 
+        case ($route === 'otp/receive'):
+            if ($method === 'POST') {
+                $code = $body['code'] ?? '';
+                // ذخیره کد در فایلی که فرانت‌اند می‌خواند
+                $dataDir = __DIR__ . '/../data';
+                if (!file_exists($dataDir)) {
+                    @mkdir($dataDir, 0777, true);
+                }
+                file_put_contents($dataDir . '/last_otp.json', json_encode(['code' => $code, 'timestamp' => time()]));
+                echo json_encode(['status' => 'success', 'message' => 'OTP received and saved.']);
+                exit(0);
+            }
+            break;
+
+        case ($route === 'otp/read'):
+            if ($method === 'GET') {
+                $dataDir = __DIR__ . '/../data';
+                $file = $dataDir . '/last_otp.json';
+                if (file_exists($file)) {
+                    echo file_get_contents($file);
+                } else {
+                    echo json_encode(['code' => null, 'timestamp' => null]);
+                }
+                exit(0);
+            }
+            break;
+
         case ($route === 'resilience/status'):
             echo json_encode($db->getResilienceStatus(), JSON_UNESCAPED_UNICODE);
             break;
