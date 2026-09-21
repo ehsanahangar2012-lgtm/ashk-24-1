@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { APP_VERSION, APP_VERSION_TAG } from './config/version.js';
+import { BUILD_TIMESTAMP, BUILD_HASH } from './config/build-info.js';
 import { Navbar } from './components/Navbar';
 import { Sidebar, TabType } from './components/Sidebar';
 import { DashboardOverview } from './components/DashboardOverview';
@@ -300,9 +301,12 @@ export default function App() {
                   <span className="text-[10px] text-amber-500/70">({APP_VERSION_TAG}-Release)</span>
                 </div>
                 <span className="hidden md:inline text-slate-600">|</span>
-                <span className="hidden md:inline text-slate-400">
-                  طراحی شده برای هاست‌های cPanel ایران و سرورهای داخلی
-                </span>
+                <div className="flex items-center space-x-1.5 space-x-reverse font-mono bg-slate-800/50 text-slate-300 px-2.5 py-0.5 rounded-full border border-slate-700/60 text-[11px]">
+                  <span className="text-slate-500">بیلد:</span>
+                  <span className="font-bold text-emerald-400">{BUILD_HASH}</span>
+                  <span className="text-slate-600">|</span>
+                  <span className="text-slate-400">{BUILD_TIMESTAMP}</span>
+                </div>
               </div>
 
               <div className="flex items-center space-x-3 space-x-reverse">

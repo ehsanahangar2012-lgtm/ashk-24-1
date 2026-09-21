@@ -371,11 +371,6 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
   }
   fs.copyFileSync(apkPath, path.join(cpanelUploads, `Ashk24_OTP_Companion_v${version}.apk`));
   fs.copyFileSync(projectPath, path.join(cpanelUploads, `Ashk24_Android_Project_v${version}.zip`));
-  // Keep base file name without version for generic links
-  fs.copyFileSync(apkPath, path.join(cpanelUploads, 'Ashk24_OTP_Companion.apk'));
-  fs.copyFileSync(projectPath, path.join(cpanelUploads, 'Ashk24_Android_Project.zip'));
-  fs.copyFileSync(apkPath, path.join(downloadsDir, 'Ashk24_OTP_Companion.apk'));
-  fs.copyFileSync(projectPath, path.join(downloadsDir, 'Ashk24_Android_Project.zip'));
 }
 
 buildApkAndProject().catch(console.error);

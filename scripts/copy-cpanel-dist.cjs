@@ -124,8 +124,8 @@ async function generateFinalPackages() {
     }
   });
 
-  const prodVersionedPath = path.join(rootDir, `ashk24-cpanel-${version}.zip`);
-  const prodDistVersionedPath = path.join(distDir, `ashk24-cpanel-${version}.zip`);
+  const prodVersionedPath = path.join(rootDir, `ashk24-cpanel-v${version}.zip`);
+  const prodDistVersionedPath = path.join(distDir, `ashk24-cpanel-v${version}.zip`);
 
   fs.writeFileSync(prodVersionedPath, prodZipBuffer);
   fs.writeFileSync(prodDistVersionedPath, prodZipBuffer);
@@ -140,7 +140,7 @@ async function generateFinalPackages() {
   [publicDownloads, distDownloads, cpanelUploads, distCpanelUploads].forEach(dir => {
     if (fs.existsSync(dir)) {
       fs.readdirSync(dir).forEach(file => {
-        if (file.startsWith('ashk24-cpanel') && file.endsWith('.zip') && !file.includes(version) && !file.includes('latest') && !file.includes('FINAL')) {
+        if (file.startsWith('ashk24-cpanel') && file.endsWith('.zip') && !file.includes(`v${version}`)) {
           try { fs.unlinkSync(path.join(dir, file)); } catch (e) {}
         }
       });
@@ -150,9 +150,6 @@ async function generateFinalPackages() {
   [publicDownloads, distDownloads, cpanelUploads, distCpanelUploads].forEach(dir => {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, `ashk24-cpanel-v${version}.zip`), prodZipBuffer);
-    fs.writeFileSync(path.join(dir, `ashk24-cpanel-${version}.zip`), prodZipBuffer);
-    fs.writeFileSync(path.join(dir, 'ashk24-cpanel-latest.zip'), prodZipBuffer);
-    fs.writeFileSync(path.join(dir, 'ashk24-cpanel-FINAL.zip'), prodZipBuffer);
   });
 
   console.log(`📦 [Production cPanel] Created single production package: ${prodVersionedPath} (${(prodZipBuffer.length / 1024).toFixed(1)} KB / ${(prodZipBuffer.length / 1024 / 1024).toFixed(2)} MB)`);
