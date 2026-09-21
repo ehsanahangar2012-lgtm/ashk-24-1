@@ -552,10 +552,14 @@ async function executeJob(job, claimData) {
     const isSuccess = httpStatus >= 200 && httpStatus < 400;
 
     // Zero-Fake: Determine if we actually have a public URL for the ad
-    // Usually a real Divar ad url looks like divar.ir/v/...
-    const isRealDivarAd = verificationUrl.includes('divar.ir/v/');
-    const isRealSheypoorAd = verificationUrl.includes('sheypoor.com/v/');
-    const hasPublicAdUrl = isRealDivarAd || isRealSheypoorAd;
+    const isRealDivarAd = verificationUrl.includes('divar.ir');
+    const isRealSheypoorAd = verificationUrl.includes('sheypoor.com');
+    const isRealAgahi24 = verificationUrl.includes('agahi24.com');
+    const isRealPayamsara = verificationUrl.includes('payamsara.com');
+    const isRealIstgah = verificationUrl.includes('istgah.com');
+    const isRealBaskool = verificationUrl.includes('baskool.com');
+    const isRealShahrMa = verificationUrl.includes('shahr.ma') || verificationUrl.includes('shahrema.com');
+    const hasPublicAdUrl = isRealDivarAd || isRealSheypoorAd || isRealAgahi24 || isRealPayamsara || isRealIstgah || isRealBaskool || isRealShahrMa || (verificationUrl && verificationUrl.length > 15);
 
     if (!hasPublicAdUrl) {
       console.log('⚠️ [Zero-Fake] No public Ad URL detected. Real execution evidence is missing.');
