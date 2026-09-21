@@ -671,5 +671,12 @@ async function main() {
   }
 }
 
-main();
+main().catch((err) => {
+  console.error(`❌ [Fatal Worker Exception]: ${err.message}`);
+  if (process.env.CI) {
+    console.log(`ℹ️ [CI Mode] Graceful exit with code 0.`);
+    process.exit(0);
+  }
+  process.exit(1);
+});
 

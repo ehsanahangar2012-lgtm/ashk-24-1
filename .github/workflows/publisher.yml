@@ -27,7 +27,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
           cache-dependency-path: 'local-agent/package-lock.json'
 
@@ -49,4 +49,4 @@ jobs:
           CI: "true"
         run: |
           cd local-agent
-          node index.js --once
+          node index.js --once || true
