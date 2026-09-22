@@ -393,53 +393,6 @@
       "trustScore": 88
     },
     {
-      "id": "plat_divar",
-      "name": "Divar",
-      "persianName": "دیوار (پلتفرم نیازمندی‌ها)",
-      "domain": "divar.ir",
-      "category": "classifieds",
-      "sectorFit": [
-        "real_estate",
-        "automotive",
-        "digital_goods",
-        "services",
-        "home_appliances",
-        "industrial",
-        "fashion"
-      ],
-      "monthlyVisits": "۴۵ میلیون کاربر فعال",
-      "requiresOtp": true,
-      "supportsImage": true,
-      "formType": "classified",
-      "active": true,
-      "trustScore": 98,
-      "sessionStatus": "authenticated",
-      "sessionToken": "sid_5twt4l5e_plat_divar_active_cookie",
-      "lastLoginAt": "۱۴۰۵/۵/۲۳",
-      "sessionExpiresAt": "۱۴۰۵/۶/۲۲"
-    },
-    {
-      "id": "plat_sheypoor",
-      "name": "Sheypoor",
-      "persianName": "شیپور (بازار آنلاین نیازمندی‌ها)",
-      "domain": "sheypoor.com",
-      "category": "classifieds",
-      "sectorFit": [
-        "real_estate",
-        "automotive",
-        "digital_goods",
-        "services",
-        "home_appliances"
-      ],
-      "monthlyVisits": "۱۸ میلیون بازدید",
-      "requiresOtp": true,
-      "supportsImage": true,
-      "formType": "classified",
-      "active": true,
-      "trustScore": 92,
-      "sessionStatus": "none"
-    },
-    {
       "id": "plat_istgah",
       "name": "Istgah",
       "persianName": "ایستگاه (نیازمندی‌های رایگان و B2B صنعتی)",
@@ -552,29 +505,6 @@
       "sessionStatus": "none"
     },
     {
-      "id": "plat_torob",
-      "name": "Torob",
-      "persianName": "ترب (موتور مقایسه قیمت)",
-      "domain": "torob.com",
-      "category": "directory",
-      "sectorFit": [
-        "digital_goods",
-        "home_appliances",
-        "fashion",
-        "industrial"
-      ],
-      "monthlyVisits": "۳۵ میلیون جستجو",
-      "requiresOtp": false,
-      "supportsImage": true,
-      "formType": "directory_entry",
-      "active": true,
-      "trustScore": 95,
-      "sessionStatus": "authenticated",
-      "sessionToken": "sid_dlk0lq7v_plat_torob_active_cookie",
-      "lastLoginAt": "۱۴۰۵/۵/۲۳",
-      "sessionExpiresAt": "۱۴۰۵/۶/۲۲"
-    },
-    {
       "id": "plat_virgool",
       "name": "Virgool",
       "persianName": "ویرگول (پلتفرم نشر محتوا و وبلاگ)",
@@ -595,22 +525,6 @@
       "sessionToken": "sid_ffhxpt8n_plat_virgool_active_cookie",
       "lastLoginAt": "۱۴۰۵/۵/۲۳",
       "sessionExpiresAt": "۱۴۰۵/۶/۲۲"
-    },
-    {
-      "id": "plat_bama",
-      "name": "Bama",
-      "persianName": "باما (مرجع تخصصی خودرو)",
-      "domain": "bama.ir",
-      "category": "classifieds",
-      "sectorFit": [
-        "automotive"
-      ],
-      "monthlyVisits": "۱۲ میلیون عاشق خودرو",
-      "requiresOtp": true,
-      "supportsImage": true,
-      "formType": "classified",
-      "active": true,
-      "trustScore": 94
     },
     {
       "id": "plat_eitaa",
@@ -674,6 +588,14 @@
       "accountUsername": "info@ashkghalam.ir",
       "lastLoginAt": "۱۴۰۵/۶/۸",
       "sessionExpiresAt": "۱۴۰۵/۷/۷"
+    },
+    {
+      "id": "plat_payamsara",
+      "name": "Payamsara",
+      "domain": "payamsara.com",
+      "authMethod": "sms_otp",
+      "requiresOtp": true,
+      "sessionStatus": "unauthenticated"
     }
   ],
   "campaigns": [
@@ -8064,46 +7986,6 @@
   ],
   "publicationJobs": [
     {
-      "campaignId": "cmp_1788706640749_289",
-      "platformId": "plat_disc_1788706632867_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۴:۵۷:۲۰"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788706640763_275",
-      "startedAt": "2026-09-06T14:57:20.763Z"
-    },
-    {
-      "campaignId": "cmp_1788706374029_120",
-      "platformId": "plat_disc_1788706336035_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری و خدمات صنعتی",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۴:۵۲:۵۴"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788706374045_191",
-      "startedAt": "2026-09-06T14:52:54.045Z"
-    },
-    {
       "campaignId": "cmp_1788705432569_760",
       "platformId": "plat_disc_1788705404715_0",
       "platformName": "ایستگاه - درج آگهی رایگان و نیازمندی‌ها",
@@ -8122,66 +8004,6 @@
       "usedEngine": "online-ai",
       "id": "job_1788705432584_407",
       "startedAt": "2026-09-06T14:37:12.584Z"
-    },
-    {
-      "campaignId": "cmp_1788704877498_76",
-      "platformId": "plat_disc_divar_1788704867592",
-      "platformName": "دیوار (بزرگ‌ترین پلتفرم آگهی و نیازمندی‌های ایران)",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۴:۲۷:۵۷"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788704877515_913",
-      "startedAt": "2026-09-06T14:27:57.515Z"
-    },
-    {
-      "campaignId": "cmp_1788703959940_840",
-      "platformId": "plat_disc_1788703954545_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۴:۱۲:۳۹"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788703959956_165",
-      "startedAt": "2026-09-06T14:12:39.956Z"
-    },
-    {
-      "campaignId": "cmp_1788677367647_633",
-      "platformId": "plat_disc_1788677364554_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۶:۴۹:۲۷"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788677367661_103",
-      "startedAt": "2026-09-06T06:49:27.661Z"
     },
     {
       "campaignId": "cmp_1788676410668_863",
@@ -8204,26 +8026,6 @@
       "startedAt": "2026-09-06T06:33:30.682Z"
     },
     {
-      "campaignId": "cmp_1788675519875_375",
-      "platformId": "plat_disc_1788675516134_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۶:۱۸:۳۹"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788675519891_515",
-      "startedAt": "2026-09-06T06:18:39.891Z"
-    },
-    {
       "campaignId": "cmp_1788674570784_269",
       "platformId": "plat_disc_1788674556156_0",
       "platformName": "ویرگول - شبکه اجتماعی محتوایی",
@@ -8242,26 +8044,6 @@
       "usedEngine": "online-ai",
       "id": "job_1788674570799_592",
       "startedAt": "2026-09-06T06:02:50.799Z"
-    },
-    {
-      "campaignId": "cmp_1788673598135_488",
-      "platformId": "plat_disc_divar_1788673594277",
-      "platformName": "دیوار (بزرگ‌ترین پلتفرم آگهی و نیازمندی‌های ایران)",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۵:۴۶:۳۸"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788673598156_702",
-      "startedAt": "2026-09-06T05:46:38.156Z"
     },
     {
       "campaignId": "cmp_1788672641700_496",
@@ -8284,46 +8066,6 @@
       "startedAt": "2026-09-06T05:30:41.716Z"
     },
     {
-      "campaignId": "cmp_1788671681652_361",
-      "platformId": "plat_disc_1788671676294_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۵:۱۴:۴۱"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788671681667_145",
-      "startedAt": "2026-09-06T05:14:41.667Z"
-    },
-    {
-      "campaignId": "cmp_1788670727090_685",
-      "platformId": "plat_disc_1788670716411_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۴:۵۸:۴۷"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788670727104_337",
-      "startedAt": "2026-09-06T04:58:47.105Z"
-    },
-    {
       "campaignId": "cmp_1788669760499_730",
       "platformId": "plat_disc_1788669755812_0",
       "platformName": "ویرگول - شبکه اجتماعی نویسندگان",
@@ -8342,158 +8084,6 @@
       "usedEngine": "online-ai",
       "id": "job_1788669760513_426",
       "startedAt": "2026-09-06T04:42:40.513Z"
-    },
-    {
-      "campaignId": "cmp_1788668836646_423",
-      "platformId": "plat_disc_1788668805459_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۴:۲۷:۱۶"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788668836661_773",
-      "startedAt": "2026-09-06T04:27:16.661Z"
-    },
-    {
-      "id": "job_real_endur_1788612934904_1",
-      "campaignId": "cmp_1001",
-      "platformId": "plat_divar",
-      "platformName": "دیوار (پلتفرم نیازمندی‌ها)",
-      "status": "navigating",
-      "currentStep": "navigating",
-      "progressPercent": 0,
-      "action": "UPLOAD",
-      "imagePath": "public/uploads/ashk_carton_sample.png",
-      "logs": [
-        {
-          "timestamp": "2026-09-05T12:55:34.904Z",
-          "step": "ENQUEUED",
-          "status": "info",
-          "message": "ثبت نوبت آزمون استقامت ۱ در صف ارکستریتور"
-        },
-        {
-          "timestamp": "2026-09-06T06:28:25.794Z",
-          "step": "navigating",
-          "status": "info",
-          "message": "راه اندازی مرورگر اختصاصی Playwright روی سیستم محلی"
-        },
-        {
-          "timestamp": "2026-09-06T06:58:04.707Z",
-          "step": "navigating",
-          "status": "info",
-          "message": "راه اندازی مرورگر اختصاصی Playwright روی سیستم محلی"
-        },
-        {
-          "timestamp": "2026-09-06T14:35:05.919Z",
-          "step": "navigating",
-          "status": "info",
-          "message": "راه اندازی مرورگر اختصاصی Playwright روی سیستم محلی"
-        }
-      ],
-      "otpRequired": false,
-      "startedAt": "2026-09-05T12:55:34.904Z"
-    },
-    {
-      "id": "job_real_endur_1788612934904_2",
-      "campaignId": "cmp_1001",
-      "platformId": "plat_divar",
-      "platformName": "دیوار (پلتفرم نیازمندی‌ها)",
-      "status": "navigating",
-      "currentStep": "navigating",
-      "progressPercent": 0,
-      "action": "UPLOAD",
-      "imagePath": "public/uploads/ashk_carton_sample.png",
-      "logs": [
-        {
-          "timestamp": "2026-09-05T12:55:34.904Z",
-          "step": "ENQUEUED",
-          "status": "info",
-          "message": "ثبت نوبت آزمون استقامت ۲ در صف ارکستریتور"
-        },
-        {
-          "timestamp": "2026-09-06T06:28:45.562Z",
-          "step": "navigating",
-          "status": "info",
-          "message": "راه اندازی مرورگر اختصاصی Playwright روی سیستم محلی"
-        },
-        {
-          "timestamp": "2026-09-06T14:35:24.934Z",
-          "step": "navigating",
-          "status": "info",
-          "message": "راه اندازی مرورگر اختصاصی Playwright روی سیستم محلی"
-        }
-      ],
-      "otpRequired": false,
-      "startedAt": "2026-09-05T12:55:34.904Z"
-    },
-    {
-      "campaignId": "cmp_1788612311422_200",
-      "platformId": "plat_disc_divar_1788612306956",
-      "platformName": "دیوار (بزرگ‌ترین پلتفرم آگهی و نیازمندی‌های ایران)",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۲:۴۵:۱۱"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788612311440_94",
-      "startedAt": "2026-09-05T12:45:11.440Z"
-    },
-    {
-      "campaignId": "cmp_1788612124241_452",
-      "platformId": "plat_disc_1788612071184_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۲:۴۲:۰۴"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788612124255_185",
-      "startedAt": "2026-09-05T12:42:04.255Z"
-    },
-    {
-      "campaignId": "cmp_1788611637930_9",
-      "platformId": "plat_disc_divar_1788611574877",
-      "platformName": "دیوار (بزرگ‌ترین پلتفرم آگهی و نیازمندی‌های ایران)",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۲:۳۳:۵۷"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788611637944_303",
-      "startedAt": "2026-09-05T12:33:57.944Z"
     },
     {
       "campaignId": "cmp_1788611388078_695",
@@ -8536,66 +8126,6 @@
       "startedAt": "2026-09-05T12:29:17.955Z"
     },
     {
-      "campaignId": "cmp_1788611055949_262",
-      "platformId": "plat_disc_1788611053430_0",
-      "platformName": "دیوار - پلتفرم نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۲:۲۴:۱۵"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788611055961_130",
-      "startedAt": "2026-09-05T12:24:15.961Z"
-    },
-    {
-      "campaignId": "cmp_1788610836197_393",
-      "platformId": "plat_disc_1788610833267_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۲:۲۰:۳۶"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788610836209_301",
-      "startedAt": "2026-09-05T12:20:36.210Z"
-    },
-    {
-      "campaignId": "cmp_1788610467949_962",
-      "platformId": "plat_disc_divar_1788610448455",
-      "platformName": "دیوار (بزرگ‌ترین پلتفرم آگهی و نیازمندی‌های ایران)",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۲:۱۴:۲۷"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788610467965_93",
-      "startedAt": "2026-09-05T12:14:27.965Z"
-    },
-    {
       "campaignId": "cmp_1788609927917_645",
       "platformId": "plat_disc_1788609925149_0",
       "platformName": "ویرگول - شبکه اجتماعی محتوایی",
@@ -8614,46 +8144,6 @@
       "usedEngine": "online-ai",
       "id": "job_1788609927930_551",
       "startedAt": "2026-09-05T12:05:27.930Z"
-    },
-    {
-      "campaignId": "cmp_1788609864751_47",
-      "platformId": "plat_disc_1788609860057_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری ایران",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۲:۰۴:۲۴"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788609864764_726",
-      "startedAt": "2026-09-05T12:04:24.764Z"
-    },
-    {
-      "campaignId": "cmp_1788609562594_750",
-      "platformId": "plat_disc_1788609559809_0",
-      "platformName": "دیوار - نیازمندی‌های آنلاین ایران",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۱:۵۹:۲۲"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788609562606_467",
-      "startedAt": "2026-09-05T11:59:22.606Z"
     },
     {
       "campaignId": "cmp_1788609247489_324",
@@ -8696,26 +8186,6 @@
       "startedAt": "2026-09-05T11:42:43.426Z"
     },
     {
-      "campaignId": "cmp_1788608216355_737",
-      "platformId": "plat_disc_divar_1788608212900",
-      "platformName": "دیوار (بزرگ‌ترین پلتفرم آگهی و نیازمندی‌های ایران)",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۱:۳۶:۵۶"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788608216367_380",
-      "startedAt": "2026-09-05T11:36:56.367Z"
-    },
-    {
       "campaignId": "cmp_1788607343572_433",
       "platformId": "plat_disc_1788607283056_0",
       "platformName": "ویرگول - شبکه اجتماعی محتوا",
@@ -8734,46 +8204,6 @@
       "usedEngine": "online-ai",
       "id": "job_1788607343585_339",
       "startedAt": "2026-09-05T11:22:23.585Z"
-    },
-    {
-      "campaignId": "cmp_1788606759561_188",
-      "platformId": "plat_disc_1788606755474_0",
-      "platformName": "دیوار - نیازمندی‌های آنلاین ایران",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۱:۱۲:۳۹"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788606759574_527",
-      "startedAt": "2026-09-05T11:12:39.574Z"
-    },
-    {
-      "campaignId": "cmp_1788605818986_201",
-      "platformId": "plat_disc_1788605797803_0",
-      "platformName": "دیوار - بزرگترین نیازمندی‌های آنلاین ایران",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۰:۵۶:۵۹"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788605818998_819",
-      "startedAt": "2026-09-05T10:56:58.998Z"
     },
     {
       "campaignId": "cmp_1788604838262_507",
@@ -8796,46 +8226,6 @@
       "startedAt": "2026-09-05T10:40:38.274Z"
     },
     {
-      "campaignId": "cmp_1788603934593_328",
-      "platformId": "plat_disc_divar_1788603930036",
-      "platformName": "دیوار (بزرگ‌ترین پلتفرم آگهی و نیازمندی‌های ایران)",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۰:۲۵:۳۴"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788603934604_393",
-      "startedAt": "2026-09-05T10:25:34.604Z"
-    },
-    {
-      "campaignId": "cmp_1788603326762_385",
-      "platformId": "plat_disc_divar_1788603263755",
-      "platformName": "دیوار (بزرگ‌ترین پلتفرم آگهی و نیازمندی‌های ایران)",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۰:۱۵:۲۶"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788603326774_40",
-      "startedAt": "2026-09-05T10:15:26.774Z"
-    },
-    {
       "campaignId": "cmp_1788602773075_316",
       "platformId": "plat_disc_1788602718045_0",
       "platformName": "ویرگول - پلتفرم تولید محتوا",
@@ -8854,166 +8244,6 @@
       "usedEngine": "online-ai",
       "id": "job_1788602773089_791",
       "startedAt": "2026-09-05T10:06:13.089Z"
-    },
-    {
-      "campaignId": "cmp_1788601791640_335",
-      "platformId": "plat_disc_divar_1788601787169",
-      "platformName": "دیوار (بزرگ‌ترین پلتفرم آگهی و نیازمندی‌های ایران)",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۹:۴۹:۵۱"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788601791651_112",
-      "startedAt": "2026-09-05T09:49:51.651Z"
-    },
-    {
-      "campaignId": "cmp_1788600877974_287",
-      "platformId": "plat_disc_1788600808677_0",
-      "platformName": "دیوار - ثبت آگهی و نیازمندی‌ها",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۹:۳۴:۳۸"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788600878028_147",
-      "startedAt": "2026-09-05T09:34:38.028Z"
-    },
-    {
-      "campaignId": "cmp_1788592225964_187",
-      "platformId": "plat_disc_1788592217652_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۷:۱۰:۲۵"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788592225975_115",
-      "startedAt": "2026-09-05T07:10:25.975Z"
-    },
-    {
-      "campaignId": "cmp_1788591936358_583",
-      "platformId": "plat_disc_1788591923633_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۷:۰۵:۳۶"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788591936371_866",
-      "startedAt": "2026-09-05T07:05:36.371Z"
-    },
-    {
-      "campaignId": "cmp_1788591101202_511",
-      "platformId": "plat_disc_1788591098346_0",
-      "platformName": "دیوار - نیازمندی‌های آنلاین سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۶:۵۱:۴۱"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788591101212_221",
-      "startedAt": "2026-09-05T06:51:41.212Z"
-    },
-    {
-      "campaignId": "cmp_1788590845192_639",
-      "platformId": "plat_disc_1788590841209_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۶:۴۷:۲۵"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788590845202_386",
-      "startedAt": "2026-09-05T06:47:25.202Z"
-    },
-    {
-      "campaignId": "cmp_1788590189910_896",
-      "platformId": "plat_disc_divar_1788590156488",
-      "platformName": "دیوار (بزرگ‌ترین پلتفرم آگهی و نیازمندی‌های ایران)",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۶:۳۶:۲۹"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788590189921_988",
-      "startedAt": "2026-09-05T06:36:29.921Z"
-    },
-    {
-      "campaignId": "cmp_1788589207898_404",
-      "platformId": "plat_disc_1788589203066_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۶:۲۰:۰۷"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788589207908_492",
-      "startedAt": "2026-09-05T06:20:07.908Z"
     },
     {
       "campaignId": "cmp_1788589069729_768",
@@ -9036,46 +8266,6 @@
       "startedAt": "2026-09-05T06:17:49.739Z"
     },
     {
-      "campaignId": "cmp_1788588530995_205",
-      "platformId": "plat_disc_1788588526808_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۶:۰۸:۵۱"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788588531006_624",
-      "startedAt": "2026-09-05T06:08:51.006Z"
-    },
-    {
-      "campaignId": "cmp_1788587574778_357",
-      "platformId": "plat_disc_1788587568760_0",
-      "platformName": "دیوار - نیازمندی‌های آنلاین ایران",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۵:۵۲:۵۴"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788587574789_945",
-      "startedAt": "2026-09-05T05:52:54.789Z"
-    },
-    {
       "campaignId": "cmp_1788586613591_907",
       "platformId": "plat_disc_1788586609985_0",
       "platformName": "ویرگول - شبکه اجتماعی مقاله‌نویسی",
@@ -9096,46 +8286,6 @@
       "startedAt": "2026-09-05T05:36:53.600Z"
     },
     {
-      "campaignId": "cmp_1788586241655_432",
-      "platformId": "plat_disc_1788586224113_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۵:۳۰:۴۱"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788586241666_465",
-      "startedAt": "2026-09-05T05:30:41.666Z"
-    },
-    {
-      "campaignId": "cmp_1788586033017_658",
-      "platformId": "plat_disc_1788586029384_0",
-      "platformName": "دیوار - نیازمندی‌های آنلاین سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۵:۲۷:۱۳"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788586033027_980",
-      "startedAt": "2026-09-05T05:27:13.027Z"
-    },
-    {
       "campaignId": "cmp_1788585076024_168",
       "platformId": "plat_disc_1788585071979_0",
       "platformName": "ویرگول - شبکه اجتماعی مقاله‌نویسی",
@@ -9154,46 +8304,6 @@
       "usedEngine": "online-ai",
       "id": "job_1788585076034_793",
       "startedAt": "2026-09-05T05:11:16.034Z"
-    },
-    {
-      "campaignId": "cmp_1788584435423_687",
-      "platformId": "plat_disc_1788584432138_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۵:۰۰:۳۵"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788584435432_245",
-      "startedAt": "2026-09-05T05:00:35.432Z"
-    },
-    {
-      "campaignId": "cmp_1788583477720_271",
-      "platformId": "plat_disc_1788583473739_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۴:۴۴:۳۷"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788583477730_648",
-      "startedAt": "2026-09-05T04:44:37.730Z"
     },
     {
       "campaignId": "cmp_1788582531461_612",
@@ -9256,86 +8366,6 @@
       "startedAt": "2026-09-05T03:57:18.549Z"
     },
     {
-      "campaignId": "cmp_1788579671251_875",
-      "platformId": "plat_disc_1788579637048_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری و خدمات صنعتی",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۳:۴۱:۱۱"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788579671261_297",
-      "startedAt": "2026-09-05T03:41:11.261Z"
-    },
-    {
-      "campaignId": "cmp_1788578696477_828",
-      "platformId": "plat_disc_1788578681467_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری و خدمات صنعتی",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۳:۲۴:۵۶"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788578696487_828",
-      "startedAt": "2026-09-05T03:24:56.487Z"
-    },
-    {
-      "campaignId": "cmp_1788577946503_690",
-      "platformId": "plat_disc_1788577892960_0",
-      "platformName": "دیوار - ثبت آگهی و نیازمندی‌ها",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۳:۱۲:۲۶"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788577946514_208",
-      "startedAt": "2026-09-05T03:12:26.514Z"
-    },
-    {
-      "campaignId": "cmp_1788577611020_793",
-      "platformId": "plat_disc_1788577586838_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری و آگهی صنعتی",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۳:۰۶:۵۱"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788577611029_915",
-      "startedAt": "2026-09-05T03:06:51.029Z"
-    },
-    {
       "campaignId": "cmp_1788576637257_871",
       "platformId": "plat_disc_1788576625330_0",
       "platformName": "ویرگول - پلتفرم نشر محتوا",
@@ -9356,26 +8386,6 @@
       "startedAt": "2026-09-05T02:50:37.266Z"
     },
     {
-      "campaignId": "cmp_1788576015846_828",
-      "platformId": "plat_disc_1788575999996_0",
-      "platformName": "دیوار - نیازمندی‌های آنلاین ایران",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۲:۴۰:۱۵"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788576015854_944",
-      "startedAt": "2026-09-05T02:40:15.854Z"
-    },
-    {
       "campaignId": "cmp_1788122847157_764",
       "platformId": "plat_disc_1788122839790_0",
       "platformName": "ویرگول - شبکه اجتماعی نویسندگان",
@@ -9394,26 +8404,6 @@
       "usedEngine": "online-ai",
       "id": "job_1788122847166_665",
       "startedAt": "2026-08-30T20:47:27.167Z"
-    },
-    {
-      "campaignId": "cmp_1788121884587_84",
-      "platformId": "plat_disc_1788121879354_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۲۰:۳۱:۲۴"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788121884595_881",
-      "startedAt": "2026-08-30T20:31:24.595Z"
     },
     {
       "campaignId": "cmp_1788120929905_164",
@@ -9516,66 +8506,6 @@
       "startedAt": "2026-08-30T19:38:49.390Z"
     },
     {
-      "campaignId": "cmp_1788117771411_700",
-      "platformId": "plat_disc_1788117768517_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۹:۲۲:۵۱"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788117771418_221",
-      "startedAt": "2026-08-30T19:22:51.418Z"
-    },
-    {
-      "campaignId": "cmp_1788117193966_417",
-      "platformId": "plat_disc_1788117191285_0",
-      "platformName": "دیوار - نیازمندی‌های آنلاین ایران",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۹:۱۳:۱۳"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788117193975_233",
-      "startedAt": "2026-08-30T19:13:13.975Z"
-    },
-    {
-      "campaignId": "cmp_1788116244821_83",
-      "platformId": "plat_disc_1788116241960_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۸:۵۷:۲۴"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788116244828_868",
-      "startedAt": "2026-08-30T18:57:24.828Z"
-    },
-    {
       "campaignId": "cmp_1788115920480_486",
       "platformId": "plat_disc_1788115916031_0",
       "platformName": "ویرگول - پلتفرم انتشار محتوا",
@@ -9594,26 +8524,6 @@
       "usedEngine": "online-ai",
       "id": "job_1788115920488_238",
       "startedAt": "2026-08-30T18:52:00.488Z"
-    },
-    {
-      "campaignId": "cmp_1788114960092_813",
-      "platformId": "plat_disc_1788114956481_0",
-      "platformName": "دیوار - نیازمندی‌های آنلاین سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۸:۳۶:۰۰"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788114960099_314",
-      "startedAt": "2026-08-30T18:36:00.099Z"
     },
     {
       "campaignId": "cmp_1788114300380_148",
@@ -9702,73 +8612,6 @@
       "usedEngine": "online-ai",
       "id": "job_1788114218612_721",
       "startedAt": "2026-08-30T18:23:38.612Z"
-    },
-    {
-      "campaignId": "cmp_1788105346121_245",
-      "platformId": "plat_disc_1788105343150_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۵:۵۵:۴۶"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788105346128_53",
-      "startedAt": "2026-08-30T15:55:46.128Z"
-    },
-    {
-      "campaignId": "camp_test_1",
-      "platformId": "plat_divar",
-      "platformName": "دیوار",
-      "status": "published",
-      "currentStep": "منتشر شده",
-      "progressPercent": 0,
-      "logs": [
-        {
-          "timestamp": "2026-08-30T15:55:50.251Z",
-          "step": "paused_user_action",
-          "status": "info",
-          "message": "منتظر ورود OTP توسط کاربر در افزونه..."
-        },
-        {
-          "timestamp": "2026-08-30T15:55:50.261Z",
-          "step": "published",
-          "status": "success",
-          "message": "انتشار موفقیت آمیز توسط کاربر محلی"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "offline-fallback",
-      "id": "job_1788105326259_271",
-      "startedAt": "2026-08-30T15:55:26.259Z",
-      "adUrl": "https://divar.ir/v/test1234"
-    },
-    {
-      "campaignId": "cmp_1788104543065_286",
-      "platformId": "plat_disc_1788104540047_0",
-      "platformName": "دیوار - نیازمندی‌های آنلاین ایران",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۵:۴۲:۲۳"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788104543072_277",
-      "startedAt": "2026-08-30T15:42:23.072Z"
     },
     {
       "campaignId": "cmp_1788104490273_364",
@@ -9946,26 +8789,6 @@
       "startedAt": "2026-08-30T15:41:20.589Z"
     },
     {
-      "campaignId": "cmp_1788104289635_232",
-      "platformId": "plat_disc_1788104286708_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۵:۳۸:۰۹"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788104289642_78",
-      "startedAt": "2026-08-30T15:38:09.642Z"
-    },
-    {
       "campaignId": "cmp_1788103831922_158",
       "platformId": "plat_disc_1788103827102_0",
       "platformName": "ویرگول - پلتفرم انتشار محتوا",
@@ -9984,26 +8807,6 @@
       "usedEngine": "online-ai",
       "id": "job_1788103831929_274",
       "startedAt": "2026-08-30T15:30:31.929Z"
-    },
-    {
-      "campaignId": "cmp_1788102871266_584",
-      "platformId": "plat_disc_1788102868398_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۱۵:۱۴:۳۱"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788102871273_126",
-      "startedAt": "2026-08-30T15:14:31.273Z"
     },
     {
       "campaignId": "cmp_test",
@@ -10208,46 +9011,6 @@
       "startedAt": "2026-08-30T06:34:12.631Z"
     },
     {
-      "campaignId": "cmp_1788071613582_766",
-      "platformId": "plat_disc_1788071604156_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری و آگهی خدمات",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۶:۳۳:۳۳"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788071613588_602",
-      "startedAt": "2026-08-30T06:33:33.588Z"
-    },
-    {
-      "campaignId": "cmp_1788071506106_94",
-      "platformId": "plat_disc_1788071493651_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری و خدمات صنعتی",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۶:۳۱:۴۶"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788071506112_412",
-      "startedAt": "2026-08-30T06:31:46.112Z"
-    },
-    {
       "campaignId": "cmp_final_test",
       "platformId": "plat_niazerooz",
       "platformName": "Niazerooz",
@@ -10255,26 +9018,6 @@
       "currentStep": "submit",
       "id": "job_1788071472551_405",
       "startedAt": "2026-08-30T06:31:12.551Z"
-    },
-    {
-      "campaignId": "cmp_1788071457861_492",
-      "platformId": "plat_disc_1788071439016_0",
-      "platformName": "دیوار - نیازمندی‌های سراسر کشور",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۶:۳۰:۵۷"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788071457867_252",
-      "startedAt": "2026-08-30T06:30:57.867Z"
     },
     {
       "campaignId": "cmp_1788071161222_321",
@@ -10297,26 +9040,6 @@
       "startedAt": "2026-08-30T06:26:01.228Z"
     },
     {
-      "campaignId": "cmp_1788070935471_122",
-      "platformId": "plat_disc_1788070823359_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۶:۲۲:۱۵"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788070935478_434",
-      "startedAt": "2026-08-30T06:22:15.478Z"
-    },
-    {
       "campaignId": "cmp_test_niaz",
       "platformId": "plat_niazerooz",
       "platformName": "Niazerooz",
@@ -10324,46 +9047,6 @@
       "currentStep": "fill_form",
       "id": "job_1788070789948_684",
       "startedAt": "2026-08-30T06:19:49.948Z"
-    },
-    {
-      "campaignId": "cmp_1788070324921_501",
-      "platformId": "plat_disc_1788070310271_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۶:۱۲:۰۴"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788070324927_157",
-      "startedAt": "2026-08-30T06:12:04.927Z"
-    },
-    {
-      "campaignId": "cmp_1788070006443_82",
-      "platformId": "plat_disc_1788069995253_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری و آگهی",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۶:۰۶:۴۶"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1788070006448_761",
-      "startedAt": "2026-08-30T06:06:46.448Z"
     },
     {
       "id": "job_1788069961856_642",
@@ -10404,26 +9087,6 @@
       "startedAt": "2026-08-30T06:00:10.121Z"
     },
     {
-      "campaignId": "cmp_1787984502539_197",
-      "platformId": "plat_disc_1787984497932_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۶:۲۱:۴۲"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1787984502543_339",
-      "startedAt": "2026-08-29T06:21:42.543Z"
-    },
-    {
       "campaignId": "cmp_sess_test",
       "platformId": "plat_niazerooz",
       "platformName": "Niazerooz",
@@ -10440,26 +9103,6 @@
       "sessionCookies": {
         "Cookie": "expired=1"
       }
-    },
-    {
-      "campaignId": "cmp_1787984397836_524",
-      "platformId": "plat_disc_1787984395257_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۶:۱۹:۵۷"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1787984397840_584",
-      "startedAt": "2026-08-29T06:19:57.840Z"
     },
     {
       "campaignId": "cmp_e2e_test",
@@ -10682,26 +9325,6 @@
       "startedAt": "2026-08-29T05:28:19.638Z"
     },
     {
-      "campaignId": "cmp_1787981181365_494",
-      "platformId": "plat_disc_1787981177748_0",
-      "platformName": "دیوار - پلتفرم نیازمندی‌های ایران",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۵:۲۶:۲۱"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1787981181368_53",
-      "startedAt": "2026-08-29T05:26:21.368Z"
-    },
-    {
       "campaignId": "cmp_1787980271870_14",
       "platformId": "plat_disc_1787980268729_0",
       "platformName": "ویرگول - شبکه اجتماعی نویسندگان",
@@ -10722,86 +9345,6 @@
       "startedAt": "2026-08-29T05:11:11.873Z"
     },
     {
-      "campaignId": "cmp_1787980233314_502",
-      "platformId": "plat_disc_1787980169281_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۵:۱۰:۳۳"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1787980233317_504",
-      "startedAt": "2026-08-29T05:10:33.317Z"
-    },
-    {
-      "campaignId": "cmp_1787980070509_356",
-      "platformId": "plat_disc_1787980061825_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۵:۰۷:۵۰"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1787980070513_825",
-      "startedAt": "2026-08-29T05:07:50.513Z"
-    },
-    {
-      "campaignId": "cmp_1787979353972_678",
-      "platformId": "plat_disc_1787979351326_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۴:۵۵:۵۳"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1787979353975_680",
-      "startedAt": "2026-08-29T04:55:53.975Z"
-    },
-    {
-      "campaignId": "cmp_1787978428774_77",
-      "platformId": "plat_disc_1787978426239_0",
-      "platformName": "دیوار - نیازمندی‌های آنلاین ایران",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۴:۴۰:۲۸"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1787978428776_36",
-      "startedAt": "2026-08-29T04:40:28.776Z"
-    },
-    {
       "campaignId": "cmp_1787978181779_440",
       "platformId": "plat_disc_1787978177061_0",
       "platformName": "ویرگول - شبکه اجتماعی محتوایی",
@@ -10820,66 +9363,6 @@
       "usedEngine": "online-ai",
       "id": "job_1787978181782_506",
       "startedAt": "2026-08-29T04:36:21.782Z"
-    },
-    {
-      "campaignId": "cmp_1787977775407_409",
-      "platformId": "plat_disc_divar_1787977757562",
-      "platformName": "دیوار (بزرگ‌ترین پلتفرم آگهی و نیازمندی‌های ایران)",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۴:۲۹:۳۵"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1787977775410_574",
-      "startedAt": "2026-08-29T04:29:35.410Z"
-    },
-    {
-      "campaignId": "cmp_1787976845775_438",
-      "platformId": "plat_disc_1787976804241_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۴:۱۴:۰۵"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1787976845778_409",
-      "startedAt": "2026-08-29T04:14:05.778Z"
-    },
-    {
-      "campaignId": "cmp_1787976219533_107",
-      "platformId": "plat_disc_1787976190339_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۴:۰۳:۳۹"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1787976219535_376",
-      "startedAt": "2026-08-29T04:03:39.535Z"
     },
     {
       "campaignId": "cmp_1787975225403_831",
@@ -11142,26 +9625,6 @@
       "startedAt": "2026-08-29T03:31:14.291Z"
     },
     {
-      "campaignId": "cmp_1787974274282_480",
-      "platformId": "plat_disc_1787974271192_0",
-      "platformName": "دیوار - نیازمندی‌های سراسری",
-      "status": "failed",
-      "currentStep": "خطا در بارگذاری داده‌های کمپین و رسانه",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "step": "خطای سیستم",
-          "status": "error",
-          "message": "مشخصات کمپین یا پلتفرم یافت نشد. پردازش متوقف گردید.",
-          "timestamp": "۳:۳۱:۱۴"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1787974274285_313",
-      "startedAt": "2026-08-29T03:31:14.285Z"
-    },
-    {
       "campaignId": "cmp_1786690216836_780",
       "platformId": "plat_disc_1786690210850_0",
       "platformName": "ویرگول - پلتفرم نشر محتوا",
@@ -11360,180 +9823,6 @@
       "startedAt": "2026-08-14T05:50:04.844Z",
       "adUrl": "https://bale.ai/post/p_1002",
       "completedAt": "2026-08-14T05:50:10.573Z"
-    },
-    {
-      "campaignId": "cmp_1002",
-      "platformId": "plat_torob",
-      "platformName": "ترب (موتور مقایسه قیمت)",
-      "status": "published",
-      "currentStep": "ثبت و انتشار موفقیت‌آمیز آگهی در پلتفرم مقصد",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "timestamp": "۵:۵۰:۰۴",
-          "step": "AUTONOMOUS_PICKUP",
-          "status": "info",
-          "message": "منشی ۲۴ ساعته کمپین \"تبلیغات تخصصی خدمات مشاوره و راه‌اندازی AI\" را شناسایی کرد و نوبت کاری ترب (موتور مقایسه قیمت) را فعال نمود."
-        },
-        {
-          "step": "CRAWLER_INIT",
-          "status": "info",
-          "message": "بارگذاری لایبرری ربات موازی و برقراری اتصال امن با torob.com...",
-          "timestamp": "۵:۵۰:۰۴"
-        },
-        {
-          "step": "DOM_ANALYSIS",
-          "status": "info",
-          "message": "تحلیل ساختار HTML فرم ثبت‌نام و درج آگهی در torob.com. شناسایی فیلدهای ورودی...",
-          "timestamp": "۵:۵۰:۰۵"
-        },
-        {
-          "step": "SELECTOR_DETECT",
-          "status": "success",
-          "message": "موفق: فیلد عنوان [id=title]، فیلد توضیحات [name=description] و فیلد تلفن [type=tel] با دقت ۹۸٪ شناسایی شدند.",
-          "timestamp": "۵:۵۰:۰۵"
-        },
-        {
-          "step": "VAL_MAP_START",
-          "status": "info",
-          "message": "ترسیم فیلدهای کسب‌وکار بر روی فرم پلتفرم ترب (موتور مقایسه قیمت) آغاز شد.",
-          "timestamp": "۵:۵۰:۰۶"
-        },
-        {
-          "step": "DATA_INJECTION",
-          "status": "info",
-          "message": "تکمیل فیلد عنوان با مقدار \"خدمات استقرار هوش مصنوعی محلی\"، قیمت با \"45000000 تومان\" و شماره تماس (09123456789) در فرم torob.com",
-          "timestamp": "۵:۵۰:۰۶"
-        },
-        {
-          "step": "SEO_INJECTION",
-          "status": "success",
-          "message": "کلمات کلیدی سئو شده (#هوش مصنوعی محلی #پردازش متن فارسی #اتوماسیون صنعتی) با موفقیت به انتهای توضیحات آگهی تزریق گردید تا شانس رتبه اول گوگل افزایش یابد.",
-          "timestamp": "۵:۵۰:۰۶"
-        },
-        {
-          "step": "VAULT_HANDSHAKE",
-          "status": "info",
-          "message": "در حال بررسی گاوصندوق سشن‌های هوشمند (Session Vault) برای پلتفرم ترب (موتور مقایسه قیمت)...",
-          "timestamp": "۵:۵۰:۰۷"
-        },
-        {
-          "step": "SESSION_EXPIRED",
-          "status": "warning",
-          "message": "نشست فعالی یافت نشد یا سشن منقضی شده است. سیستم به احراز هویت پیامکی (OTP) سوییچ می‌کند.",
-          "timestamp": "۵:۵۰:۰۸"
-        },
-        {
-          "step": "CAPTCHA_DETECTION",
-          "status": "info",
-          "message": "بررسی لود شدن قطعه امنیتی ضدربات (ReCAPTCHA v3 / Geetest)...",
-          "timestamp": "۵:۵۰:۰۸"
-        },
-        {
-          "step": "ANTIBOT_RESOLVED",
-          "status": "success",
-          "message": "چالش ضدربات بصری با هندل خودکار عامل هوش مصنوعی و حل توکن با موفقیت دور زده شد.",
-          "timestamp": "۵:۵۰:۰۹"
-        },
-        {
-          "step": "FORM_DISPATCH",
-          "status": "info",
-          "message": "ارسال نهایی بسته اطلاعات (Payload) به سرور مقصد و انتظار برای ثبت شناسه آگهی...",
-          "timestamp": "۵:۵۰:۰۹"
-        },
-        {
-          "step": "VAULT_STORE_SUCCESS",
-          "status": "success",
-          "message": "سشن جدید با کوکی [sid_dlk0lq7v_pl...] رمزگذاری شده و با موفقیت در SessionVaultModule ذخیره شد.",
-          "timestamp": "۵:۵۰:۱۰"
-        },
-        {
-          "step": "PUBLISH_COMPLETE",
-          "status": "success",
-          "message": "تبریک! کمپین \"تبلیغات تخصصی خدمات مشاوره و راه‌اندازی AI\" با موفقیت کامل در پلتفرم ترب (موتور مقایسه قیمت) منتشر شد. لینک دسترسی: https://torob.com/post/p_1002",
-          "timestamp": "۵:۵۰:۱۰"
-        }
-      ],
-      "otpRequired": false,
-      "usedEngine": "online-ai",
-      "id": "job_1786686604842_999",
-      "startedAt": "2026-08-14T05:50:04.842Z",
-      "adUrl": "https://torob.com/post/p_1002",
-      "completedAt": "2026-08-14T05:50:10.562Z"
-    },
-    {
-      "campaignId": "cmp_1002",
-      "platformId": "plat_sheypoor",
-      "platformName": "شیپور (بازار آنلاین نیازمندی‌ها)",
-      "status": "waiting_otp",
-      "currentStep": "درخواست پیامک تایید (OTP) ارسال شد. منتظر دریافت کد توسط کاربر یا وب‌هوک...",
-      "progressPercent": 65,
-      "logs": [
-        {
-          "timestamp": "۵:۵۰:۰۴",
-          "step": "AUTONOMOUS_PICKUP",
-          "status": "info",
-          "message": "منشی ۲۴ ساعته کمپین \"تبلیغات تخصصی خدمات مشاوره و راه‌اندازی AI\" را شناسایی کرد و نوبت کاری شیپور (بازار آنلاین نیازمندی‌ها) را فعال نمود."
-        },
-        {
-          "step": "CRAWLER_INIT",
-          "status": "info",
-          "message": "بارگذاری لایبرری ربات موازی و برقراری اتصال امن با sheypoor.com...",
-          "timestamp": "۵:۵۰:۰۴"
-        },
-        {
-          "step": "DOM_ANALYSIS",
-          "status": "info",
-          "message": "تحلیل ساختار HTML فرم ثبت‌نام و درج آگهی در sheypoor.com. شناسایی فیلدهای ورودی...",
-          "timestamp": "۵:۵۰:۰۵"
-        },
-        {
-          "step": "SELECTOR_DETECT",
-          "status": "success",
-          "message": "موفق: فیلد عنوان [id=title]، فیلد توضیحات [name=description] و فیلد تلفن [type=tel] با دقت ۹۸٪ شناسایی شدند.",
-          "timestamp": "۵:۵۰:۰۵"
-        },
-        {
-          "step": "VAL_MAP_START",
-          "status": "info",
-          "message": "ترسیم فیلدهای کسب‌وکار بر روی فرم پلتفرم شیپور (بازار آنلاین نیازمندی‌ها) آغاز شد.",
-          "timestamp": "۵:۵۰:۰۶"
-        },
-        {
-          "step": "DATA_INJECTION",
-          "status": "info",
-          "message": "تکمیل فیلد عنوان با مقدار \"خدمات استقرار هوش مصنوعی محلی\"، قیمت با \"45000000 تومان\" و شماره تماس (09123456789) در فرم sheypoor.com",
-          "timestamp": "۵:۵۰:۰۶"
-        },
-        {
-          "step": "SEO_INJECTION",
-          "status": "success",
-          "message": "کلمات کلیدی سئو شده (#هوش مصنوعی محلی #پردازش متن فارسی #اتوماسیون صنعتی) با موفقیت به انتهای توضیحات آگهی تزریق گردید تا شانس رتبه اول گوگل افزایش یابد.",
-          "timestamp": "۵:۵۰:۰۶"
-        },
-        {
-          "step": "VAULT_HANDSHAKE",
-          "status": "info",
-          "message": "در حال بررسی گاوصندوق سشن‌های هوشمند (Session Vault) برای پلتفرم شیپور (بازار آنلاین نیازمندی‌ها)...",
-          "timestamp": "۵:۵۰:۰۷"
-        },
-        {
-          "step": "SESSION_EXPIRED",
-          "status": "warning",
-          "message": "نشست فعالی یافت نشد یا سشن منقضی شده است. سیستم به احراز هویت پیامکی (OTP) سوییچ می‌کند.",
-          "timestamp": "۵:۵۰:۰۸"
-        },
-        {
-          "step": "OTP_REQUESTED",
-          "status": "warning",
-          "message": "پیامک تایید به شماره 09123456789 ارسال گردید. منتظر دریافت پاسخ از MobileCompanion یا درگاه دستی وب...",
-          "timestamp": "۵:۵۰:۰۸"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1786686604841_941",
-      "startedAt": "2026-08-14T05:50:04.841Z"
     },
     {
       "campaignId": "cmp_1001",
@@ -11736,106 +10025,6 @@
       "completedAt": "2026-08-14T05:50:10.557Z"
     },
     {
-      "campaignId": "cmp_1001",
-      "platformId": "plat_divar",
-      "platformName": "دیوار (پلتفرم نیازمندی‌ها)",
-      "status": "published",
-      "currentStep": "ثبت و انتشار موفقیت‌آمیز آگهی در پلتفرم مقصد",
-      "progressPercent": 100,
-      "logs": [
-        {
-          "timestamp": "۵:۵۰:۰۴",
-          "step": "AUTONOMOUS_PICKUP",
-          "status": "info",
-          "message": "منشی ۲۴ ساعته کمپین \"کمپین رونمایی نرم‌افزار اتوماسیون سازمانی اشک ۲۴\" را شناسایی کرد و نوبت کاری دیوار (پلتفرم نیازمندی‌ها) را فعال نمود."
-        },
-        {
-          "step": "CRAWLER_INIT",
-          "status": "info",
-          "message": "بارگذاری لایبرری ربات موازی و برقراری اتصال امن با divar.ir...",
-          "timestamp": "۵:۵۰:۰۴"
-        },
-        {
-          "step": "DOM_ANALYSIS",
-          "status": "info",
-          "message": "تحلیل ساختار HTML فرم ثبت‌نام و درج آگهی در divar.ir. شناسایی فیلدهای ورودی...",
-          "timestamp": "۵:۵۰:۰۵"
-        },
-        {
-          "step": "SELECTOR_DETECT",
-          "status": "success",
-          "message": "موفق: فیلد عنوان [id=title]، فیلد توضیحات [name=description] و فیلد تلفن [type=tel] با دقت ۹۸٪ شناسایی شدند.",
-          "timestamp": "۵:۵۰:۰۵"
-        },
-        {
-          "step": "VAL_MAP_START",
-          "status": "info",
-          "message": "ترسیم فیلدهای کسب‌وکار بر روی فرم پلتفرم دیوار (پلتفرم نیازمندی‌ها) آغاز شد.",
-          "timestamp": "۵:۵۰:۰۶"
-        },
-        {
-          "step": "DATA_INJECTION",
-          "status": "info",
-          "message": "تکمیل فیلد عنوان با مقدار \"سامانه اتوماسیون هوشمند اشک ۲۴\"، قیمت با \"18500000 تومان\" و شماره تماس (09123456789) در فرم divar.ir",
-          "timestamp": "۵:۵۰:۰۶"
-        },
-        {
-          "step": "SEO_INJECTION",
-          "status": "success",
-          "message": "کلمات کلیدی سئو شده (#اتوماسیون بازاریابی #هوش مصنوعی سازمانی #دیوار و شیپور #کاهش هزینه تبلیغات) با موفقیت به انتهای توضیحات آگهی تزریق گردید تا شانس رتبه اول گوگل افزایش یابد.",
-          "timestamp": "۵:۵۰:۰۶"
-        },
-        {
-          "step": "VAULT_HANDSHAKE",
-          "status": "info",
-          "message": "در حال بررسی گاوصندوق سشن‌های هوشمند (Session Vault) برای پلتفرم دیوار (پلتفرم نیازمندی‌ها)...",
-          "timestamp": "۵:۵۰:۰۷"
-        },
-        {
-          "step": "SESSION_BYPASS",
-          "status": "success",
-          "message": "نشست معتبر و کوکی فعال [sid_6a7b8c9d...] از گاوصندوق سشن‌ها بازیابی شد. میانبر مستقیم بدون نیاز به پیامک OTP!",
-          "timestamp": "۵:۵۰:۰۸"
-        },
-        {
-          "step": "CAPTCHA_DETECTION",
-          "status": "info",
-          "message": "بررسی لود شدن قطعه امنیتی ضدربات (ReCAPTCHA v3 / Geetest)...",
-          "timestamp": "۵:۵۰:۰۸"
-        },
-        {
-          "step": "ANTIBOT_RESOLVED",
-          "status": "success",
-          "message": "چالش ضدربات بصری با هندل خودکار عامل هوش مصنوعی و حل توکن با موفقیت دور زده شد.",
-          "timestamp": "۵:۵۰:۰۹"
-        },
-        {
-          "step": "FORM_DISPATCH",
-          "status": "info",
-          "message": "ارسال نهایی بسته اطلاعات (Payload) به سرور مقصد و انتظار برای ثبت شناسه آگهی...",
-          "timestamp": "۵:۵۰:۱۰"
-        },
-        {
-          "step": "VAULT_STORE_SUCCESS",
-          "status": "success",
-          "message": "سشن جدید با کوکی [sid_5twt4l5e_pl...] رمزگذاری شده و با موفقیت در SessionVaultModule ذخیره شد.",
-          "timestamp": "۵:۵۰:۱۰"
-        },
-        {
-          "step": "PUBLISH_COMPLETE",
-          "status": "success",
-          "message": "تبریک! کمپین \"کمپین رونمایی نرم‌افزار اتوماسیون سازمانی اشک ۲۴\" با موفقیت کامل در پلتفرم دیوار (پلتفرم نیازمندی‌ها) منتشر شد. لینک دسترسی: https://divar.ir/post/p_1001",
-          "timestamp": "۵:۵۰:۱۰"
-        }
-      ],
-      "otpRequired": true,
-      "usedEngine": "online-ai",
-      "id": "job_1786686604838_867",
-      "startedAt": "2026-08-14T05:50:04.838Z",
-      "adUrl": "https://divar.ir/post/p_1001",
-      "completedAt": "2026-08-14T05:50:10.956Z"
-    },
-    {
       "campaignId": "cmp_1786686604835_599",
       "platformId": "plat_disc_1786686599140_0",
       "platformName": "ویرگول - پلتفرم نشر محتوا",
@@ -11854,23 +10043,6 @@
       "usedEngine": "online-ai",
       "id": "job_1786686604836_417",
       "startedAt": "2026-08-14T05:50:04.836Z"
-    },
-    {
-      "id": "job_live_pub_1788706503746",
-      "campaignId": "camp_live",
-      "platformId": "plat_divar",
-      "status": "pending",
-      "currentStep": "در انتظار دریافت توسط Local Agent",
-      "logs": [
-        {
-          "timestamp": "2026-09-06T14:57:06.573Z",
-          "step": "navigating",
-          "status": "info",
-          "message": "راه اندازی مرورگر اختصاصی Playwright روی سیستم محلی"
-        }
-      ],
-      "targetUrl": "https://divar.ir/new",
-      "createdAt": "2026-09-06T14:55:03.746Z"
     }
   ],
   "smsLogs": [],

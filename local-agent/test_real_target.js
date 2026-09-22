@@ -16,14 +16,14 @@ if (!fs.existsSync(EVIDENCE_DIR)) {
 async function runRealTargetPOC() {
   console.log('---------------------------------------------------------');
   console.log('🚀 [Ashk24 Worker POC] Starting Real Target Verification');
-  console.log('Target: divar.ir (New Ad / Login Form)');
+  console.log('Target: payamsara.com (New Ad / Login Form)');
   console.log('Zero-Fake-Pass Active - Reporting 100% genuine evidence.');
   console.log('---------------------------------------------------------');
 
   const startTime = Date.now();
   let browser = null;
   const result = {
-    target: 'https://divar.ir/new',
+    target: 'https://payamsara.com/framework/user/register',
     timestamp: new Date().toISOString(),
     networkConnected: false,
     httpStatus: null,
@@ -53,8 +53,8 @@ async function runRealTargetPOC() {
 
     const page = await context.newPage();
 
-    console.log('2. Navigating to https://divar.ir/new ...');
-    const response = await page.goto('https://divar.ir/new', {
+    console.log('2. Navigating to https://payamsara.com/framework/user/register ...');
+    const response = await page.goto('https://payamsara.com/framework/user/register', {
       waitUntil: 'domcontentloaded',
       timeout: 35000
     });
@@ -63,7 +63,7 @@ async function runRealTargetPOC() {
     result.httpStatus = response ? response.status() : null;
     console.log(`📡 Response HTTP Status: ${result.httpStatus}`);
 
-    // Wait a little for React/Next.js hydration on Divar
+    // Wait a little for React/Next.js hydration on Payamsara
     await page.waitForTimeout(3000);
     result.domLoaded = true;
 
@@ -83,8 +83,8 @@ async function runRealTargetPOC() {
       console.log(`   - Input [${i}]: type=${type}, name=${name}, placeholder=${placeholder}`);
     }
 
-    // Try finding the phone input field on Divar
-    // Divar usually has input[type="tel"] or input[name="mobile"] or input with placeholder 'شماره'
+    // Try finding the phone input field on Payamsara
+    // Payamsara usually has input[type="tel"] or input[name="mobile"] or input with placeholder 'شماره'
     const phoneInput = await page.$('input[type="tel"], input[name="mobile"], input[type="text"]');
     if (phoneInput) {
       console.log('3. Interacting with Real Phone Input field...');
@@ -135,7 +135,7 @@ async function runRealTargetPOC() {
           console.log('📱 [Challenge]: SMS OTP confirmation required! State -> PAUSED_USER_ACTION');
         } else if (hasRateLimit) {
           result.challengeDetected = 'RATE_LIMIT_BLOCKED';
-          console.log('⛔ [Blocked]: Divar rate limit or IP restriction detected.');
+          console.log('⛔ [Blocked]: Payamsara rate limit or IP restriction detected.');
         } else {
           result.challengeDetected = 'TRANSITION_OBSERVED';
           console.log('ℹ️ Form submitted, observing transition...');

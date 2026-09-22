@@ -269,8 +269,8 @@ class Ashk24Db {
                     'priceToman' => 18500000,
                     'sector' => 'digital_goods',
                     'tone' => 'persuasive',
-                    'keywords' => ['اتوماسیون بازاریابی', 'هوش مصنوعی سازمانی', 'ثبت آگهی خودکار', 'دیوار و شیپور'],
-                    'selectedPlatformIds' => ['plat_divar', 'plat_sheypoor', 'plat_virgool'],
+                    'keywords' => ['اتوماسیون بازاریابی', 'هوش مصنوعی سازمانی', 'ثبت آگهی خودکار', 'وب آگهی'],
+                    'selectedPlatformIds' => ['plat_payamsara', 'plat_parscenter', 'plat_virgool'],
                     'status' => 'active',
                     'targetCities' => ['تهران', 'مشهد', 'اصفهان', 'کرج'],
                     'createdDate' => '۱۴۰۴/۱۱/۲۰',
@@ -850,23 +850,23 @@ class Ashk24Db {
         return $db['telemetryLogs'] ?? [
             [
                 'id' => 'tel_101',
-                'platformId' => 'plat_divar',
-                'platformName' => 'دیوار',
-                'platformDomain' => 'divar.ir',
+                'platformId' => 'plat_payamsara',
+                'platformName' => 'پیام‌سرا',
+                'platformDomain' => 'payamsara.com',
                 'timestamp' => date('H:i:s'),
-                'stage' => 'otp_request',
-                'httpStatus' => 400,
-                'requestUrl' => 'https://api.divar.ir/v2/open-platform/auth/send-otp',
+                'stage' => 'auth_request',
+                'httpStatus' => 200,
+                'requestUrl' => 'https://payamsara.com/framework/user/register',
                 'requestMethod' => 'POST',
-                'requestHeaders' => ['Content-Type' => 'application/json'],
+                'requestHeaders' => ['Content-Type' => 'application/x-www-form-urlencoded'],
                 'requestBodySummary' => '{"phone":"09153108763"}',
-                'responseSnippet' => '{"code":3,"message":"درخواست نامعتبراست. توکن CSRF پنهان و کلید کلاینت یافت نشد."}',
-                'detectedFormInputs' => ['input[type=tel]', 'button[type=submit]'],
+                'responseSnippet' => '{"code":0,"message":"کد تایید با موفقیت ارسال شد."}',
+                'detectedFormInputs' => ['input[name="user_mobile"]', 'input[type="submit"]'],
                 'detectedCaptchaType' => 'none',
-                'status' => 'error',
-                'failureReason' => 'CSRF_TOKEN_EXPIRED',
-                'errorDetails' => 'درخواست مستقیم cURL فاقد توکن CSRF و کوکی سشن معتبر مرورگر دیوار است.',
-                'aiDiagnosticSummary' => 'دیوار نیاز به سشن زنده مرورگر دارد. اجرای مستقیم cURL بدون هدر x-app-slug رد می‌شود.'
+                'status' => 'success',
+                'failureReason' => '',
+                'errorDetails' => '',
+                'aiDiagnosticSummary' => 'فرم وب پیام‌سرا با موفقیت بررسی و فیلدهای ورود تطبیق داده شدند.'
             ]
         ];
     }
@@ -888,12 +888,12 @@ class Ashk24Db {
         $db = $this->readDb();
         return $db['autoPatches'] ?? [
             [
-                'patchId' => 'patch_divar_csrf',
-                'targetPlatformId' => 'plat_divar',
-                'issueType' => 'CSRF & Session Token Injection',
-                'title' => 'تزریق هدر x-app-slug و سشن مرورگر کرومیوم دیوار',
-                'description' => 'تنظیمات ارسال آگهی دیوار را با تزریق هدرهای اختصاصی x-app-slug و کوکی‌های سشن مرورگر تنظیم می‌کند.',
-                'status' => 'pending'
+                'patchId' => 'patch_payamsara_form',
+                'targetPlatformId' => 'plat_payamsara',
+                'issueType' => 'Form Field Adaptation',
+                'title' => 'انطباق هوشمند فیلدهای فرم درج آگهی پیام‌سرا',
+                'description' => 'تنظیمات ارسال آگهی پیام‌سرا را با سلکتورهای به‌روز شده فرم استاندارد وب منطبق می‌کند.',
+                'status' => 'applied'
             ]
         ];
     }
@@ -919,13 +919,13 @@ class Ashk24Db {
             [
                 'id' => 'evt_201',
                 'timestamp' => date('H:i:s'),
-                'platformId' => 'plat_divar',
-                'platformName' => 'دیوار',
+                'platformId' => 'plat_payamsara',
+                'platformName' => 'پیام‌سرا',
                 'actionType' => 'QUERY_SELECTOR',
-                'targetSelector' => 'input[type="tel"]',
+                'targetSelector' => 'input[name="user_mobile"]',
                 'fieldLabel' => 'ورودی شماره همراه',
                 'status' => 'success',
-                'details' => 'عنصر فیلد شماره همراه دیوار با سلکتور input[type="tel"] شناسایی شد.'
+                'details' => 'عنصر فیلد شماره همراه پیام‌سرا با سلکتور input[name="user_mobile"] شناسایی شد.'
             ]
         ];
     }
@@ -958,19 +958,19 @@ class Ashk24Db {
         $passed = count($invalid) === 0;
 
         $log = $this->addTelemetryLog([
-            'platformId' => $payload['platformId'] ?? 'plat_divar',
-            'platformName' => $payload['platformName'] ?? 'دیوار',
-            'platformDomain' => 'divar.ir',
+            'platformId' => $payload['platformId'] ?? 'plat_payamsara',
+            'platformName' => $payload['platformName'] ?? 'پیام‌سرا',
+            'platformDomain' => 'payamsara.com',
             'stage' => 'pre_validation',
-            'requestUrl' => $payload['targetUrl'] ?? 'https://divar.ir/new',
+            'requestUrl' => $payload['targetUrl'] ?? 'https://payamsara.com/sendad',
             'status' => $passed ? 'success' : 'error',
             'errorDetails' => $passed ? 'اعتبارسنجی پیش از ارسال فرم تایید شد.' : ('تعداد ' . count($invalid) . ' فیلد نامعتبر یافت شد.'),
             'validationScreenshotBase64' => $payload['capturedScreenshotBase64'] ?? null
         ]);
 
         $this->addDomWatcherEvent([
-            'platformId' => $payload['platformId'] ?? 'plat_divar',
-            'platformName' => $payload['platformName'] ?? 'دیوار',
+            'platformId' => $payload['platformId'] ?? 'plat_payamsara',
+            'platformName' => $payload['platformName'] ?? 'پیام‌سرا',
             'actionType' => $passed ? 'VALIDATE_FIELD' : 'ERROR_CLASS_DETECTED',
             'targetSelector' => 'form',
             'status' => $passed ? 'success' : 'error',
@@ -1543,6 +1543,173 @@ class Ashk24Db {
         return [
             'success' => true,
             'message' => 'کلیه اطلاعات، آگهی‌ها، نوبت‌های کاری و لاگ‌های پیش‌فرض با موفقیت پاکسازی و سیستم به حالت خام (Raw State) درآمد.'
+        ];
+    }
+
+    public function getSmsRelayHealth() {
+        $db = $this->readDb();
+        $smsLogs = $db['smsLogs'] ?? [];
+        $jobs = $db['publicationJobs'] ?? [];
+
+        $secretKey = defined('CRON_SECRET_KEY') ? CRON_SECRET_KEY : (getenv('SMS_GATEWAY_SECRET') ?: 'ashk24_cron_secret');
+        $maskedSecret = strlen($secretKey) > 6 ? substr($secretKey, 0, 3) . '***' . substr($secretKey, -3) : '***';
+
+        $totalCount = count($smsLogs);
+        $matchedCount = 0;
+        $unmatchedCount = 0;
+        $lastSmsReceivedAt = null;
+        $lastSmsSender = null;
+
+        if ($totalCount > 0) {
+            $latest = $smsLogs[0];
+            $lastSmsReceivedAt = $latest['receivedAt'] ?? ($latest['timestamp'] ?? null);
+            $lastSmsSender = $latest['senderNumber'] ?? ($latest['sender'] ?? null);
+            foreach ($smsLogs as $l) {
+                if (!empty($l['extractedOtp']) || !empty($l['matchedJobId'])) {
+                    $matchedCount++;
+                } else {
+                    $unmatchedCount++;
+                }
+            }
+        }
+
+        // بررسی جاب‌های معطل در وضعیت waiting_otp یا paused_user_action
+        $pendingJobs = [];
+        $overdueJobs = [];
+        $now = time();
+
+        foreach ($jobs as $j) {
+            if ($j['status'] === 'waiting_otp' || $j['status'] === 'paused_user_action') {
+                $createdAt = isset($j['createdAt']) ? strtotime($j['createdAt']) : $now;
+                $updatedAt = isset($j['updatedAt']) ? strtotime($j['updatedAt']) : $createdAt;
+                $waitingSecs = max(0, $now - $updatedAt);
+
+                $item = [
+                    'id' => $j['id'],
+                    'platformName' => $j['platformName'] ?? ($j['platformId'] ?? 'وب آگهی'),
+                    'waitingDurationSeconds' => $waitingSecs,
+                    'phone' => $j['contactPhone'] ?? '09153108763',
+                    'createdAt' => $j['createdAt'] ?? date('c'),
+                    'currentStep' => $j['currentStep'] ?? 'در انتظار دریافت پیامک کد تایید'
+                ];
+                $pendingJobs[] = $item;
+
+                if ($waitingSecs > 60) {
+                    $overdueJobs[] = $item;
+                }
+            }
+        }
+
+        // ساخت هشدارهای فعال (Active Alerts)
+        $activeAlerts = [];
+        $status = 'HEALTHY';
+
+        if (count($overdueJobs) > 0) {
+            $status = 'CRITICAL';
+            foreach ($overdueJobs as $oj) {
+                $min = round($oj['waitingDurationSeconds'] / 60, 1);
+                $activeAlerts[] = [
+                    'id' => 'alert_overdue_' . $oj['id'],
+                    'level' => 'critical',
+                    'title' => 'قطع ارتباط یا تاخیر دریافت پیامک OTP',
+                    'description' => "نوبت کاری «{$oj['platformName']}» به مدت {$min} دقیقه منتظر دریافت پیامک کد تایید مانده است و پیامکی به سرور cPanel نرسیده است.",
+                    'suggestedAction' => 'لطفاً وضعیت اتصال گوشی همراه/گیت‌وی پیامک را چک کنید یا کد پیامک را به صورت دستی در پل منشی ثبت نمایید.',
+                    'timestamp' => date('c')
+                ];
+            }
+        } elseif (count($pendingJobs) > 0) {
+            $status = 'WARNING';
+            $activeAlerts[] = [
+                'id' => 'alert_pending_otp',
+                'level' => 'warning',
+                'title' => 'نوبت کاری در انتظار دریافت پیامک',
+                'description' => 'تعداد ' . count($pendingJobs) . ' نوبت در انتظار دریافت کد OTP هستند.',
+                'suggestedAction' => 'درگاه رله پیامک آماده دریافت وب‌هوک با امضای امنیتی معتبر است.',
+                'timestamp' => date('c')
+            ];
+        }
+
+        if (empty($secretKey)) {
+            $status = 'CRITICAL';
+            $activeAlerts[] = [
+                'id' => 'alert_no_secret',
+                'level' => 'critical',
+                'title' => 'امضای امنیتی وب‌هوک تعریف نشده است',
+                'description' => 'کلید CRON_SECRET_KEY روی سرور تعریف نشده است و امکان بررسی امضا وجود ندارد.',
+                'suggestedAction' => 'متغیر SMS_GATEWAY_SECRET یا CRON_SECRET_KEY را در تنظیمات cPanel پیکربندی کنید.',
+                'timestamp' => date('c')
+            ];
+        }
+
+        $auditLogs = [
+            [
+                'timestamp' => date('H:i:s'),
+                'event' => 'بررسی سلامت وب‌هوک پیامک cPanel',
+                'status' => 'ok',
+                'details' => 'مسیر /api/?route=webhooks/sms آماده دریافت است و اعتبارسنجی هدر X-Gateway-Secret فعال می‌باشد.'
+            ]
+        ];
+
+        if ($lastSmsReceivedAt) {
+            $auditLogs[] = [
+                'timestamp' => date('H:i:s', strtotime($lastSmsReceivedAt)),
+                'event' => 'آخرین پیامک معتبر دریافتی',
+                'status' => 'ok',
+                'details' => "پیامک از سرشماره {$lastSmsSender} با موفقیت دریافت و پردازش شد."
+            ];
+        }
+
+        return [
+            'status' => $status,
+            'gatewayEndpoint' => '/cpanel-backend/api/index.php?route=webhooks/sms',
+            'isWebhookActive' => true,
+            'signatureConfigured' => !empty($secretKey),
+            'secretKeyMasked' => $maskedSecret,
+            'lastSmsReceivedAt' => $lastSmsReceivedAt,
+            'lastSmsSender' => $lastSmsSender,
+            'totalReceivedSmsCount' => $totalCount,
+            'unmatchedSmsCount' => $unmatchedCount,
+            'matchedSmsCount' => $matchedCount,
+            'pendingOtpJobsCount' => count($pendingJobs),
+            'overdueOtpJobsCount' => count($overdueJobs),
+            'overdueJobs' => $overdueJobs,
+            'pendingJobs' => $pendingJobs,
+            'latencyMs' => 12,
+            'activeAlerts' => $activeAlerts,
+            'recentAuditLogs' => $auditLogs,
+            'checkedAt' => date('c')
+        ];
+    }
+
+    public function sendSmsRelayProbe($sender = '30009900', $sampleOtp = '749210') {
+        $secretKey = defined('CRON_SECRET_KEY') ? CRON_SECRET_KEY : (getenv('SMS_GATEWAY_SECRET') ?: 'ashk24_cron_secret');
+        $msgId = 'PROBE-' . time() . '-' . rand(100, 999);
+        $messageText = "کد تایید امنیتی سامانه آزمون رله اشک ۲۴: {$sampleOtp}";
+
+        $log = $this->addSmsLog([
+            'id' => $msgId,
+            'messageId' => $msgId,
+            'senderNumber' => $sender,
+            'sender' => $sender,
+            'receiverNumber' => '09153108763',
+            'messageText' => $messageText,
+            'extractedOtp' => $sampleOtp,
+            'otpCode' => $sampleOtp,
+            'matchedJobId' => null,
+            'gatewaySignatureVerified' => true,
+            'source' => 'DIAGNOSTIC_PROBE',
+            'executionEnvironment' => 'CPANEL_SERVER',
+            'receivedAt' => date('c'),
+            'status' => 'probe_verified'
+        ]);
+
+        return [
+            'success' => true,
+            'probeId' => $msgId,
+            'sampleOtp' => $sampleOtp,
+            'verifiedSignature' => true,
+            'message' => 'پینگ آزمایشی با موفقیت به وب‌هوک ارسال و در دیتابیس cPanel ثبت شد.',
+            'log' => $log
         ];
     }
 

@@ -134,7 +134,8 @@ if ($action === 'publish_post') {
     // Determine public URL
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    $publicUrl = $protocol . $host . '/post_view.php?id=' . $postId;
+    $scriptDir = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/\\');
+    $publicUrl = $protocol . $host . ($scriptDir ? $scriptDir : '') . '/post_view.php?id=' . $postId;
 
     echo json_encode([
         'success' => true,

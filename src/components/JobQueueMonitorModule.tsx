@@ -30,6 +30,7 @@ import { PublicationJob } from '../types/ashk24.js';
 import { toPersianDigits } from '../utils/persianUtils.js';
 import { clientStorage } from '../services/clientStorageService.js';
 import { PublicationDiagnosticsInspector } from './PublicationDiagnosticsInspector.js';
+import { SmsRelayMonitorModule } from './SmsRelayMonitorModule.js';
 
 interface JobQueueMonitorModuleProps {
   jobs: PublicationJob[];
@@ -239,20 +240,20 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
         submitAd: 'https://www.baskool.com/register',
       };
     }
-    if (cleanId.includes('divar') || domain.includes('divar')) {
+    if (cleanId.includes('parscenter') || domain.includes('parscenter')) {
       return {
-        home: 'https://divar.ir/',
-        register: 'https://divar.ir/my-divar/my-posts',
-        login: 'https://divar.ir/my-divar/my-posts',
-        submitAd: 'https://divar.ir/new',
+        home: 'https://parscenter.com/',
+        register: 'https://parscenter.com/User/Register',
+        login: 'https://parscenter.com/User/Login',
+        submitAd: 'https://parscenter.com/Product/Create',
       };
     }
-    if (cleanId.includes('sheypoor') || domain.includes('sheypoor')) {
+    if (cleanId.includes('niazpardaz') || domain.includes('niazpardaz')) {
       return {
-        home: 'https://www.sheypoor.com/',
-        register: 'https://www.sheypoor.com/session',
-        login: 'https://www.sheypoor.com/session',
-        submitAd: 'https://www.sheypoor.com/session',
+        home: 'https://www.niazpardaz.com/',
+        register: 'https://www.niazpardaz.com/register',
+        login: 'https://www.niazpardaz.com/login',
+        submitAd: 'https://www.niazpardaz.com/add-ad',
       };
     }
     const cleanDom = domain || `${cleanId.replace('plat_', '')}.com`;
@@ -391,6 +392,9 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* پایش زنده و وضعیت سلامت رله پیامک OTP */}
+      <SmsRelayMonitorModule compact />
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-slate-100 flex items-center space-x-2 space-x-reverse">

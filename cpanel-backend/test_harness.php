@@ -454,8 +454,8 @@ class Ashk24ProductionTestHarness {
         $testJob = $this->db->createJob([
             'id' => $testJobId,
             'campaignId' => $testCampaign['id'],
-            'platformId' => 'plat_divar',
-            'platformName' => 'دیوار (Divar.ir)',
+            'platformId' => 'plat_payamsara',
+            'platformName' => 'پیام‌سرا (Payamsara.com)',
             'status' => 'waiting_otp',
             'currentStep' => 'در انتظار دریافت پیامک واقعی ورود با امضای تاییدشده گیت‌وی...',
             'progressPercent' => 35,
@@ -538,7 +538,7 @@ class Ashk24ProductionTestHarness {
             'httpStatus' => 200,
             'status' => $status,
             'jobId' => $testJobId,
-            'platform' => 'SMS Gateway / Divar Relay',
+            'platform' => 'SMS Gateway / Payamsara Relay',
             'durationMs' => round((microtime(true) - $stepStart) * 1000),
             'stateTransition' => $smsActuallyReceived ? 'waiting_otp -> real_signed_sms -> authenticated' : 'waiting_otp -> blocked_no_signed_sms',
             'error' => $error,
@@ -564,7 +564,7 @@ class Ashk24ProductionTestHarness {
         $this->db->createJob([
             'id' => $fakeTestJobId,
             'campaignId' => "TEST-ASHK24-CMP-{$t}",
-            'platformId' => 'plat_divar',
+            'platformId' => 'plat_payamsara',
             'platformName' => 'تست ضد فیک',
             'status' => 'waiting_otp',
             'currentStep' => 'بررسی ضد فیک...'
@@ -629,8 +629,8 @@ class Ashk24ProductionTestHarness {
         $this->db->createJob([
             'id' => $jobId,
             'campaignId' => "TEST-ASHK24-CMP-{$t}",
-            'platformId' => 'plat_sheypoor',
-            'platformName' => 'شیپور (Sheypoor.com)',
+            'platformId' => 'plat_parscenter',
+            'platformName' => 'پارس سنتر (ParsCenter.com)',
             'status' => 'blocked_user_action',
             'currentStep' => 'توقف امن اتوماسیون: نیازمند اقدام مستقیم کاربر در مرورگر (BLOCKED_USER_ACTION).'
         ]);
@@ -643,7 +643,7 @@ class Ashk24ProductionTestHarness {
             'httpStatus' => 200,
             'status' => 'BLOCKED',
             'jobId' => $jobId,
-            'platform' => 'Sheypoor / Chrome Agent',
+            'platform' => 'ParsCenter / Chrome Agent',
             'durationMs' => round((microtime(true) - $stepStart) * 1000),
             'stateTransition' => 'PREPARE -> REQUIRE_HUMAN_AGENT -> BLOCKED_USER_ACTION',
             'error' => 'مرورگر تعاملی فعال نیست. اتوماسیون به صورت امن متوقف شد (BLOCKED_USER_ACTION).',

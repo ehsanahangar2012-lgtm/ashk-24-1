@@ -8,9 +8,9 @@ on:
         required: false
         default: ''
       platform_target:
-        description: 'Target platform (e.g. divar, sheypoor)'
+        description: 'Target platform (e.g. payamsara, agahi24, istgah)'
         required: false
-        default: 'divar'
+        default: 'payamsara'
   # Autonomous periodic run: uncomment after cPanel deployment
   # schedule:
   #   - cron: '0 */4 * * *'
@@ -43,7 +43,7 @@ jobs:
           echo "🏷️ App Version (Config): $(grep 'APP_VERSION =' src/config/version.ts | cut -d"'" -f2)"
           echo "🤖 Worker Version      : $(grep '"version"' local-agent/package.json | head -n 1 | cut -d'"' -f4)"
           echo "🎯 Target Job ID       : ${{ inputs.job_id || github.event.inputs.job_id || 'None (Auto-Claim)' }}"
-          echo "🏷️ Platform Target     : ${{ inputs.platform_target || github.event.inputs.platform_target || 'divar' }}"
+          echo "🏷️ Platform Target     : ${{ inputs.platform_target || github.event.inputs.platform_target || 'payamsara' }}"
           echo "======================================================="
 
       - name: Setup Node.js Environment
@@ -86,7 +86,7 @@ jobs:
           CPANEL_URL: ${{ secrets.CPANEL_URL }}
           CPANEL_AGENT_TOKEN: ${{ secrets.CPANEL_AGENT_TOKEN }}
           TARGET_JOB_ID: ${{ inputs.job_id || github.event.inputs.job_id || '' }}
-          PLATFORM_TARGET: ${{ inputs.platform_target || github.event.inputs.platform_target || 'divar' }}
+          PLATFORM_TARGET: ${{ inputs.platform_target || github.event.inputs.platform_target || 'payamsara' }}
           IRAN_PROXY_URL: ${{ secrets.IRAN_PROXY_URL }}
           VNC_PASSWORD: ${{ secrets.VNC_PASSWORD || 'Ashk24SecureSession' }}
           HEADLESS: 'false'
@@ -174,7 +174,7 @@ jobs:
           echo "🏷️ App Version (Config): $(grep 'APP_VERSION =' src/config/version.ts | cut -d"'" -f2)"
           echo "🤖 Worker Version      : $(grep '"version"' local-agent/package.json | head -n 1 | cut -d'"' -f4)"
           echo "🎯 Target Job ID       : ${TARGET_JOB_ID:-None (Auto-Claim)}"
-          echo "🏷️ Platform Target     : ${PLATFORM_TARGET:-divar}"
+          echo "🏷️ Platform Target     : ${PLATFORM_TARGET:-payamsara}"
           echo "======================================================="
           node local-agent/index.js --once --cloud-mode
 

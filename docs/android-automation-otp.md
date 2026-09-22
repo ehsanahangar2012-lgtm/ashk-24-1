@@ -22,9 +22,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $route === 'otp/receive') {
 ### ۳. تنظیمات اپلیکیشن اندرویدی (SMS Forwarder)
 ۱. اپلیکیشن **SMS Forwarder** را نصب کنید.
 ۲. یک Rule جدید بسازید:
-   - **Trigger:** پیامک‌های دریافتی از "Divar" یا "Sheypoor".
-   - **Action:** ارسال درخواست HTTP POST به نشانی: `https://YOUR_DOMAIN/cpanel-backend/api/index.php?route=otp/receive`
-   - **Payload:** فرمت JSON به صورت `{"code": "%sms_content%"}` (بسته به اپلیکیشن، پارامتر محتوا را با Regex استخراج کنید).
+   - **Trigger:** پیامک‌های دریافتی حاوی کد تایید و احراز هویت وب‌سایت‌های آگهی (مانند پیام‌سرا، آگهی۲۴ و سایر وب آگهی‌ها).
+   - **Action:** ارسال درخواست HTTP POST به نشانی: `https://secret.ashkghalam.ir/api/webhooks/sms`
+   - **Header:** کلید امنیتی اختصاصی `X-Gateway-Secret: ashk24_gateway_secret_2026_secure`
 
 ### ۴. سمت سامانه (Frontend)
 سامانه در بازه‌های زمانی کوتاه (Polling) فایل `last_otp.json` را بررسی کرده و کد را در فرم وارد می‌کند.

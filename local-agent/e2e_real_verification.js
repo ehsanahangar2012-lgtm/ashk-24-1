@@ -30,8 +30,8 @@ async function runE2EVerification() {
     testName: 'E2E Real Verification: PAUSE -> RESUME -> SUBMIT -> VERIFY',
     startedAt: new Date().toISOString(),
     sessionPersistenceCheck: null,
-    targetPlatform: 'plat_divar',
-    targetUrl: 'https://divar.ir/new',
+    targetPlatform: 'plat_payamsara',
+    targetUrl: 'https://payamsara.com/framework/user/register',
     phases: {
       sessionCheck: { status: 'pending' },
       navigationAndInput: { status: 'pending' },
@@ -75,7 +75,8 @@ async function runE2EVerification() {
         platformId: report.targetPlatform
       })
     });
-    activeJob = await jobRes.json();
+    const jobData = await jobRes.json();
+    activeJob = jobData.job || jobData;
     console.log(`📋 Job Created: ID=${activeJob.id}, Target=${activeJob.platformDomain || activeJob.platformId}`);
   } catch (err) {
     console.error(`❌ Failed to create job in cPanel: ${err.message}`);
@@ -248,12 +249,12 @@ async function runE2EVerification() {
     const latestJob = await jobCheckRes.json();
 
     const isHumanVerified = latestJob.status === 'resumed' && latestJob.humanActionVerified;
-    const realOtpFromEnv = process.env.REAL_DIVAR_OTP || latestJob.otpCode || null;
+    const realOtpFromEnv = process.env.REAL_SMS_OTP || latestJob.otpCode || null;
     const realCaptchaToken = process.env.REAL_CAPTCHA_TOKEN || null;
 
     if (!isHumanVerified && !realOtpFromEnv && !realCaptchaToken) {
       console.log('\n⛔ [First Real Blocking Point Encountered]:');
-      console.log('   Challenge: Interactive Arcaptcha / SMS OTP on divar.ir/new');
+      console.log('   Challenge: Interactive Arcaptcha / SMS OTP on payamsara.com/new');
       console.log('   Notification Channel: Human notified via Secretary Bridge (mobile/pending-otp).');
       console.log('   Human Action State: PENDING (Human has not yet solved the live Arcaptcha or provided the live SMS OTP).');
       console.log('   Zero-Fake Enforced: Cannot simulate or fake OTP or CAPTCHA resolution.');
@@ -274,7 +275,7 @@ async function runE2EVerification() {
         humanChannel: 'Human-in-the-Loop Secretary Bridge (mobile/pending-otp)',
         evidenceScreenshot: screenChallengePath,
         domEvidence: path.join(EVIDENCE_DIR, 'page_dump.html'),
-        exactFailureMessage: 'Target (divar.ir) presented Arcaptcha security challenge. Zero-Fake-Pass rule forbids automated mock solve. System correctly paused at PAUSED_USER_ACTION awaiting human resolution.'
+        exactFailureMessage: 'Target (payamsara.com) presented Arcaptcha security challenge. Zero-Fake-Pass rule forbids automated mock solve. System correctly paused at PAUSED_USER_ACTION awaiting human resolution.'
       };
 
       // Record this honest state in cPanel

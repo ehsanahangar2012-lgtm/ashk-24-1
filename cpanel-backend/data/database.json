@@ -207,6 +207,79 @@
   ],
   "publicationJobs": [
     {
+      "id": "job_1790049911293_421",
+      "campaignId": "camp_test_001",
+      "campaignTitle": "تست آگهی اتوماسیون اشک قلم",
+      "platformId": "plat_payamsara",
+      "platformName": "پیام‌سرا (نیازمندی‌های رایگان و تبلیغات اینترنتی)",
+      "platformDomain": "payamsara.com",
+      "status": "paused_user_action",
+      "currentStep": "توقف در انتظار حل چالش انسانی آرکپچا و کد پیامک واقعی. هرگونه بای‌پس ساختگی طبق قانون ZERO-FAKE ممنوع است.",
+      "progressPercent": 25,
+      "otpRequired": false,
+      "logs": [
+        {
+          "timestamp": "2026-09-22T04:05:11.293Z",
+          "level": "info",
+          "message": "وظیفه انتشار برای «پیام‌سرا (نیازمندی‌های رایگان و تبلیغات اینترنتی)» آغاز گردید. ارتباط با سرور و استخراج فیلدها در حال انجام است."
+        },
+        {
+          "timestamp": "2026-09-22T04:05:11.795Z",
+          "level": "info",
+          "message": "نوبت انتشار در صف قرار گرفت و آماده تحویل به ورکر یا افزونه است."
+        }
+      ],
+      "createdAt": "2026-09-22T04:05:11.294Z",
+      "updatedAt": "2026-09-22T04:05:19.734Z",
+      "jobId": "job_1790049911293_421",
+      "challengeType": "CAPTCHA_CHALLENGE",
+      "evidenceScreenshot": "/app/applet/local-agent/evidence/e2e_02_challenge_detected.png",
+      "humanAlert": {
+        "channel": "Secretary Bridge / Mobile Companion / Dashboard UI",
+        "alertTimestamp": "2026-09-22T04:05:19.710Z",
+        "status": "NOTIFIED",
+        "actionUrl": "http://localhost:3000/cpanel-backend/api/index.php?route=jobs/resolve-challenge",
+        "message": "چالش امنیتی نیازمند اقدام انسانی شناسایی شد. لطفاً چالش را در پل ارتباطی منشی هوشمند حل و تایید فرمایید."
+      },
+      "blockingPoint": {
+        "phase": "HUMAN_CAPTCHA_OTP_CHALLENGE",
+        "targetUrl": "https://payamsara.com/sendad",
+        "timestamp": "2026-09-22T04:05:19.731Z",
+        "challengeType": "Interactive Verification",
+        "status": "PAUSED_USER_ACTION",
+        "humanChannel": "Human-in-the-Loop Secretary Bridge (mobile/pending-otp)",
+        "evidenceScreenshot": "/app/applet/local-agent/evidence/e2e_02_challenge_detected.png",
+        "domEvidence": "/app/applet/local-agent/evidence/page_dump.html",
+        "exactFailureMessage": "Target (payamsara.com) presented interactive security challenge. Zero-Fake-Pass rule forbids automated mock solve. System correctly paused at PAUSED_USER_ACTION awaiting human resolution."
+      }
+    },
+    {
+      "id": "job_1790049878287_118",
+      "campaignId": "camp_test_001",
+      "campaignTitle": "تست آگهی اتوماسیون اشک قلم",
+      "platformId": "plat_payamsara",
+      "platformName": "پیام‌سرا (نیازمندی‌های رایگان و تبلیغات اینترنتی)",
+      "platformDomain": "payamsara.com",
+      "status": "pending",
+      "currentStep": "در انتظار دریافت و اجرای نوبت کاری توسط ورکر محلی / افزونه اشک ۲۴ برای پیام‌سرا (نیازمندی‌های رایگان و تبلیغات اینترنتی)",
+      "progressPercent": 25,
+      "otpRequired": false,
+      "logs": [
+        {
+          "timestamp": "2026-09-22T04:04:38.287Z",
+          "level": "info",
+          "message": "وظیفه انتشار برای «پیام‌سرا (نیازمندی‌های رایگان و تبلیغات اینترنتی)» آغاز گردید. ارتباط با سرور و استخراج فیلدها در حال انجام است."
+        },
+        {
+          "timestamp": "2026-09-22T04:04:38.788Z",
+          "level": "info",
+          "message": "نوبت انتشار در صف قرار گرفت و آماده تحویل به ورکر یا افزونه است."
+        }
+      ],
+      "createdAt": "2026-09-22T04:04:38.287Z",
+      "updatedAt": "2026-09-22T04:04:38.788Z"
+    },
+    {
       "id": "job_1790001995195_616",
       "campaignId": "camp_test_001",
       "campaignTitle": "تست آگهی اتوماسیون اشک قلم",

@@ -18,18 +18,20 @@ if ($method === 'POST') {
         $inputData = $_POST;
     }
 
-    $platformDomain = isset($inputData['domain']) ? trim($inputData['domain']) : 'sheypoor.com';
+    $platformDomain = isset($inputData['domain']) ? trim($inputData['domain']) : 'payamsara.com';
     $phoneNumber = isset($inputData['phone']) ? trim($inputData['phone']) : '09153108763';
     $action = isset($inputData['action']) ? trim($inputData['action']) : 'probe_auth';
 
-    // ساختار تشخیص هوشمند DOM و سوئیچ بین ورود و ثبت نام
+    // ساختار تشخیص هوشمند DOM و سوئیچ بین ورود و ثبت نام در سایتهای وب آگهی
     $targetUrl = "https://{$platformDomain}/";
-    if (strpos($platformDomain, 'divar') !== false) {
-        $targetUrl = 'https://divar.ir/my-divar/my-posts';
-    } elseif (strpos($platformDomain, 'sheypoor') !== false) {
-        $targetUrl = 'https://www.sheypoor.com/session';
+    if (strpos($platformDomain, 'payamsara') !== false) {
+        $targetUrl = 'https://www.payamsara.com/framework/user/register';
+    } elseif (strpos($platformDomain, 'agahi24') !== false) {
+        $targetUrl = 'https://agahi24.com/register/';
     } elseif (strpos($platformDomain, 'istgah') !== false) {
         $targetUrl = 'https://www.istgah.com/login/';
+    } elseif (strpos($platformDomain, 'niazpardaz') !== false) {
+        $targetUrl = 'https://www.niazpardaz.com/user/login';
     }
 
     // ارسال درخواست cURL واقعی به درگاه سایت مقصد
@@ -71,6 +73,6 @@ if ($method === 'POST') {
 echo json_encode([
     'status' => 'active',
     'service' => 'موتور رله هوشمند احراز هویت سی‌پنل (Ashk 24 Auth Relay)',
-    'supportedPlatforms' => ['دیوار', 'شیپور', 'ایستگاه', 'نیازمندی‌ها', 'نیازرپز', 'آگهی۲۴'],
+    'supportedPlatforms' => ['پیام‌سرا', 'آگهی۲۴', 'ایستگاه', 'باسکول', 'پارس‌سنتر', 'نیازپرداز', 'نیازروز'],
     'usage' => 'درخواست POST حاوی domain و phone ارسال کنید.'
 ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);

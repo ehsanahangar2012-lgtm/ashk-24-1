@@ -627,7 +627,7 @@ switch ($action) {
           <div className="relative flex-1 w-full">
             <input
               type="text"
-              placeholder="مثلاً: divar.ir یا istgah.com یا virgool.io یا sheypoor.com"
+              placeholder="مثلاً: parscenter.com یا istgah.com یا niazpardaz.com یا agahi24.com"
               value={analyzerInput}
               onChange={(e) => setAnalyzerInput(e.target.value)}
               className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 pl-10 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 font-mono text-left"

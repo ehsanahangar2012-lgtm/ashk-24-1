@@ -48,7 +48,7 @@ async function executeJob(jobId) {
     });
     const data = await res.json();
     
-    const platformUrl = data.campaign?.selectedPlatformIds?.includes('plat_divar') ? 'https://divar.ir/new' : 'https://example.com/mock-target';
+    const platformUrl = data.job?.targetUrl || data.targetUrl || 'https://payamsara.com/sendad';
     // Simulate opening tab and letting content script take over
     chrome.tabs.create({ url: `${platformUrl}?jobId=${jobId}` }, (tab) => {
       chrome.storage.local.set({ activeJob: data });

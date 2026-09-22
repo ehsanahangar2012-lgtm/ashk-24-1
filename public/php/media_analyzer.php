@@ -31,32 +31,32 @@ if (!file_exists($jsonFilePath)) {
         "source" => "Ashk24 PHP Media Engine",
         "platforms" => [
             [
-                "id" => "plat_divar",
-                "name" => "DIVAR",
-                "persianName" => "دیوار",
-                "domain" => "divar.ir",
+                "id" => "plat_payamsara",
+                "name" => "PAYAMSARA",
+                "persianName" => "پیام‌سرا (پورتال آگهی و تبلیغات وب)",
+                "domain" => "payamsara.com",
                 "category" => "classifieds",
                 "sectorFit" => ["industrial", "real_estate", "digital_goods", "services"],
-                "monthlyVisits" => "۴۵ میلیون بازدید",
-                "requiresOtp" => true,
+                "monthlyVisits" => "۳.۲ میلیون بازدید",
+                "requiresOtp" => false,
                 "supportsImage" => true,
                 "formType" => "classified",
                 "active" => true,
-                "trustScore" => 98
+                "trustScore" => 93
             ],
             [
-                "id" => "plat_sheypoor",
-                "name" => "SHEYPOOR",
-                "persianName" => "شیپور",
-                "domain" => "sheypoor.com",
+                "id" => "plat_parscenter",
+                "name" => "PARSCENTER",
+                "persianName" => "پارس سنتر (دایرکتوری جامع کالا و خدمات)",
+                "domain" => "parscenter.com",
                 "category" => "classifieds",
                 "sectorFit" => ["industrial", "real_estate", "digital_goods", "services"],
-                "monthlyVisits" => "۱۸ میلیون بازدید",
-                "requiresOtp" => true,
+                "monthlyVisits" => "۳.۵ میلیون بازدید",
+                "requiresOtp" => false,
                 "supportsImage" => true,
                 "formType" => "classified",
                 "active" => true,
-                "trustScore" => 94
+                "trustScore" => 92
             ],
             [
                 "id" => "plat_virgool",
@@ -272,26 +272,26 @@ switch ($action) {
 
         $verifiedCatalog = [
             [
-                'name' => 'Divar',
-                'persianName' => 'دیوار (ثبت آگهی و نیازمندی‌های سراسری)',
-                'domain' => 'divar.ir',
+                'name' => 'Payamsara',
+                'persianName' => 'پیام‌سرا (پورتال آگهی و تبلیغات وب ایران)',
+                'domain' => 'payamsara.com',
                 'category' => 'classifieds',
-                'monthlyVisits' => '۶۰ میلیون بازدید ماهانه',
-                'requiresOtp' => true,
+                'monthlyVisits' => '۳.۲ میلیون بازدید ماهانه',
+                'requiresOtp' => false,
                 'supportsImage' => true,
                 'formType' => 'classified',
-                'trustScore' => 98
+                'trustScore' => 93
             ],
             [
-                'name' => 'Sheypoor',
-                'persianName' => 'شیپور (نیازمندی‌های سراسری ایران)',
-                'domain' => 'sheypoor.com',
+                'name' => 'ParsCenter',
+                'persianName' => 'پارس سنتر (دایرکتوری جامع کالا و خدمات)',
+                'domain' => 'parscenter.com',
                 'category' => 'classifieds',
-                'monthlyVisits' => '۲۵ میلیون بازدید ماهانه',
-                'requiresOtp' => true,
+                'monthlyVisits' => '۳.۵ میلیون بازدید ماهانه',
+                'requiresOtp' => false,
                 'supportsImage' => true,
                 'formType' => 'classified',
-                'trustScore' => 94
+                'trustScore' => 92
             ],
             [
                 'name' => 'Virgool',
@@ -305,15 +305,15 @@ switch ($action) {
                 'trustScore' => 95
             ],
             [
-                'name' => 'Torob',
-                'persianName' => 'موتور جستجو و معرفی محصولات ترب',
-                'domain' => 'torob.com',
-                'category' => 'b2b',
-                'monthlyVisits' => '۴۵ میلیون بازدید ماهانه',
+                'name' => 'NiazPardaz',
+                'persianName' => 'نیازپرداز (پایگاه آگهی و تبلیغات وب ایران)',
+                'domain' => 'niazpardaz.com',
+                'category' => 'classifieds',
+                'monthlyVisits' => '۲.۸ میلیون بازدید ماهانه',
                 'requiresOtp' => false,
                 'supportsImage' => true,
-                'formType' => 'directory_entry',
-                'trustScore' => 97
+                'formType' => 'classified',
+                'trustScore' => 90
             ],
             [
                 'name' => 'Istgah',

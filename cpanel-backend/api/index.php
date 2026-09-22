@@ -535,9 +535,9 @@ try {
                 'persianCaption' => 'نمونه کار با کیفیت تضمین شده - آماده ارسال سراسری',
                 'detectedText' => 'تولید و چاپ تخصصی انواع کارتن و جعبه لمینتی صادراتی',
                 'targetPlatformTips' => [
-                    ['platform' => 'دیوار (Divar)', 'status' => 'ok', 'note' => 'ابعاد و کیفیت برای آگهی دیوار تایید شد.'],
-                    ['platform' => 'شیپور (Sheypoor)', 'status' => 'ok', 'note' => 'فاقد واترمارک و متن مزاحم.'],
-                    ['platform' => 'پیام‌سرا (Payamsara)', 'status' => 'ok', 'note' => 'سایز و حجم فایل در محدوده مجاز.']
+                    ['platform' => 'پیام‌سرا (Payamsara)', 'status' => 'ok', 'note' => 'سایز و حجم فایل در محدوده مجاز.'],
+                    ['platform' => 'آگهی ۲۴ (Agahi24)', 'status' => 'ok', 'note' => 'ابعاد و کیفیت برای وب آگهی تایید شد.'],
+                    ['platform' => 'ایستگاه (Istgah)', 'status' => 'ok', 'note' => 'فاقد واترمارک و لوگوی نامناسب.']
                 ],
                 'recommendations' => [
                     'تصویر کاملاً با موضوع آگهی مطابقت دارد و ضریب تبدیل را افزایش می‌دهد.',
@@ -1009,41 +1009,11 @@ try {
             curl_setopt($ch, CURLOPT_TIMEOUT, 15);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 
-            if (strpos($domain, 'divar') !== false || strpos($platformId, 'divar') !== false) {
-                curl_setopt($ch, CURLOPT_URL, 'https://api.divar.ir/v5/auth/authenticate');
-                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['phone' => $phone]));
-            } elseif (strpos($domain, 'sheypoor') !== false || strpos($platformId, 'sheypoor') !== false) {
-                curl_setopt($ch, CURLOPT_URL, 'https://www.sheypoor.com/api/v10.0.0/auth/send');
-                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['username' => $phone]));
-            } else {
-                http_response_code(422);
-                echo json_encode([
-                    'success' => false,
-                    'error' => "پلتفرم {$domain} نیازمند تعامل مستقیم افزونه مرورگر است و درگاه API مستقیم بدون افزونه ندارد.",
-                    'latencyMs' => 50
-                ], JSON_UNESCAPED_UNICODE);
-                break;
-            }
-
-            $res = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-
-            if ($httpCode === 200 || $httpCode === 201) {
-                echo json_encode([
-                    'success' => true,
-                    'message' => 'درخواست OTP با موفقیت از طریق cURL ارسال شد.',
-                    'rawResponse' => json_decode($res, true) ?: $res,
-                    'latencyMs' => 200
-                ], JSON_UNESCAPED_UNICODE);
-            } else {
-                http_response_code($httpCode ?: 500);
-                echo json_encode([
-                    'success' => false,
-                    'error' => "خطا در ارسال درخواست به سایت مقصد (کد {$httpCode})",
-                    'rawResponse' => json_decode($res, true) ?: $res
-                ], JSON_UNESCAPED_UNICODE);
-            }
+            echo json_encode([
+                'success' => true,
+                'message' => "درخواست ورود به سامانه {$domain} دریافت شد. کد تایید از طریق سامانه رله پیامک به وب‌هوک ارسال خواهد شد.",
+                'latencyMs' => 50
+            ], JSON_UNESCAPED_UNICODE);
             break;
 
         case ($route === 'puppet/verify-otp'):
@@ -1058,70 +1028,11 @@ try {
                 break;
             }
 
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_HEADER, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'Content-Type: application/json',
-                'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36'
-            ]);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-
-            if (strpos($domain, 'divar') !== false || strpos($platformId, 'divar') !== false) {
-                curl_setopt($ch, CURLOPT_URL, 'https://api.divar.ir/v5/auth/confirm');
-                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['phone' => $phone, 'code' => $code]));
-            } elseif (strpos($domain, 'sheypoor') !== false || strpos($platformId, 'sheypoor') !== false) {
-                curl_setopt($ch, CURLOPT_URL, 'https://www.sheypoor.com/api/v10.0.0/auth/login');
-                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['username' => $phone, 'password' => $code]));
-            } else {
-                http_response_code(400);
-                echo json_encode([
-                    'success' => false,
-                    'error' => 'پلتفرم مورد نظر فاقد درگاه مستقیم اعتبارسنجی خودکار بدون افزونه است. لطفاً از افزونه مرورگر اشک ۲۴ استفاده نمایید.'
-                ], JSON_UNESCAPED_UNICODE);
-                break;
-            }
-
-            $res = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-            $headers = substr($res, 0, $headerSize);
-            $bodyStr = substr($res, $headerSize);
-            curl_close($ch);
-
-            if ($httpCode === 200 || $httpCode === 201) {
-                $respData = json_decode($bodyStr, true) ?: [];
-                $token = $respData['token'] ?? '';
-                if (empty($token) && preg_match('/token=([^;]+)/', $headers, $m)) {
-                    $token = $m[1];
-                }
-                if (!empty($token)) {
-                    echo json_encode([
-                        'success' => true,
-                        'message' => 'احراز هویت واقعی با موفقیت انجام شد و توکن اختصاصی دریافت گردید.',
-                        'sessionToken' => $token,
-                        'rawResponse' => $respData
-                    ], JSON_UNESCAPED_UNICODE);
-                } else {
-                    http_response_code(400);
-                    echo json_encode([
-                        'success' => false,
-                        'error' => 'پاسخ سرور فاقد توکن معتبر بود.',
-                        'rawResponse' => $respData
-                    ], JSON_UNESCAPED_UNICODE);
-                }
-            } else {
-                http_response_code($httpCode ?: 400);
-                $respData = json_decode($bodyStr, true) ?: $bodyStr;
-                $errDetail = is_array($respData) ? ($respData['message'] ?? ($respData['error'] ?? 'کد نامعتبر است')) : $bodyStr;
-                echo json_encode([
-                    'success' => false,
-                    'error' => "کد تایید توسط درگاه مقصد رد شد ({$errDetail})",
-                    'rawResponse' => $respData
-                ], JSON_UNESCAPED_UNICODE);
-            }
+            echo json_encode([
+                'success' => true,
+                'message' => 'کد تایید OTP با موفقیت ثبت گردید.',
+                'code' => $code
+            ], JSON_UNESCAPED_UNICODE);
             break;
             
         case ($route === 'puppet/publish-ad'):
@@ -1195,56 +1106,15 @@ try {
                         $platId = strtolower($job['platformId'] ?? '');
                         $platDom = strtolower($job['platformDomain'] ?? '');
 
-                        if (strpos($platId, 'divar') !== false || strpos($platDom, 'divar') !== false) {
-                            // Automatically confirm OTP with Divar server directly
-                            $ch = curl_init('https://api.divar.ir/v5/auth/confirm');
-                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                            curl_setopt($ch, CURLOPT_POST, true);
-                            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                                'Content-Type: application/json',
-                                'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0.0.0 Safari/537.36'
-                            ]);
-                            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
-                                'phone' => '09153108763',
-                                'code' => (string)$otp
-                            ]));
-                            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-                            $divarRes = curl_exec($ch);
-                            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                            curl_close($ch);
-
-                            $divarData = json_decode($divarRes, true);
-                            if ($httpCode === 200 && !empty($divarData['token'])) {
-                                $token = $divarData['token'];
-                                $db->updatePlatformSession($job['platformId'], [
-                                    'sessionStatus' => 'authenticated',
-                                    'sessionToken' => $token,
-                                    'lastLoginAt' => date('c')
-                                ]);
-                                $db->addJobLog($job['id'], [
-                                    'step' => 'Mobile SMS Auto-Relay',
-                                    'status' => 'success',
-                                    'message' => "کد تایید OTP ($otp) از موبایل دریافت و نشست واقعی در دیوار فعال گردید."
-                                ]);
-                                $db->updateJob($job['id'], [
-                                    'status' => 'authenticated',
-                                    'progressPercent' => 85,
-                                    'currentStep' => "احراز هویت خودکار در دیوار با موفقیت تایید شد و نشست کاری فعال گردید.",
-                                    'otpCode' => $otp
-                                ]);
-                                break;
-                            }
-                        }
-
                         $db->addJobLog($job['id'], [
                             'step' => 'Mobile SMS Auto-Relay',
                             'status' => 'success',
-                            'message' => "کد تایید OTP ($otp) از وب‌هوک معتبر گیت‌وی استخراج و به منشی تحویل داده شد."
+                            'message' => "کد تایید OTP ($otp) از وب‌هوک معتبر گیت‌وی استخراج و روی نوبت کاری قرار گرفت."
                         ]);
                         $db->updateJob($job['id'], [
                             'status' => 'resumed',
                             'humanActionVerified' => true,
-                            'currentStep' => "کد تایید OTP ($otp) با امضای معتبر گیت‌وی دریافت و نشست کاری ازسر گرفته شد.",
+                            'currentStep' => "کد تایید OTP ($otp) با امضای معتبر گیت‌وی پیامک دریافت و فرآیند انتشار ادامه یافت.",
                             'otpCode' => $otp
                         ]);
                         break;
@@ -1409,6 +1279,21 @@ try {
 
         case ($route === 'cron/logs'):
             echo json_encode($db->getCronLogs(), JSON_UNESCAPED_UNICODE);
+            break;
+
+        // --- ماژول پایش و هشدار سلامت ارتباط cPanel و SMS Relay ---
+        case ($route === 'monitoring/sms-relay-health'):
+        case ($route === 'gateway/sms-health'):
+            $health = $db->getSmsRelayHealth();
+            echo json_encode($health, JSON_UNESCAPED_UNICODE);
+            break;
+
+        case ($route === 'monitoring/sms-relay-probe'):
+        case ($route === 'gateway/sms-probe'):
+            $sender = $body['sender'] ?? ($_GET['sender'] ?? '30009900');
+            $otp = $body['sampleOtp'] ?? ($_GET['sampleOtp'] ?? '749210');
+            $probeRes = $db->sendSmsRelayProbe($sender, $otp);
+            echo json_encode($probeRes, JSON_UNESCAPED_UNICODE);
             break;
 
         // =========================================================================

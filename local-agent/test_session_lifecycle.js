@@ -130,7 +130,7 @@ async function runTest1_SessionSave() {
     await context.addCookies([
       {
         name: 'ashk24_session_token',
-        value: 'sec_tok_divar_98153108763',
+        value: 'sec_tok_payamsara_98153108763',
         domain: 'localhost',
         path: '/',
         httpOnly: true,
@@ -138,7 +138,7 @@ async function runTest1_SessionSave() {
         sameSite: 'Lax'
       },
       {
-        name: 'divar_user_id',
+        name: 'payamsara_user_id',
         value: 'usr_iran_mashhad_01',
         domain: 'localhost',
         path: '/'
@@ -158,7 +158,7 @@ async function runTest1_SessionSave() {
     const metadata = {
       currentUrl: 'http://localhost/new_ad',
       currentStep: 'ورود شماره همراه و تایید کپچا',
-      platformId: 'plat_divar',
+      platformId: 'plat_payamsara',
       challengeType: 'CAPTCHA_CHALLENGE',
       timestamp: new Date().toISOString()
     };
@@ -176,7 +176,7 @@ async function runTest1_SessionSave() {
     
     const cookieNames = saved.storageState.cookies.map(c => c.name);
     assert(cookieNames.includes('ashk24_session_token'), 'Cookie ashk24_session_token preserved');
-    assert(cookieNames.includes('divar_user_id'), 'Cookie divar_user_id preserved');
+    assert(cookieNames.includes('payamsara_user_id'), 'Cookie payamsara_user_id preserved');
 
     // Check file on disk
     const filePath = getSessionFilePath(testJobId);
@@ -205,7 +205,7 @@ async function runTest2_CaptchaPause() {
   try {
     const context = env.context;
     await context.addCookies([
-      { name: 'captcha_session_id', value: 'cap_divar_mashhad_789', domain: 'localhost', path: '/' }
+      { name: 'captcha_session_id', value: 'cap_payamsara_mashhad_789', domain: 'localhost', path: '/' }
     ]);
 
     const page = await context.newPage();
@@ -239,7 +239,7 @@ async function runTest2_CaptchaPause() {
       currentUrl,
       currentStep,
       challengeType,
-      platformId: 'plat_divar',
+      platformId: 'plat_payamsara',
       timestamp: new Date().toISOString()
     });
 
@@ -311,7 +311,7 @@ async function runTest3_ResumeSameJob(pausedJobData) {
         <body>
           <div id="success-screen">
             <h1>آگهی با موفقیت منتشر شد</h1>
-            <p id="ad-url">https://divar.ir/v/ashk-ghalam-box-industrial/10380456789</p>
+            <p id="ad-url">https://payamsara.com/v/ashk-ghalam-box-industrial/10380456789</p>
             <div id="badge-published">وضعیت: تایید و منتشر شده</div>
           </div>
         </body>
@@ -331,7 +331,7 @@ async function runTest3_ResumeSameJob(pausedJobData) {
       evidenceScreenshot: finalScreenshot,
       independentVerification: {
         timestamp: new Date().toISOString(),
-        targetUrl: 'https://divar.ir/v/ashk-ghalam-box-industrial/10380456789',
+        targetUrl: 'https://payamsara.com/v/ashk-ghalam-box-industrial/10380456789',
         httpStatus: 200,
         isAccessible: true,
         verifiedBy: 'Ashk24_LocalAgent_SessionManager'
@@ -431,7 +431,7 @@ async function runTest5_FullAcceptanceLifecycle() {
   const savedState = await saveSession(lifecycleJobId, env1.context, {
     currentUrl: 'http://localhost/ad/create',
     currentStep: 'چالش امنیتی شناسایی شد.',
-    platformId: 'plat_divar',
+    platformId: 'plat_payamsara',
     challengeType: 'CAPTCHA_CHALLENGE'
   });
 
@@ -485,7 +485,7 @@ async function runTest5_FullAcceptanceLifecycle() {
       <body>
         <div id="submitted">
           <h1>آگهی چاپ و بسته‌بندی اشک قلم ثبت گردید</h1>
-          <a id="published-url" href="https://divar.ir/v/ashk-ghalam-kalat/884920">مشاهده آگهی</a>
+          <a id="published-url" href="https://payamsara.com/v/ashk-ghalam-kalat/884920">مشاهده آگهی</a>
         </div>
       </body>
     </html>
@@ -503,7 +503,7 @@ async function runTest5_FullAcceptanceLifecycle() {
   const verificationReport = {
     jobId: lifecycleJobId,
     verifiedAt: new Date().toISOString(),
-    targetUrl: 'https://divar.ir/v/ashk-ghalam-kalat/884920',
+    targetUrl: 'https://payamsara.com/v/ashk-ghalam-kalat/884920',
     httpStatus: 200,
     isAccessible: true,
     evidenceScreenshot: submitScreenshot,

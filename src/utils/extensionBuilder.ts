@@ -19,18 +19,17 @@ export function generateExtensionFiles(options?: {
       name: 'دستیار هوشمند و همیار لحظه‌ای انتشار آگهی اشک ۲۴',
       short_name: 'اشک ۲۴ (همیار انتشار)',
       version: APP_VERSION,
-      description: 'دستیار لحظه‌ای، تشخیص خودکار دکمه‌های درج آگهی و فرم‌ها در نیازپرداز، ایستگاه، دیوار، شیپور و تمام سایت‌های وب ایران',
+      description: 'دستیار لحظه‌ای، تشخیص خودکار دکمه‌های درج آگهی و فرم‌ها در نیازپرداز، ایستگاه، پارس‌سنتر، پیام‌سرا و تمام سایت‌های وب آگهی ایران',
       permissions: ['activeTab', 'scripting', 'storage', 'tabs', 'notifications'],
       host_permissions: [
-        'https://*.divar.ir/*',
-        'https://*.sheypoor.com/*',
+        'https://*.parscenter.com/*',
+        'https://*.locopoc.com/*',
         'https://*.istgah.com/*',
         'https://*.niazpardaz.com/*',
         'https://*.payamsara.com/*',
         'https://*.niazerooz.com/*',
         'https://*.rahnama.com/*',
         'https://*.agahi24.com/*',
-        'https://*.bama.ir/*',
         'http://127.0.0.1/*',
         'http://localhost/*'
       ],
@@ -55,15 +54,14 @@ export function generateExtensionFiles(options?: {
       content_scripts: [
         {
           matches: [
-            'https://*.divar.ir/*',
-            'https://*.sheypoor.com/*',
+            'https://*.parscenter.com/*',
+            'https://*.locopoc.com/*',
             'https://*.istgah.com/*',
             'https://*.niazpardaz.com/*',
             'https://*.payamsara.com/*',
             'https://*.niazerooz.com/*',
             'https://*.rahnama.com/*',
             'https://*.agahi24.com/*',
-            'https://*.bama.ir/*',
             'http://127.0.0.1/*',
             'http://localhost/*'
           ],
@@ -75,8 +73,8 @@ export function generateExtensionFiles(options?: {
         {
           resources: ['icons/*', 'hud_styles.css'],
           matches: [
-            'https://*.divar.ir/*',
-            'https://*.sheypoor.com/*',
+            'https://*.parscenter.com/*',
+            'https://*.locopoc.com/*',
             'https://*.istgah.com/*',
             'https://*.niazpardaz.com/*',
             'https://*.payamsara.com/*',
@@ -132,7 +130,7 @@ async function performBridgeHandshake() {
           supportedActions: ['OPEN_URL', 'INSPECT_PAGE', 'GET_DOM', 'GET_FORMS', 'GET_FIELDS', 'CLICK', 'FILL', 'SELECT', 'UPLOAD', 'WAIT', 'EXTRACT', 'SCREENSHOT'],
           tabs: [],
           permissions: ['activeTab', 'scripting', 'storage', 'tabs'],
-          allowedDomains: ['127.0.0.1', 'localhost', 'niazpardaz.com', 'istgah.com', 'payamsara.com', 'divar.ir', 'sheypoor.com']
+          allowedDomains: ['127.0.0.1', 'localhost', 'niazpardaz.com', 'istgah.com', 'payamsara.com', 'parscenter.com', 'agahi24.com', 'locopoc.com']
         }
       })
     });
@@ -262,7 +260,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
  * - React 16+ / Vue 3 / Angular Prototype Value Setter Bypass
  * - Multi-Step Navigation & Real-Time Mutation Observer
  * - Gutenberg / TinyMCE / WordPress / Rich-Text Editor Injection
- * - Dedicated Adapters for Payamsara, Niazpardaz, Istgah, Divar, Sheypoor, etc.
+ * - Dedicated Adapters for Payamsara, Niazpardaz, Istgah, ParsCenter, NiazeRooz, etc.
  */
 
 (function () {
@@ -304,19 +302,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       captcha: 'input[name="security"], input[name="captcha"], #security',
       submit: 'input[type="submit"], button[type="submit"], #submit'
     },
-    'divar.ir': {
-      title: 'input[name="title"], input[data-testid="title-input"], input[placeholder*="عنوان"]',
-      description: 'textarea[name="description"], textarea[data-testid="description-input"], textarea[placeholder*="توضیحات"]',
-      phone: 'input[type="tel"], input[name="phone"], input[name="mobile"], input[data-testid="phone-input"]',
-      price: 'input[name="price"], input[data-testid="price-input"], input[placeholder*="قیمت"]',
-      submit: 'button[type="submit"], button[data-testid="submit-button"], .kt-button--primary'
+    'parscenter.com': {
+      title: 'input[name="Title"], input[name="title"], #Title, #productTitle',
+      description: 'textarea[name="Description"], textarea[name="desc"], #Description',
+      phone: 'input[name="Tel"], input[name="Mobile"], input[name="phone"], #Tel',
+      price: 'input[name="Price"], #Price',
+      submit: 'button[type="submit"], input[type="submit"], #btnSave'
     },
-    'sheypoor.com': {
-      title: 'input[name="title"], #title, input[placeholder*="عنوان"]',
-      description: 'textarea[name="description"], #description, textarea[placeholder*="توضیحات"]',
-      phone: 'input[name="telephone"], input[type="tel"], #telephone',
-      price: 'input[name="price"], #price, input[placeholder*="قیمت"]',
-      submit: 'button[type="submit"], .btn-primary, #submit-ad-btn'
+    'locopoc.com': {
+      title: 'input[name="title"], #title',
+      description: 'textarea[name="body"], #body, textarea[name="desc"]',
+      phone: 'input[name="tel"], input[name="mobile"], #tel',
+      email: 'input[name="email"], #email',
+      submit: 'input[type="submit"], button[type="submit"]'
     },
     'niazerooz.com': {
       title: 'input[name="title"], #title',
@@ -588,7 +586,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     results.hasCaptcha = !!detected.captcha;
 
     const hostname = window.location.hostname;
-    const knownSites = ['istgah', 'divar', 'sheypoor', 'niazpardaz', 'rahnama', 'bama', 'agahi', 'payamsara', 'eparsi', 'lokma', 'wp-admin', 'ashkghalam'];
+    const knownSites = ['istgah', 'niazpardaz', 'rahnama', 'parscenter', 'niazerooz', 'agahi', 'payamsara', 'locopoc', 'eparsi', 'lokma', 'wp-admin', 'ashkghalam'];
     results.isClassifiedSite = knownSites.some(k => hostname.includes(k)) || results.fieldCounts >= 2 || !!postAdNav;
 
     return results;
@@ -1203,8 +1201,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     </div>
     <div class="grid-sites">
       <div class="site-pill active" data-url="https://www.istgah.com/sendad/">ایستگاه</div>
-      <div class="site-pill" data-url="https://divar.ir/new">دیوار</div>
-      <div class="site-pill" data-url="https://www.sheypoor.com/post-listing">شیپور</div>
+      <div class="site-pill" data-url="https://parscenter.com/">پارس سنتر</div>
+      <div class="site-pill" data-url="https://locopoc.com/">لوکوپوک</div>
       <div class="site-pill" data-url="https://www.niazpardaz.com/">نیازپرداز</div>
       <div class="site-pill" data-url="https://www.payamsara.com/">پیام‌سرا</div>
       <div class="site-pill" data-url="https://www.rahnama.com/">راهنما</div>

@@ -32,6 +32,13 @@ if (fs.existsSync(rootHtaccess)) {
   console.log('✅ Copied .htaccess to dist/.htaccess');
 }
 
+// 1.1 Copy post_view.php to dist/
+const rootPostView = path.join(rootDir, 'post_view.php');
+if (fs.existsSync(rootPostView)) {
+  fs.copyFileSync(rootPostView, path.join(distDir, 'post_view.php'));
+  console.log('✅ Copied post_view.php to dist/post_view.php');
+}
+
 // 2. Copy cpanel-backend folder to dist/cpanel-backend
 const cpanelBackendSrc = path.join(rootDir, 'cpanel-backend');
 const cpanelBackendDest = path.join(distDir, 'cpanel-backend');

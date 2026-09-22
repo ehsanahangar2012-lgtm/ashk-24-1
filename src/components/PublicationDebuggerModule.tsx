@@ -133,19 +133,19 @@ export const PublicationDebuggerModule: React.FC = () => {
     try {
       // Simulate validation check
       const samplePayload: PreSubmissionValidationPayload = {
-        platformId: 'plat_divar',
-        platformName: 'دیوار',
+        platformId: 'plat_payamsara',
+        platformName: 'پیام‌سرا',
         formType: 'ad_creation',
-        targetUrl: 'https://divar.ir/new',
+        targetUrl: 'https://payamsara.com/sendad',
         validatedAt: new Date().toLocaleTimeString('fa-IR'),
         allValid: false,
         fields: [
-          { fieldName: 'شماره همراه کاربری', selector: 'input[type="tel"]', value: '09153108763', isValid: true, hasCssErrorClass: false },
+          { fieldName: 'شماره همراه کاربری', selector: 'input[name="user_mobile"]', value: '09153108763', isValid: true, hasCssErrorClass: false },
           { fieldName: 'عنوان آگهی رسمی', selector: 'input[name="title"]', value: '', isValid: false, hasCssErrorClass: true, detectedErrorClasses: ['border-red-500', 'is-invalid'], errorMessage: 'عنوان آگهی نمی‌تواند خالی باشد' },
-          { fieldName: 'توضیحات و خدمات', selector: 'textarea[name="description"]', value: 'ارائه خدمات اتوماسیون رسمی شرکت.', isValid: true, hasCssErrorClass: false },
+          { fieldName: 'توضیحات و خدمات', selector: 'textarea[name="body"]', value: 'ارائه خدمات اتوماسیون رسمی شرکت.', isValid: true, hasCssErrorClass: false },
           { fieldName: 'قیمت پایه (تومان)', selector: 'input[name="price"]', value: '0', isValid: true, hasCssErrorClass: false },
         ],
-        capturedScreenshotBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="380" viewBox="0 0 600 380" fill="%230f172a"><rect width="600" height="380" rx="12" fill="%230f172a"/><rect x="20" y="20" width="560" height="40" rx="8" fill="%231e293b"/><text x="40" y="45" fill="%2338bdf8" font-family="sans-serif" font-size="14" font-weight="bold">PRE-SUBMISSION FORM VALIDATION SNAPSHOT [DIVAR.IR]</text><rect x="40" y="80" width="520" height="45" rx="6" fill="%23334155" stroke="%2310b981" stroke-width="2"/><text x="55" y="108" fill="%23e2e8f0" font-family="sans-serif" font-size="12">Mobile: 09153108763 [VALID]</text><rect x="40" y="140" width="520" height="45" rx="6" fill="%23450a0a" stroke="%23ef4444" stroke-width="3"/><text x="55" y="168" fill="%23fca5a5" font-family="sans-serif" font-size="12" font-weight="bold">Title: EMPTY [CSS ERROR: .border-red-500 .is-invalid]</text><rect x="40" y="200" width="520" height="70" rx="6" fill="%23334155" stroke="%2310b981" stroke-width="2"/><text x="55" y="238" fill="%23e2e8f0" font-family="sans-serif" font-size="12">Description: Official company automation services [VALID]</text><rect x="40" y="290" width="520" height="45" rx="8" fill="%23991b1b"/><text x="210" y="318" fill="%23ffffff" font-family="sans-serif" font-size="14" font-weight="bold">SUBMIT BLOCKED BY PRE-VALIDATION LAYER</text></svg>',
+        capturedScreenshotBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="380" viewBox="0 0 600 380" fill="%230f172a"><rect width="600" height="380" rx="12" fill="%230f172a"/><rect x="20" y="20" width="560" height="40" rx="8" fill="%231e293b"/><text x="40" y="45" fill="%2338bdf8" font-family="sans-serif" font-size="14" font-weight="bold">PRE-SUBMISSION FORM VALIDATION SNAPSHOT [PAYAMSARA.COM]</text><rect x="40" y="80" width="520" height="45" rx="6" fill="%23334155" stroke="%2310b981" stroke-width="2"/><text x="55" y="108" fill="%23e2e8f0" font-family="sans-serif" font-size="12">Mobile: 09153108763 [VALID]</text><rect x="40" y="140" width="520" height="45" rx="6" fill="%23450a0a" stroke="%23ef4444" stroke-width="3"/><text x="55" y="168" fill="%23fca5a5" font-family="sans-serif" font-size="12" font-weight="bold">Title: EMPTY [CSS ERROR: .border-red-500 .is-invalid]</text><rect x="40" y="200" width="520" height="70" rx="6" fill="%23334155" stroke="%2310b981" stroke-width="2"/><text x="55" y="238" fill="%23e2e8f0" font-family="sans-serif" font-size="12">Description: Official company automation services [VALID]</text><rect x="40" y="290" width="520" height="45" rx="8" fill="%23991b1b"/><text x="210" y="318" fill="%23ffffff" font-family="sans-serif" font-size="14" font-weight="bold">SUBMIT BLOCKED BY PRE-VALIDATION LAYER</text></svg>',
       };
 
       const res = await clientStorage.validatePreSubmission(samplePayload);

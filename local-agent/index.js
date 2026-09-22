@@ -306,8 +306,8 @@ async function executeJob(job, claimData) {
         targetUrl = 'https://www.agahi24.com/register';
       } else if (pid.includes('payamsara') || pdom.includes('payamsara')) {
         targetUrl = 'https://payamsara.com/framework/user/register';
-      } else if (pid.includes('sheypoor') || pdom.includes('sheypoor')) {
-        targetUrl = 'https://www.sheypoor.com/session';
+      } else if (pid.includes('parscenter') || pdom.includes('parscenter')) {
+        targetUrl = 'https://parscenter.com/User/Register';
       } else if (pid.includes('istgah') || pdom.includes('istgah')) {
         targetUrl = 'https://www.istgah.com/register/';
       } else {
@@ -336,10 +336,9 @@ async function executeJob(job, claimData) {
       }
     }
 
-    // Comprehensive selector list matching real Iranian classified platforms:
+    // Comprehensive selector list matching real Iranian web classified platforms:
     // Agahi24: input[name="digits_phone"], input.mobile_field
     // Payamsara: input[name="user_mobile"], input#user_mobile
-    // Divar/Sheypoor: input[type="tel"], input[name="phone"], input[name="mobile"]
     const phoneSelector = 'input[name="digits_phone"], input[name="user_mobile"], input#user_mobile, input[type="tel"], input[name="phone"], input[name="mobile"], input[autocomplete="tel-national"]';
     let phoneInput = null;
     try {
@@ -552,14 +551,13 @@ async function executeJob(job, claimData) {
     const isSuccess = httpStatus >= 200 && httpStatus < 400;
 
     // Zero-Fake: Determine if we actually have a public URL for the ad
-    const isRealDivarAd = verificationUrl.includes('divar.ir');
-    const isRealSheypoorAd = verificationUrl.includes('sheypoor.com');
     const isRealAgahi24 = verificationUrl.includes('agahi24.com');
     const isRealPayamsara = verificationUrl.includes('payamsara.com');
     const isRealIstgah = verificationUrl.includes('istgah.com');
     const isRealBaskool = verificationUrl.includes('baskool.com');
+    const isRealParsCenter = verificationUrl.includes('parscenter.com');
     const isRealShahrMa = verificationUrl.includes('shahr.ma') || verificationUrl.includes('shahrema.com');
-    const hasPublicAdUrl = isRealDivarAd || isRealSheypoorAd || isRealAgahi24 || isRealPayamsara || isRealIstgah || isRealBaskool || isRealShahrMa || (verificationUrl && verificationUrl.length > 15);
+    const hasPublicAdUrl = isRealAgahi24 || isRealPayamsara || isRealIstgah || isRealBaskool || isRealParsCenter || isRealShahrMa || (verificationUrl && verificationUrl.length > 15);
 
     if (!hasPublicAdUrl) {
       console.log('⚠️ [Zero-Fake] No public Ad URL detected. Real execution evidence is missing.');

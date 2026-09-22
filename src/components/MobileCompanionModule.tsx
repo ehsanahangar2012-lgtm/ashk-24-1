@@ -8,6 +8,7 @@ import {
   RefreshCw,
   Copy,
   Zap,
+  Activity,
   Info,
   QrCode,
   Download,
@@ -33,9 +34,10 @@ import { toPersianDigits } from '../utils/persianUtils.js';
 import { APP_VERSION } from '../config/version.js';
 
 import { SmartHelpButton } from './SmartHelpModal.js';
+import { SmsRelayMonitorModule } from './SmsRelayMonitorModule.js';
 
 export const MobileCompanionModule: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'host_bridge' | 'otp_checker' | 'apk_download' | 'smart_guide' | 'emulator' | 'pairing'>('host_bridge');
+  const [activeTab, setActiveTab] = useState<'host_bridge' | 'sms_relay_monitor' | 'otp_checker' | 'apk_download' | 'smart_guide' | 'emulator' | 'pairing'>('sms_relay_monitor');
   const [config, setConfig] = useState<MobileDeviceConfig | null>(null);
   const [notifications, setNotifications] = useState<MobileNotificationLog[]>([]);
   const [smsLogs, setSmsLogs] = useState<SmsWebhookPayload[]>([]);
@@ -549,6 +551,22 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
       {/* Tabs Switcher */}
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-800 pb-2">
         <button
+          onClick={() => setActiveTab('sms_relay_monitor')}
+          className={`flex items-center space-x-2 space-x-reverse px-4 py-2.5 rounded-xl text-xs font-semibold transition-all relative ${
+            activeTab === 'sms_relay_monitor'
+              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-sm'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+          }`}
+        >
+          <Activity className="w-4 h-4 text-emerald-400" />
+          <span>پایش و هشدار سلامت SMS Relay & cPanel</span>
+          <span className="flex h-2 w-2 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('host_bridge')}
           className={`flex items-center space-x-2 space-x-reverse px-4 py-2.5 rounded-xl text-xs font-semibold transition-all relative ${
             activeTab === 'host_bridge'
@@ -626,6 +644,13 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
           <span>تنظیمات جفت‌سازی و وب‌هوک</span>
         </button>
       </div>
+
+      {/* TAB: SMS Relay Health & Real-time Alert Monitor */}
+      {activeTab === 'sms_relay_monitor' && (
+        <SmsRelayMonitorModule
+          onOpenSecretaryBridge={() => setActiveTab('host_bridge')}
+        />
+      )}
 
       {/* TAB: Host Secretary Bridge */}
       {activeTab === 'host_bridge' && (

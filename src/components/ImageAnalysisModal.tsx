@@ -183,9 +183,9 @@ export const ImageAnalysisModal: React.FC<ImageAnalysisModalProps> = ({
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {(result?.targetPlatformTips || [
-                    { platform: 'دیوار (Divar)', status: 'ok', note: 'تایید کامل عکس، ابعاد و عدم درج قیمت روی تصویر.' },
+                    { platform: 'پارس سنتر (ParsCenter)', status: 'ok', note: 'ابعاد استاندارد و کیفیت مناسب برای وب آگهی.' },
                     { platform: 'پیام‌سرا (Payamsara)', status: 'ok', note: 'آماده بارگزاری و درج در گالری آگهی.' },
-                    { platform: 'شیپور (Sheypoor)', status: 'ok', note: 'کیفیت بالا و بدون لوگوی پوشاننده محتوا.' },
+                    { platform: 'آگهی ۲۴ (Agahi24)', status: 'ok', note: 'کیفیت بالا و فاقد واترمارک مزاحم.' },
                     { platform: 'ایستگاه (Istgah)', status: 'ok', note: 'آماده نمایش به عنوان کاور آگهی متنی.' },
                   ]).map((item, idx) => (
                     <div

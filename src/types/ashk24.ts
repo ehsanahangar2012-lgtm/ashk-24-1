@@ -355,13 +355,20 @@ export interface ContinuousAutomationProgress {
 
 export interface SmsWebhookPayload {
   id: string;
+  messageId?: string;
   senderNumber: string;
+  sender?: string;
   receiverNumber: string;
   messageText: string;
   receivedAt: string;
+  timestamp?: string;
   extractedCode?: string;
+  extractedOtp?: string;
+  otpCode?: string;
   matchedJobId?: string;
-  status: 'parsed' | 'unmatched' | 'matched' | 'verified';
+  status: 'parsed' | 'unmatched' | 'matched' | 'verified' | 'probe_verified';
+  gatewaySignatureVerified?: boolean;
+  source?: string;
 }
 
 export interface EmailWebhookPayload {
@@ -686,6 +693,66 @@ export interface TestHarnessStatusResponse {
   recentRuns: TestHarnessRun[];
   harnessReady: boolean;
   supportedModes: string[];
+}
+
+// =========================================================================
+// ماژول پایش و هشدار وضعیت ارتباط cPanel و SMS Relay
+// =========================================================================
+export type SmsRelayHealthLevel = 'HEALTHY' | 'WARNING' | 'CRITICAL' | 'UNCONFIGURED';
+
+export interface SmsRelayAlert {
+  id: string;
+  level: 'warning' | 'critical' | 'info';
+  title: string;
+  description: string;
+  suggestedAction: string;
+  timestamp: string;
+}
+
+export interface OverdueOtpJob {
+  id: string;
+  platformName: string;
+  waitingDurationSeconds: number;
+  phone: string;
+  createdAt: string;
+  currentStep?: string;
+}
+
+export interface SmsRelayAuditLog {
+  timestamp: string;
+  event: string;
+  status: 'ok' | 'alert' | 'error';
+  details: string;
+}
+
+export interface SmsRelayHealthStatus {
+  status: SmsRelayHealthLevel;
+  gatewayEndpoint: string;
+  isWebhookActive: boolean;
+  signatureConfigured: boolean;
+  secretKeyMasked: string;
+  lastSmsReceivedAt: string | null;
+  lastSmsSender: string | null;
+  totalReceivedSmsCount: number;
+  unmatchedSmsCount: number;
+  matchedSmsCount: number;
+  pendingOtpJobsCount: number;
+  overdueOtpJobsCount: number;
+  overdueJobs: OverdueOtpJob[];
+  pendingJobs: OverdueOtpJob[];
+  latencyMs: number;
+  activeAlerts: SmsRelayAlert[];
+  recentAuditLogs: SmsRelayAuditLog[];
+  checkedAt: string;
+}
+
+export interface SmsRelayProbeResult {
+  success: boolean;
+  probeId: string;
+  sampleOtp: string;
+  verifiedSignature: boolean;
+  message: string;
+  log?: any;
 }
 
 export * from './browserIntelligence.js';

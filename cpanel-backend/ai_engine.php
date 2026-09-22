@@ -724,76 +724,76 @@ class Ashk24AiEngine {
                 "keywords" => ["بازارها", "آگهی رایگان", "نیازمندیهای روز"]
             ],
 
-            // --- فاز ۲: پلتفرم‌های امنیتی با نیاز به شماره همراه و کد پیامک OTP ---
+            // --- فاز ۲: سایتهای وب آگهی و دایرکتوری‌های صنعتی و عمومی ---
             [
-                "name" => "Divar",
-                "persianName" => "دیوار (نیازمندی‌های سراسری و جامع ایران)",
-                "domain" => "divar.ir",
-                "category" => "classifieds",
-                "monthlyVisits" => "۵۵ میلیون بازدید ماهانه",
-                "requiresOtp" => true,
-                "authTier" => "tier2_otp_mobile",
-                "authMethod" => "otp_sms",
-                "formType" => "classified",
-                "trustScore" => 98,
-                "sectorFit" => ["industrial", "services", "digital_goods", "b2b", "real_estate"],
-                "keywords" => ["دیوار", "نیازمندیها", "آگهی رایگان", "کارتن سازی"]
-            ],
-            [
-                "name" => "Sheypoor",
-                "persianName" => "شیپور (پورتال سراسری نیازمندی‌های ایران)",
-                "domain" => "sheypoor.com",
-                "category" => "classifieds",
-                "monthlyVisits" => "۲۲ میلیون بازدید ماهانه",
-                "requiresOtp" => true,
-                "authTier" => "tier2_otp_mobile",
-                "authMethod" => "otp_sms",
-                "formType" => "classified",
-                "trustScore" => 94,
-                "sectorFit" => ["industrial", "services", "digital_goods", "b2b", "real_estate"],
-                "keywords" => ["شیپور", "ثبت آگهی", "نیازمندیها"]
-            ],
-            [
-                "name" => "Torob",
-                "persianName" => "موتور جستجو و معرفی محصولات ترب (Torob)",
-                "domain" => "torob.com",
+                "name" => "ParsCenter",
+                "persianName" => "پارس سنتر (دایرکتوری جامع کالا و خدمات صنعتی ایران)",
+                "domain" => "parscenter.com",
                 "category" => "b2b",
-                "monthlyVisits" => "۴۰ میلیون بازدید ماهانه",
-                "requiresOtp" => true,
-                "authTier" => "tier2_otp_mobile",
-                "authMethod" => "otp_sms",
+                "monthlyVisits" => "۳.۵ میلیون بازدید ماهانه",
+                "requiresOtp" => false,
+                "authTier" => "tier1_easy_email",
+                "authMethod" => "email_password",
                 "formType" => "directory_entry",
-                "trustScore" => 97,
-                "sectorFit" => ["industrial", "b2b", "digital_goods"],
-                "keywords" => ["ترب", "قیمت کالا", "محصولات"]
+                "trustScore" => 93,
+                "sectorFit" => ["industrial", "services", "digital_goods", "b2b"],
+                "keywords" => ["پارس سنتر", "کالای صنعتی", "کارتن سازی", "تولیدات"]
             ],
             [
-                "name" => "Bama",
-                "persianName" => "باما (آگهی تجهیزات و نیازمندی‌های تجاری)",
-                "domain" => "bama.ir",
+                "name" => "NiazPardaz",
+                "persianName" => "نیاز پرداز (سامانه نیازمندی‌ها و وب آگهی سراسری)",
+                "domain" => "niazpardaz.com",
                 "category" => "classifieds",
-                "monthlyVisits" => "۱۲ میلیون بازدید ماهانه",
-                "requiresOtp" => true,
-                "authTier" => "tier2_otp_mobile",
-                "authMethod" => "otp_sms",
+                "monthlyVisits" => "۴ میلیون بازدید ماهانه",
+                "requiresOtp" => false,
+                "authTier" => "tier1_easy_email",
+                "authMethod" => "email_password",
+                "formType" => "classified",
+                "trustScore" => 92,
+                "sectorFit" => ["industrial", "services", "b2b"],
+                "keywords" => ["نیازپرداز", "ثبت آگهی رایگان", "نیازمندیها"]
+            ],
+            [
+                "name" => "NiazeRooz",
+                "persianName" => "نیاز روز (پورتال آگهی و نیازمندی‌های اینترنتی)",
+                "domain" => "niazerooz.com",
+                "category" => "classifieds",
+                "monthlyVisits" => "۳ میلیون بازدید ماهانه",
+                "requiresOtp" => false,
+                "authTier" => "tier1_easy_email",
+                "authMethod" => "email_password",
                 "formType" => "classified",
                 "trustScore" => 91,
-                "sectorFit" => ["industrial", "services"],
-                "keywords" => ["باما", "تجهیزات", "ماشین آلات"]
+                "sectorFit" => ["industrial", "services", "digital_goods", "b2b"],
+                "keywords" => ["نیاز روز", "آگهی تبلیغاتی", "تبلیغات اینترنتی"]
             ],
             [
-                "name" => "Emalls",
-                "persianName" => "ایمالز (پورتال مقایسه قیمت و دایرکتوری کالا)",
-                "domain" => "emalls.ir",
-                "category" => "b2b",
-                "monthlyVisits" => "۱۸ میلیون بازدید ماهانه",
-                "requiresOtp" => true,
-                "authTier" => "tier2_otp_mobile",
-                "authMethod" => "otp_sms",
-                "formType" => "directory_entry",
+                "name" => "Locopoc",
+                "persianName" => "لوکوپوک (سامانه تبلیغات و آگهی اینترنتی مشاغل)",
+                "domain" => "locopoc.com",
+                "category" => "classifieds",
+                "monthlyVisits" => "۲ میلیون بازدید ماهانه",
+                "requiresOtp" => false,
+                "authTier" => "tier1_easy_email",
+                "authMethod" => "email_password",
+                "formType" => "classified",
+                "trustScore" => 90,
+                "sectorFit" => ["industrial", "services", "b2b"],
+                "keywords" => ["لوکوپوک", "آگهی رایگان", "تبلیغ مشاغل"]
+            ],
+            [
+                "name" => "Rahnama",
+                "persianName" => "راهنما (بانک اطلاعات و نیازمندی‌های اینترنتی)",
+                "domain" => "rahnama.com",
+                "category" => "classifieds",
+                "monthlyVisits" => "۲.۵ میلیون بازدید ماهانه",
+                "requiresOtp" => false,
+                "authTier" => "tier1_easy_email",
+                "authMethod" => "email_password",
+                "formType" => "classified",
                 "trustScore" => 89,
-                "sectorFit" => ["industrial", "b2b", "digital_goods"],
-                "keywords" => ["ایمالز", "قیمت کالا", "فروشگاه"]
+                "sectorFit" => ["industrial", "services", "b2b"],
+                "keywords" => ["راهنما", "نیازمندیهای سراسری", "تبلیغات"]
             ],
             [
                 "name" => "Virgool",
@@ -1095,8 +1095,8 @@ class Ashk24AiEngine {
                 continue;
             }
 
-            // تخمین نوع احراز هویت بر اساس دامنه
-            $isOtp = in_array($domainClean, ["divar.ir", "sheypoor.com", "bama.ir", "torob.com", "emalls.ir"], true);
+            // تخمین نوع احراز هویت بر اساس نیازمندی وب‌سایت آگهی
+            $isOtp = in_array($domainClean, ["agahi24.com", "payamsara.com"], true);
             $authTier = $isOtp ? "tier2_otp_mobile" : "tier1_easy_email";
             $authMethod = $isOtp ? "otp_sms" : "email_password";
 
