@@ -365,12 +365,33 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
   };
   fs.writeFileSync(path.join(downloadsDir, 'Ashk24_MacroDroid_Relay.json'), JSON.stringify(macroJson, null, 2));
 
-  // Also copy to cpanel-backend/uploads/ so /uploads/Ashk24_OTP_Companion_v... works seamlessly
-  if (!fs.existsSync(cpanelUploads)) {
-    fs.mkdirSync(cpanelUploads, { recursive: true });
-  }
-  fs.copyFileSync(apkPath, path.join(cpanelUploads, `Ashk24_OTP_Companion_v${version}.apk`));
-  fs.copyFileSync(projectPath, path.join(cpanelUploads, `Ashk24_Android_Project_v${version}.zip`));
+  // Sync to all destination directories
+  const targetDirs = [
+    downloadsDir,
+    path.resolve('dist/downloads'),
+    cpanelUploads,
+    path.resolve('dist/cpanel-backend/uploads'),
+    path.resolve('uploads'),
+    path.resolve('dist/uploads')
+  ];
+
+  targetDirs.forEach(dir => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    // Copy versioned APK and Canonical APK
+    fs.copyFileSync(apkPath, path.join(dir, `Ashk24_OTP_Companion_v${version}.apk`));
+    fs.copyFileSync(apkPath, path.join(dir, `Ashk24_OTP_Companion.apk`));
+
+    // Copy versioned Project ZIP and Canonical Project ZIP
+    fs.copyFileSync(projectPath, path.join(dir, `Ashk24_Android_Project_v${version}.zip`));
+    fs.copyFileSync(projectPath, path.join(dir, `Ashk24_Android_Project.zip`));
+
+    // Copy MacroDroid JSON
+    fs.writeFileSync(path.join(dir, 'Ashk24_MacroDroid_Relay.json'), JSON.stringify(macroJson, null, 2));
+  });
+
+  console.log(`🚀 [Companion Generator] Synced fresh v${version} packages to all download/upload endpoints.`);
 }
 
 buildApkAndProject().catch(console.error);

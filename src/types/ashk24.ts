@@ -131,6 +131,37 @@ export type PlatformCategory = 'classifieds' | 'social' | 'blog' | 'directory' |
 export type AuthTierType = 'tier1_easy_email' | 'tier2_otp_mobile' | 'tier3_strict_challenge';
 export type AuthMethodType = 'email_password' | 'email_confirmation' | 'otp_sms' | 'direct_no_auth';
 
+export interface PlatformAdapterConfig {
+  endpoint?: string;
+  submitMethod?: 'POST' | 'GET' | 'PUT';
+  requestFormat?: 'form_urlencoded' | 'json' | 'multipart';
+  fieldMap?: {
+    title?: string;
+    description?: string;
+    phone?: string;
+    email?: string;
+    province?: string;
+    city?: string;
+    price?: string;
+    category?: string;
+    address?: string;
+    contactName?: string;
+    website?: string;
+    tags?: string;
+    customFields?: Record<string, string>;
+  };
+  defaultCategory?: string;
+  defaultProvince?: string;
+  defaultCity?: string;
+  authStrategy?: 'none' | 'email_password' | 'otp_sms' | 'cookie_session' | 'token_header';
+  successHttpCodes?: number[];
+  successIndicators?: string[];
+  reviewIndicators?: string[];
+  trackingUrlPattern?: string;
+  adUrlPattern?: string;
+  headers?: Record<string, string>;
+}
+
 export interface MediaPlatform {
   id: string;
   name: string;
@@ -148,6 +179,8 @@ export interface MediaPlatform {
   authTier?: AuthTierType;
   authMethod?: AuthMethodType;
   emailVerificationRequired?: boolean;
+  // Multi-Platform Adapter configuration
+  adapterConfig?: PlatformAdapterConfig;
   // Smart Session Vault (کوکی‌ها و توکن‌های فعال)
   sessionStatus?: 'none' | 'authenticated' | 'expired' | 'refreshing';
   sessionToken?: string;
@@ -265,7 +298,7 @@ export interface DomAnalysisResult {
   parsedBy: 'offline-semantic-parser' | 'cpanel-native-parser';
 }
 
-export type JobStatus = 'pending' | 'processing' | 'claimed' | 'navigating' | 'parsing_dom' | 'filling_data' | 'waiting_otp' | 'otp_received' | 'solving_captcha' | 'waiting_human_action' | 'paused_user_action' | 'resumed' | 'submitting' | 'verifying' | 'published' | 'failed';
+export type JobStatus = 'pending' | 'processing' | 'claimed' | 'navigating' | 'parsing_dom' | 'filling_data' | 'waiting_otp' | 'otp_received' | 'solving_captcha' | 'waiting_human_action' | 'paused_user_action' | 'resumed' | 'submitting' | 'verifying' | 'submitted' | 'under_review' | 'published' | 'failed';
 
 export interface JobStepLog {
   timestamp: string;
@@ -289,6 +322,8 @@ export interface PublicationJob {
   platformId: string;
   platformName: string;
   platformDomain?: string;
+  contactPhone?: string;
+  contactEmail?: string;
   status: JobStatus;
   currentStep: string;
   progressPercent: number;
@@ -306,6 +341,7 @@ export interface PublicationJob {
   };
   tempStorage?: any;
   adUrl?: string;
+  trackingUrl?: string;
   publishedTitle?: string;
   publishedBodyText?: string;
   publishedImages?: string[];

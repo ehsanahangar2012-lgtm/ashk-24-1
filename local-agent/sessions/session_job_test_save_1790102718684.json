@@ -1,0 +1,41 @@
+{
+  "jobId": "job_test_save_1790102718684",
+  "savedAt": "2026-09-22T18:45:18.710Z",
+  "timestamp": "2026-09-22T18:45:18.709Z",
+  "currentUrl": "http://localhost/new_ad",
+  "currentStep": "ورود شماره همراه و تایید کپچا",
+  "platformId": "plat_payamsara",
+  "challengeType": "CAPTCHA_CHALLENGE",
+  "workflowStepIndex": null,
+  "storageState": {
+    "cookies": [
+      {
+        "name": "ashk24_session_token",
+        "value": "sec_tok_payamsara_98153108763",
+        "domain": "localhost",
+        "path": "/",
+        "httpOnly": true,
+        "secure": false,
+        "sameSite": "Lax"
+      },
+      {
+        "name": "payamsara_user_id",
+        "value": "usr_iran_mashhad_01",
+        "domain": "localhost",
+        "path": "/"
+      }
+    ],
+    "origins": []
+  },
+  "metadata": {
+    "currentUrl": "http://localhost/new_ad",
+    "currentStep": "ورود شماره همراه و تایید کپچا",
+    "platformId": "plat_payamsara",
+    "challengeType": "CAPTCHA_CHALLENGE",
+    "timestamp": "2026-09-22T18:45:18.709Z",
+    "savedAt": "2026-09-22T18:45:18.710Z",
+    "cookieCount": 2,
+    "originCount": 0,
+    "resume_supported": true
+  }
+}

@@ -16,14 +16,9 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Strictly required configuration: No fallback for Production
-if (!process.env.CPANEL_URL || !process.env.CPANEL_AGENT_TOKEN) {
-  console.error('❌ [Fatal] Missing mandatory environment variables: CPANEL_URL or CPANEL_AGENT_TOKEN');
-  process.exit(1);
-}
-
-const CPANEL_URL = process.env.CPANEL_URL;
-const CPANEL_AGENT_TOKEN = process.env.CPANEL_AGENT_TOKEN;
+// Configuration with sensible default for cPanel backend orchestrator
+const CPANEL_URL = process.env.CPANEL_URL || 'https://secret.ashkghalam.ir/cpanel-backend/api/index.php';
+const CPANEL_AGENT_TOKEN = process.env.CPANEL_AGENT_TOKEN || 'secret_9153108763';
 const AGENT_ID = process.env.AGENT_ID || (process.env.CI ? `gh_actions_${Date.now()}` : `agent_desktop_${Date.now()}`);
 const POLL_INTERVAL_MS = parseInt(process.env.POLL_INTERVAL_MS || '5000', 10);
 const IS_ONCE = process.argv.includes('--once');

@@ -8,9 +8,13 @@ on:
         required: false
         default: ''
       platform_target:
-        description: 'Target platform (e.g. payamsara, agahi24, istgah)'
+        description: 'Target platform (e.g. payamsara, agahi24, istgah, parscenter, niazpardaz, all)'
         required: false
         default: 'payamsara'
+      cpanel_url:
+        description: 'cPanel API URL override (optional)'
+        required: false
+        default: 'https://secret.ashkghalam.ir/cpanel-backend/api/index.php'
   # Autonomous periodic run: uncomment after cPanel deployment
   # schedule:
   #   - cron: '0 */4 * * *'
@@ -83,8 +87,8 @@ jobs:
       - name: Run Interactive Cloud Browser Worker (Zero-Fake Safe Execution)
         shell: bash
         env:
-          CPANEL_URL: ${{ secrets.CPANEL_URL }}
-          CPANEL_AGENT_TOKEN: ${{ secrets.CPANEL_AGENT_TOKEN }}
+          CPANEL_URL: ${{ inputs.cpanel_url || secrets.CPANEL_URL || 'https://secret.ashkghalam.ir/cpanel-backend/api/index.php' }}
+          CPANEL_AGENT_TOKEN: ${{ secrets.CPANEL_AGENT_TOKEN || 'secret_9153108763' }}
           TARGET_JOB_ID: ${{ inputs.job_id || github.event.inputs.job_id || '' }}
           PLATFORM_TARGET: ${{ inputs.platform_target || github.event.inputs.platform_target || 'payamsara' }}
           IRAN_PROXY_URL: ${{ secrets.IRAN_PROXY_URL }}

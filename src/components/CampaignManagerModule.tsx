@@ -36,6 +36,7 @@ import { clientStorage } from '../services/clientStorageService.js';
 import { SmartHelpButton } from './SmartHelpModal.js';
 import { CampaignSmartAssistantModal } from './CampaignSmartAssistantModal.js';
 import { CampaignSmartBlueprint } from '../services/localCampaignAiEngine.js';
+import { KeywordCampaignGeneratorSection } from './KeywordCampaignGeneratorSection.js';
 
 interface CampaignManagerModuleProps {
   campaigns: Campaign[];
@@ -393,6 +394,16 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
           </button>
         </div>
       </div>
+
+      {/* 🌟 بخش ویژه: تولید هوشمند کمپین از داده‌های دریافتی بر اساس کلمات کلیدی (موضوع و متن مرتبط) */}
+      <KeywordCampaignGeneratorSection
+        platforms={platforms || []}
+        onCreateCampaign={onCreateCampaign}
+        onTriggerJob={onTriggerJob}
+        onCampaignCreated={() => {
+          if (onRefreshAll) onRefreshAll();
+        }}
+      />
 
       {/* 🚀 1-CLICK FAST-TRACK AD PUBLISHER WIZARD */}
       <div className="p-5 rounded-3xl bg-gradient-to-br from-amber-500/10 via-slate-900 to-slate-950 border border-amber-500/30 shadow-xl space-y-4">

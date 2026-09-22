@@ -1,16 +1,17 @@
 {
   "name": "ashk24-automation",
   "private": true,
-  "version": "4.1.0",
+  "version": "4.4.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/generate-build-info.cjs && npm run clean && vite build && node scripts/generate-apk-package.cjs && node scripts/copy-cpanel-dist.cjs",
+    "build": "node scripts/generate-build-info.cjs && node scripts/purge-obsolete.cjs && vite build && node scripts/generate-apk-package.cjs && node scripts/copy-cpanel-dist.cjs",
     "preview": "vite preview",
-    "clean": "rm -rf dist",
+    "clean": "node scripts/purge-obsolete.cjs && rm -rf dist",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@google/genai": "^2.24.0",
     "@tailwindcss/vite": "^4.1.14",
     "@types/jszip": "^3.4.1",
     "@vitejs/plugin-react": "^5.0.4",
@@ -19,6 +20,7 @@
     "motion": "^12.23.24",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
+    "recharts": "^3.10.1",
     "vite": "^6.2.3"
   },
   "devDependencies": {

@@ -563,68 +563,36 @@ try {
                 $campsMap[$c['id']] = $c;
             }
 
+            require_once __DIR__ . '/../universal_publisher.php';
             $processedCount = 0;
             $updatedJobs = [];
 
             foreach ($jobs as $job) {
-                if (in_array($job['status'], ['pending', 'processing', 'preparing', 'waiting_otp'])) {
+                if (in_array($job['status'], ['pending', 'processing', 'preparing', 'waiting_otp', 'paused_user_action'])) {
                     $processedCount++;
                     $platName = $job['platformName'] ?? 'رسانه هدف';
-                    $platDomain = $job['platformDomain'] ?? 'payamsara.com';
-                    $newStatus = 'published';
-
-                    // Get campaign details for real title/slug generation
+                    $platDomain = strtolower($job['platformDomain'] ?? '');
                     $campId = $job['campaignId'] ?? '';
                     $camp = $campsMap[$campId] ?? null;
-                    $title = $camp['title'] ?? ($camp['productName'] ?? 'چاپ و بسته بندی کارتن سازی اشک قلم');
-                    
-                    // Generate a clean professional Persian slug
-                    $slug = trim($title);
-                    $slug = str_replace([' ', '_', '.', ',', '،'], '-', $slug);
-                    $slug = preg_replace('/[^\p{L}\p{N}\-_]/u', '', $slug);
-                    $slug = preg_replace('/-+/', '-', $slug);
-                    if (empty($slug)) {
-                        $slug = 'ashk-ghalam-ad-' . time();
-                    }
 
-                    $adUrl = 'https://' . $platDomain . '/ad/' . $slug . '-' . substr($job['id'], -4);
-
-                    // Real cPanel cURL check to target domain if possible
-                    $httpStatusVerified = false;
-                    $curlMessage = 'ارتباط با سرور و تایید دامنه برقرار شد.';
-                    if (function_exists('curl_init')) {
-                        $ch = curl_init('https://' . $platDomain);
-                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                        curl_setopt($ch, CURLOPT_TIMEOUT, 3);
-                        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-                        curl_setopt($ch, CURLOPT_USERAGENT, 'Ashk24-Enterprise-Bot/4.0 (cPanel Real Engine)');
-                        curl_exec($ch);
-                        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                        curl_close($ch);
-                        if ($httpCode > 0) {
-                            $httpStatusVerified = true;
-                            $curlMessage = "تایید واقعی سرور هدف (HTTP {$httpCode}) با موفقیت انجام شد.";
-                        }
-                    }
+                    // Universal adaptive submission to ANY target platform
+                    $realResult = UniversalPlatformPublisher::submitAd($camp ?: [
+                        'title' => 'تولید انواع کارتن ۳ لایه و ۵ لایه لمینتی و دایکاتی صادراتی',
+                        'description' => 'مجتمع چاپ و کارتن‌سازی اشک قلم: طراحی و تولید انواع کارتن های ۳ لایه و ۵ لایه لمینتی، دایکاتی و جعبه های صادراتی با بالاترین کیفیت در مشهد، شهرک صنعتی کلات.'
+                    ], $job);
 
                     $updated = $db->updateJob($job['id'], [
-                        'status' => $newStatus,
-                        'progressPercent' => 100,
-                        'currentStep' => "آگهی با عنوان «{$title}» با موفقیت در {$platName} منتشر و تایید گردید.",
-                        'adUrl' => $adUrl,
-                        'completedAt' => date('c'),
+                        'status' => $realResult['status'], // 'under_review', 'paused_user_action', or 'failed'
+                        'progressPercent' => $realResult['progressPercent'],
+                        'currentStep' => $realResult['currentStep'],
+                        'adUrl' => null, // STRICT ZERO-FAKE: No fake ad link until approved!
+                        'trackingUrl' => $realResult['trackingUrl'],
                         'logs' => array_merge($job['logs'] ?? [], [
                             [
                                 'timestamp' => date('H:i:s'),
-                                'step' => 'Real-cURL-Verification',
-                                'status' => 'success',
-                                'message' => $curlMessage
-                            ],
-                            [
-                                'timestamp' => date('H:i:s'),
-                                'step' => 'Published',
-                                'status' => 'success',
-                                'message' => "انتشار نهایی در {$platName} انجام شد. لینک معتبر: {$adUrl}"
+                                'step' => 'UniversalPlatformSubmit',
+                                'status' => $realResult['success'] ? 'success' : ($realResult['status'] === 'paused_user_action' ? 'warning' : 'error'),
+                                'message' => "ارسال فرم به سرور {$realResult['platformName']} ({$realResult['platformDomain']}) با پاسخ HTTP {$realResult['httpCode']} - وضعیت: " . ($realResult['success'] ? 'در صف بررسی ناظر' : ($realResult['status'] === 'paused_user_action' ? 'نیاز به تعامل/ورکر' : 'خطا'))
                             ]
                         ])
                     ]);
@@ -634,9 +602,45 @@ try {
 
             echo json_encode([
                 'success' => true,
-                'message' => "تعداد {$processedCount} نوبت کاری با موفقیت و بر اساس اطلاعات واقعی کمپین پردازش و منتشر گردیدند.",
+                'message' => "تعداد {$processedCount} نوبت کاری در کلیه پلتفرم‌های منتخب پردازش گردید.",
                 'count' => $processedCount,
                 'jobs' => $updatedJobs
+            ], JSON_UNESCAPED_UNICODE);
+            break;
+
+        case ($route === 'jobs/submit-platform' || $route === 'jobs/submit-niazpardaz'):
+            require_once __DIR__ . '/../universal_publisher.php';
+            $jobId = $body['jobId'] ?? ($_GET['jobId'] ?? null);
+            $job = $jobId ? $db->getJobById($jobId) : null;
+            $campaigns = $db->getCampaigns();
+            $camp = ($job && isset($campaigns[0])) ? $campaigns[0] : [
+                'title' => 'تولید انواع کارتن ۳ لایه و ۵ لایه لمینتی و دایکاتی صادراتی',
+                'description' => 'مجتمع چاپ و کارتن‌سازی اشک قلم: طراحی و تولید انواع کارتن های ۳ لایه و ۵ لایه لمینتی، دایکاتی و جعبه های صادراتی با بالاترین کیفیت در مشهد، شهرک صنعتی کلات.'
+            ];
+
+            $realResult = UniversalPlatformPublisher::submitAd($camp, $job);
+            if ($job) {
+                $db->updateJob($job['id'], [
+                    'status' => $realResult['status'],
+                    'progressPercent' => $realResult['progressPercent'],
+                    'currentStep' => $realResult['currentStep'],
+                    'adUrl' => null,
+                    'trackingUrl' => $realResult['trackingUrl'],
+                    'logs' => array_merge($job['logs'] ?? [], [
+                        [
+                            'timestamp' => date('H:i:s'),
+                            'step' => 'UniversalPlatformDirectSubmit',
+                            'status' => $realResult['success'] ? 'success' : 'error',
+                            'message' => "پاسخ سرور {$realResult['platformName']} (HTTP {$realResult['httpCode']}): " . $realResult['currentStep']
+                        ]
+                    ])
+                ]);
+            }
+
+            echo json_encode([
+                'success' => $realResult['success'],
+                'data' => $realResult,
+                'message' => $realResult['currentStep']
             ], JSON_UNESCAPED_UNICODE);
             break;
 

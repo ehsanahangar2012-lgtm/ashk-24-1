@@ -55,7 +55,25 @@
       "active": true,
       "trustScore": 94,
       "sessionStatus": "authenticated",
-      "accountUsername": "ashkghalam"
+      "accountUsername": "ashkghalam",
+      "adapterConfig": {
+        "endpoint": "/ad/new",
+        "submitMethod": "POST",
+        "requestFormat": "form_urlencoded",
+        "fieldMap": {
+          "title": "ad_title",
+          "description": "ad_content",
+          "phone": "contact_phone",
+          "email": "contact_email",
+          "province": "province_name",
+          "city": "city_name",
+          "price": "price_value",
+          "tags": "keywords"
+        },
+        "defaultProvince": "خراسان رضوی",
+        "defaultCity": "مشهد",
+        "trackingUrlPattern": "https://payamsara.com/my-account"
+      }
     },
     {
       "id": "plat_agahi24",
@@ -81,7 +99,24 @@
       "active": true,
       "trustScore": 92,
       "sessionStatus": "authenticated",
-      "accountUsername": "ashkghalam"
+      "accountUsername": "ashkghalam",
+      "adapterConfig": {
+        "endpoint": "/post-new/",
+        "submitMethod": "POST",
+        "requestFormat": "form_urlencoded",
+        "fieldMap": {
+          "title": "subject",
+          "description": "description",
+          "phone": "mobile",
+          "email": "email",
+          "province": "ostan",
+          "city": "shahr",
+          "price": "price"
+        },
+        "defaultProvince": "خراسان رضوی",
+        "defaultCity": "مشهد",
+        "trackingUrlPattern": "https://www.agahi24.com/my-ads/"
+      }
     },
     {
       "id": "plat_baskool",
@@ -103,7 +138,19 @@
       "active": true,
       "trustScore": 96,
       "sessionStatus": "authenticated",
-      "accountUsername": "ashkghalam"
+      "accountUsername": "ashkghalam",
+      "adapterConfig": {
+        "endpoint": "/api/product/create",
+        "submitMethod": "POST",
+        "requestFormat": "json",
+        "fieldMap": {
+          "title": "title",
+          "description": "description",
+          "phone": "phone",
+          "price": "price"
+        },
+        "trackingUrlPattern": "https://www.baskool.com/profile/products"
+      }
     },
     {
       "id": "plat_istgah",
@@ -128,7 +175,25 @@
       "active": true,
       "trustScore": 95,
       "sessionStatus": "authenticated",
-      "accountUsername": "ashkghalam"
+      "accountUsername": "ashkghalam",
+      "adapterConfig": {
+        "endpoint": "/post/",
+        "submitMethod": "POST",
+        "requestFormat": "form_urlencoded",
+        "fieldMap": {
+          "title": "title",
+          "description": "body",
+          "phone": "phone",
+          "email": "email",
+          "province": "state",
+          "city": "city",
+          "address": "address",
+          "tags": "tags"
+        },
+        "defaultProvince": "خراسان رضوی",
+        "defaultCity": "مشهد",
+        "trackingUrlPattern": "https://www.istgah.com/my/"
+      }
     },
     {
       "id": "plat_irantejarat",
@@ -150,7 +215,19 @@
       "formType": "directory_entry",
       "active": true,
       "trustScore": 90,
-      "sessionStatus": "authenticated"
+      "sessionStatus": "authenticated",
+      "adapterConfig": {
+        "endpoint": "/ad/new",
+        "submitMethod": "POST",
+        "requestFormat": "form_urlencoded",
+        "fieldMap": {
+          "title": "title",
+          "description": "description",
+          "phone": "phone",
+          "email": "email"
+        },
+        "trackingUrlPattern": "https://iran-tejarat.com/user/ads"
+      }
     },
     {
       "id": "plat_parscenter",
@@ -171,7 +248,24 @@
       "formType": "directory_entry",
       "active": true,
       "trustScore": 93,
-      "sessionStatus": "authenticated"
+      "sessionStatus": "authenticated",
+      "adapterConfig": {
+        "endpoint": "/Product/Create",
+        "submitMethod": "POST",
+        "requestFormat": "form_urlencoded",
+        "fieldMap": {
+          "title": "ProductName",
+          "description": "ProductDescription",
+          "contactName": "CompanyName",
+          "phone": "ContactNumber",
+          "province": "Province",
+          "city": "City",
+          "tags": "Keywords"
+        },
+        "defaultProvince": "خراسان رضوی",
+        "defaultCity": "مشهد",
+        "trackingUrlPattern": "https://parscenter.com/User/Products"
+      }
     },
     {
       "id": "plat_shahrema",
@@ -193,7 +287,19 @@
       "formType": "classified",
       "active": true,
       "trustScore": 89,
-      "sessionStatus": "authenticated"
+      "sessionStatus": "authenticated",
+      "adapterConfig": {
+        "endpoint": "/ad/new",
+        "submitMethod": "POST",
+        "requestFormat": "form_urlencoded",
+        "fieldMap": {
+          "title": "title",
+          "description": "content",
+          "phone": "cell",
+          "email": "mail"
+        },
+        "trackingUrlPattern": "https://shahrema.com/my-ads"
+      }
     }
   ],
   "campaigns": [

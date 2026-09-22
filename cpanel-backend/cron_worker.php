@@ -15,6 +15,7 @@ date_default_timezone_set('Asia/Tehran');
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/ai_engine.php';
+require_once __DIR__ . '/universal_publisher.php';
 
 // بررسی دسترسی (اگر از طریق مرورگر فراخوانی شده باشد)
 $isCli = (php_sapi_name() === 'cli' || defined('STDIN'));
@@ -121,12 +122,29 @@ foreach ($jobs as $job) {
             $executedJobs++;
             continue;
         } else {
-            // وب دایرکتوری‌های عمومی (آگهی ۲۴، شهر ما، ایستگاه و...) نیازمند تعامل ورکر گیت‌هاب (GitHub Actions Headless Runner) یا افزونه مرورگر بر روی آی‌پی تمیز ایران هستند.
-            $db->updateJob($job['id'], [
-                'status' => 'pending',
-                'currentStep' => "در انتظار واکشی خودکار توسط ورکر گیت‌هاب (GitHub Worker) یا دستیار مرورگر اشک ۲۴ جهت ارسال واقعی پیامک و ثبت آگهی..."
-            ]);
             curl_close($ch);
+            $campaigns = $db->getCampaigns();
+            $camp = !empty($campaigns) ? $campaigns[0] : [
+                'title' => 'تولید انواع کارتن ۳ لایه و ۵ لایه لمینتی و دایکاتی صادراتی',
+                'description' => 'مجتمع چاپ و کارتن‌سازی اشک قلم: طراحی و تولید انواع کارتن های ۳ لایه و ۵ لایه لمینتی، دایکاتی و جعبه های صادراتی با بالاترین کیفیت در مشهد، شهرک صنعتی کلات.'
+            ];
+            $realResult = UniversalPlatformPublisher::submitAd($camp, $job);
+            $db->updateJob($job['id'], [
+                'status' => $realResult['status'],
+                'progressPercent' => $realResult['progressPercent'],
+                'currentStep' => $realResult['currentStep'],
+                'adUrl' => null, // NO FAKE URL
+                'trackingUrl' => $realResult['trackingUrl'],
+                'logs' => array_merge($job['logs'] ?? [], [
+                    [
+                        'timestamp' => date('H:i:s'),
+                        'step' => 'CronUniversalSubmit',
+                        'status' => $realResult['success'] ? 'success' : ($realResult['status'] === 'paused_user_action' ? 'warning' : 'error'),
+                        'message' => "اجرای خودکار کران‌جاب سی‌پنل و ثبت مستقیم در {$realResult['platformName']} (HTTP {$realResult['httpCode']}) - وضعیت: " . ($realResult['success'] ? 'در صف بررسی ناظر' : ($realResult['status'] === 'paused_user_action' ? 'نیاز به تعامل/ورکر' : 'خطا'))
+                    ]
+                ])
+            ]);
+            $executedJobs++;
             continue;
         }
 
