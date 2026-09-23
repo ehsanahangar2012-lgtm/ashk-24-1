@@ -62,9 +62,39 @@ export interface InternalSiteConfig {
   lastErrorMessage?: string;
 }
 
+export interface CompanyAsset {
+  id: string;
+  companyId: string;
+  name: string;
+  type: 'logo' | 'catalog' | 'watermark' | 'product_image' | 'license_doc' | 'video_clip';
+  url: string;
+  fileSize?: string;
+  mimeType?: string;
+  description?: string;
+  tags?: string[];
+  createdAt: string;
+}
+
+export interface CompanySpecificConfig {
+  companyId: string;
+  defaultPlatforms: string[];
+  autoRetryCount: number;
+  adFooterSignature: string;
+  watermarkUrl?: string;
+  autoRenewalDays: number;
+  smsNotificationPhone?: string;
+  priceStrategy: 'exact' | 'negotiable' | 'call_for_price';
+  primaryColor?: string;
+  customCategoryMappings?: Record<string, string>; // platformId -> categoryName
+  disclaimerText?: string;
+  maxDailyPosts?: number;
+  requireManualReview?: boolean;
+}
+
 export interface CompanyProfile {
   id: string;
   name: string;
+  companyName?: string;
   brandName: string;
   nationalCode: string;
   phoneNumber: string;
@@ -86,6 +116,12 @@ export interface CompanyProfile {
   productImages?: string[];
   aboutUsSummary?: string;
   internalSite?: InternalSiteConfig;
+  isActive?: boolean;
+  isDefault?: boolean;
+  clientType?: 'owned' | 'client_account';
+  notes?: string;
+  assets?: CompanyAsset[];
+  isolatedConfig?: CompanySpecificConfig;
   updatedAt: string;
 }
 

@@ -1,5 +1,7 @@
 import {
   CompanyProfile,
+  CompanyAsset,
+  CompanySpecificConfig,
   MediaPlatform,
   Campaign,
   PublicationJob,
@@ -41,6 +43,7 @@ import {
   SmsRelayAlert,
 } from '../types/ashk24.js';
 import { toPersianDigits, getJalaliCurrentDate, getJalaliCurrentTime } from '../utils/persianUtils.js';
+import { LocalCampaignAiEngine } from './localCampaignAiEngine.js';
 
 // Local Storage Cache Keys
 const COMPANY_KEY = 'ashk24_company';
@@ -965,7 +968,236 @@ class ClientStorageService {
     return url.trim();
   }
 
-  // --- Company Profile ---
+  // --- Company & Multi-Client Profiles ---
+  public async getCompanies(): Promise<CompanyProfile[]> {
+    const serverCompanies = await callCpanelApi<CompanyProfile[]>('companies');
+    if (serverCompanies && Array.isArray(serverCompanies) && serverCompanies.length > 0) {
+      const sanitizedList = serverCompanies.map((c) => ({
+        ...c,
+        logoUrl: this.sanitizeUrl(c.logoUrl),
+        catalogPdfUrl: this.sanitizeUrl(c.catalogPdfUrl),
+        productImages: Array.isArray(c.productImages) ? c.productImages.map((u) => this.sanitizeUrl(u)).filter(Boolean) : [],
+      }));
+      try {
+        localStorage.setItem('ashk24_companies', JSON.stringify(sanitizedList));
+      } catch (e) {}
+      return sanitizedList;
+    }
+
+    const saved = localStorage.getItem('ashk24_companies');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((c: CompanyProfile) => ({
+            ...c,
+            logoUrl: this.sanitizeUrl(c.logoUrl),
+            catalogPdfUrl: this.sanitizeUrl(c.catalogPdfUrl),
+            productImages: Array.isArray(c.productImages) ? c.productImages.map((u: string) => this.sanitizeUrl(u)).filter(Boolean) : [],
+          }));
+        }
+      } catch (e) {}
+    }
+
+    const singleDefault = await this.getCompanyProfile();
+    const initialList = [{ ...singleDefault, isActive: true, isDefault: true }];
+    try {
+      localStorage.setItem('ashk24_companies', JSON.stringify(initialList));
+    } catch (e) {}
+    return initialList;
+  }
+
+  public async getActiveCompany(): Promise<CompanyProfile> {
+    return this.getCompanyProfile();
+  }
+
+  public async setActiveCompany(id: string): Promise<CompanyProfile> {
+    const res = await callCpanelApi<{ activeCompany: CompanyProfile }>('companies/switch-active', {
+      method: 'POST',
+      body: JSON.stringify({ companyId: id }),
+    });
+
+    const companies = await this.getCompanies();
+    let selectedCompany: CompanyProfile | null = null;
+    const updatedCompanies = companies.map((c) => {
+      if (c.id === id) {
+        selectedCompany = { ...c, isActive: true };
+        return selectedCompany;
+      }
+      return { ...c, isActive: false };
+    });
+
+    if (res && res.activeCompany) {
+      selectedCompany = res.activeCompany;
+    }
+
+    if (!selectedCompany && companies.length > 0) {
+      selectedCompany = companies[0];
+    }
+
+    if (selectedCompany) {
+      try {
+        localStorage.setItem('ashk24_companies', JSON.stringify(updatedCompanies));
+        localStorage.setItem(COMPANY_KEY, JSON.stringify(selectedCompany));
+      } catch (e) {}
+      return selectedCompany;
+    }
+
+    return DEFAULT_COMPANY;
+  }
+
+  public async createCompanyProfile(profile: Omit<CompanyProfile, 'id' | 'updatedAt'>): Promise<CompanyProfile> {
+    const payload = {
+      ...profile,
+      logoUrl: this.sanitizeUrl(profile.logoUrl),
+      catalogPdfUrl: this.sanitizeUrl(profile.catalogPdfUrl),
+      productImages: Array.isArray(profile.productImages) ? profile.productImages.map((u) => this.sanitizeUrl(u)).filter(Boolean) : [],
+    };
+
+    const serverRes = await callCpanelApi<{ data: CompanyProfile }>('companies', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    let newCmp: CompanyProfile;
+    if (serverRes && serverRes.data) {
+      newCmp = serverRes.data;
+    } else {
+      newCmp = {
+        ...payload,
+        id: `cmp_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    const currentCompanies = await this.getCompanies();
+    const updatedCompanies = [...currentCompanies, newCmp];
+    try {
+      localStorage.setItem('ashk24_companies', JSON.stringify(updatedCompanies));
+    } catch (e) {}
+
+    return newCmp;
+  }
+
+  public async updateCompany(id: string, profile: Partial<CompanyProfile>): Promise<CompanyProfile> {
+    const payload = {
+      ...profile,
+      logoUrl: profile.logoUrl !== undefined ? this.sanitizeUrl(profile.logoUrl) : undefined,
+      catalogPdfUrl: profile.catalogPdfUrl !== undefined ? this.sanitizeUrl(profile.catalogPdfUrl) : undefined,
+      productImages: Array.isArray(profile.productImages) ? profile.productImages.map((u) => this.sanitizeUrl(u)).filter(Boolean) : undefined,
+    };
+
+    const serverRes = await callCpanelApi<{ data: CompanyProfile }>(`companies/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+
+    const currentCompanies = await this.getCompanies();
+    let updatedTarget: CompanyProfile | null = null;
+    const updatedCompanies = currentCompanies.map((c) => {
+      if (c.id === id) {
+        updatedTarget = { ...c, ...payload, updatedAt: new Date().toISOString() };
+        return updatedTarget;
+      }
+      return c;
+    });
+
+    if (serverRes && serverRes.data) {
+      updatedTarget = serverRes.data;
+    }
+
+    try {
+      localStorage.setItem('ashk24_companies', JSON.stringify(updatedCompanies));
+      if (updatedTarget && (updatedTarget as CompanyProfile).isActive) {
+        localStorage.setItem(COMPANY_KEY, JSON.stringify(updatedTarget));
+      }
+    } catch (e) {}
+
+    return updatedTarget || (currentCompanies[0] ?? DEFAULT_COMPANY);
+  }
+
+  public async addCompanyAsset(companyId: string, asset: Omit<CompanyAsset, 'id' | 'createdAt'>): Promise<CompanyAsset> {
+    const newAsset: CompanyAsset = {
+      ...asset,
+      id: `ast_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      companyId,
+      url: this.sanitizeUrl(asset.url),
+      createdAt: new Date().toISOString(),
+    };
+
+    const companies = await this.getCompanies();
+    const targetCompany = companies.find((c) => c.id === companyId);
+    if (targetCompany) {
+      const existingAssets = Array.isArray(targetCompany.assets) ? targetCompany.assets : [];
+      const updatedAssets = [newAsset, ...existingAssets];
+      await this.updateCompany(companyId, { assets: updatedAssets });
+    }
+    return newAsset;
+  }
+
+  public async deleteCompanyAsset(companyId: string, assetId: string): Promise<boolean> {
+    const companies = await this.getCompanies();
+    const targetCompany = companies.find((c) => c.id === companyId);
+    if (targetCompany && Array.isArray(targetCompany.assets)) {
+      const updatedAssets = targetCompany.assets.filter((a) => a.id !== assetId);
+      await this.updateCompany(companyId, { assets: updatedAssets });
+      return true;
+    }
+    return false;
+  }
+
+  public async saveCompanyIsolatedConfig(companyId: string, config: Partial<CompanySpecificConfig>): Promise<CompanySpecificConfig> {
+    const companies = await this.getCompanies();
+    const targetCompany = companies.find((c) => c.id === companyId);
+    const currentConfig: CompanySpecificConfig = targetCompany?.isolatedConfig || {
+      companyId,
+      defaultPlatforms: ['plat_payamsara', 'plat_agahi24', 'plat_niazpardaz'],
+      autoRetryCount: 3,
+      adFooterSignature: `📞 جهت سفارش و مشاوره: ${targetCompany?.phoneNumber || ''}`,
+      watermarkUrl: targetCompany?.logoUrl || '',
+      autoRenewalDays: 30,
+      smsNotificationPhone: targetCompany?.phoneNumber || '',
+      priceStrategy: 'exact',
+      primaryColor: '#f59e0b',
+      maxDailyPosts: 10,
+      requireManualReview: false,
+    };
+
+    const mergedConfig: CompanySpecificConfig = {
+      ...currentConfig,
+      ...config,
+      companyId,
+    };
+
+    await this.updateCompany(companyId, { isolatedConfig: mergedConfig });
+    return mergedConfig;
+  }
+
+  public async deleteCompanyProfile(id: string): Promise<boolean> {
+    const currentCompanies = await this.getCompanies();
+    if (currentCompanies.length <= 1) {
+      return false;
+    }
+
+    await callCpanelApi(`companies/${id}`, {
+      method: 'DELETE',
+    });
+
+    const filtered = currentCompanies.filter((c) => c.id !== id);
+    if (filtered.length > 0 && !filtered.some((c) => c.isActive)) {
+      filtered[0].isActive = true;
+      try {
+        localStorage.setItem(COMPANY_KEY, JSON.stringify(filtered[0]));
+      } catch (e) {}
+    }
+
+    try {
+      localStorage.setItem('ashk24_companies', JSON.stringify(filtered));
+    } catch (e) {}
+
+    return true;
+  }
+
   public async getCompanyProfile(): Promise<CompanyProfile> {
     const serverData = await callCpanelApi<CompanyProfile>('company');
     if (serverData && serverData.name) {
@@ -1018,6 +1250,13 @@ class ClientStorageService {
 
     try {
       localStorage.setItem(COMPANY_KEY, JSON.stringify(updated));
+    } catch (e) {}
+
+    // Update inside companies list too
+    try {
+      const companies = await this.getCompanies();
+      const newCompanies = companies.map((c) => (c.id === updated.id ? updated : c));
+      localStorage.setItem('ashk24_companies', JSON.stringify(newCompanies));
     } catch (e) {}
 
     return updated;
@@ -1802,6 +2041,114 @@ ${suggestedHashtags.join(' ')}`;
     }
 
     return { success: false, message: 'کمپین یافت نشد.' };
+  }
+
+  /**
+   * تولید خودکار تیتر و شرح آگهی با استفاده از API جمنای (Gemini 3.8 Flash) بر اساس نوع بیزنس و شرکت
+   */
+  public async generateGeminiCampaignCopy(params: {
+    companyId?: string;
+    productName: string;
+    description?: string;
+    sector?: BusinessSector;
+    tone?: BrandTone;
+    priceToman?: number;
+    targetKeywords?: string[];
+    targetAudience?: string;
+    userPrompt?: string;
+  }): Promise<{
+    success: boolean;
+    provider: string;
+    topics: string[];
+    suggestedTitle: string;
+    suggestedBody: string;
+    suggestedShortSnippet: string;
+    bulletPoints: string[];
+    suggestedHashtags: string[];
+    seoScore: number;
+    callToAction: string;
+    reasoning: string;
+  }> {
+    const companies = await this.getCompanies();
+    const company = companies.find((c) => c.id === params.companyId) || (await this.getCompanyProfile());
+    const sector = params.sector || company.sector || 'industrial';
+    const tone = params.tone || company.defaultTone || 'persuasive';
+    const keywords = params.targetKeywords && params.targetKeywords.length > 0
+      ? params.targetKeywords
+      : (company.keywords && company.keywords.length > 0 ? company.keywords : ['کارتن سازی', 'بسته بندی', 'تولید']);
+
+    try {
+      const serverResult = await callCpanelApi<any>('campaigns/generate-gemini', {
+        method: 'POST',
+        body: JSON.stringify({
+          keywords,
+          tone,
+          sector,
+          companyProfile: company,
+          priceToman: params.priceToman || 0,
+          audience: params.targetAudience,
+          userPrompt: params.userPrompt || `تولید آگهی برای محصول «${params.productName}» با توضیحات: ${params.description || ''}`,
+        }),
+      });
+
+      if (serverResult && serverResult.success && Array.isArray(serverResult.topics)) {
+        const topVariation = Array.isArray(serverResult.contentVariations) && serverResult.contentVariations.length > 0
+          ? serverResult.contentVariations[0]
+          : null;
+
+        const bulletPoints = [
+          'تضمین ۱۰۰٪ کیفیت متریال و استاندارد صنعتی',
+          'امکان تولید و ارسال فوری به سراسر کشور',
+          'پشتیبانی تخصصی و مشاوره رایگان سفارش',
+          'قیمت رقابتی مستقیم از خط تولید کارخانه',
+        ];
+
+        return {
+          success: true,
+          provider: serverResult.provider || 'gemini-3.8-flash',
+          topics: serverResult.topics,
+          suggestedTitle: serverResult.topics[0] || `فروش و عرضه مستقیم ${params.productName} با ضمانت کیفیت`,
+          suggestedBody: topVariation?.content || `${params.description || ''}\n\nتلفن هماهنگی: ${company.phoneNumber}`,
+          suggestedShortSnippet: `عرضه مستقیم ${params.productName} از تولیدکننده با تضمین قیمت و کیفیت.`,
+          bulletPoints,
+          suggestedHashtags: serverResult.suggestedHashtags || keywords.map((k: string) => `#${k.replace(/\s+/g, '_')}`),
+          seoScore: serverResult.seoScore || 98,
+          callToAction: `جهت ثبت سفارش و مشاوره فنی «${params.productName}» با شماره ${company.phoneNumber} تماس حاصل فرمایید.`,
+          reasoning: serverResult.reasoning || 'تولید شده توسط هوش مصنوعی جمنای منطبق با استانداردهای سئو و الگوریتم‌های سایت‌های نیازمندی ایران.',
+        };
+      }
+    } catch (e) {
+      console.warn('Gemini API call failed, falling back to local heuristic engine:', e);
+    }
+
+    // Fallback: Use local offline smart campaign generator
+    const localBlueprint = LocalCampaignAiEngine.generateCampaignBlueprint({
+      productName: params.productName,
+      productDescription: params.description || '',
+      priceToman: params.priceToman || 0,
+      customKeywords: keywords,
+      sector,
+      tone,
+    });
+
+    return {
+      success: true,
+      provider: 'local-offline-engine',
+      topics: [
+        localBlueprint.title,
+        `عرضه بدون واسطه ${params.productName} با تخفیف ویژه سازمانی`,
+        `خرید مستقیم ${params.productName} از درب کارخانه`,
+        `طراحی و تولید سفارشی ${params.productName} با بهترین متریال`,
+      ],
+      suggestedTitle: localBlueprint.title,
+      suggestedBody: localBlueprint.bodyText,
+      suggestedShortSnippet: localBlueprint.shortSnippet,
+      bulletPoints: localBlueprint.bulletPoints,
+      suggestedHashtags: localBlueprint.suggestedHashtags,
+      seoScore: localBlueprint.seoScore,
+      callToAction: `جهت مشاوره و دریافت پیش‌فاکتور با شماره ${company.phoneNumber} تماس بگیرید.`,
+      reasoning: 'تولید شده توسط موتور آفلاین اشک ۲۴ سازگار با شرایط اینترنت بدون دسترسی بین‌الملل.',
+    };
   }
 
   // --- Publication Jobs ---

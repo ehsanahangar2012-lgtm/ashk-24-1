@@ -11,7 +11,14 @@ function getGeminiClient(): GoogleGenAI | null {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
   if (!geminiClient) {
-    geminiClient = new GoogleGenAI({ apiKey });
+    geminiClient = new GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        },
+      },
+    });
   }
   return geminiClient;
 }
@@ -184,9 +191,9 @@ ${params.userPrompt ? `- درخواست تکمیلی کاربر: ${params.userPr
 پاسخ را صرفاً به صورت JSON معتبر ارسال کن.
 `;
 
-    const candidateModels = ['gemini-3.6-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+    const candidateModels = ['gemini-3.8-flash', 'gemini-3.1-flash-lite'];
     let parsed: any = null;
-    let usedModel = 'gemini-3.6-flash';
+    let usedModel = 'gemini-3.8-flash';
 
     for (const modelName of candidateModels) {
       try {

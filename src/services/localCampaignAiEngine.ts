@@ -283,3 +283,5 @@ ${mergedKws.map((k) => '#' + k.replace(/\s+/g, '_')).slice(0, 7).join(' ')}`;
     return insights;
   }
 }
+
+export const localCampaignAiEngine = new LocalCampaignAiEngine();

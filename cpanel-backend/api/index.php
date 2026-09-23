@@ -312,7 +312,7 @@ try {
             ], JSON_UNESCAPED_UNICODE);
             break;
 
-        // --- 2. Company Profile ---
+        // --- 2. Company & Multi-Client Profiles ---
         case ($route === 'company'):
             if ($method === 'GET') {
                 echo json_encode($db->getCompanyProfile(), JSON_UNESCAPED_UNICODE);
@@ -322,6 +322,73 @@ try {
                     'message' => 'اطلاعات پروفایل سازمانی در سی‌پنل بروزرسانی شد.',
                     'data' => $updated
                 ], JSON_UNESCAPED_UNICODE);
+            }
+            break;
+
+        case ($route === 'companies'):
+            if ($method === 'GET') {
+                echo json_encode($db->getCompanies(), JSON_UNESCAPED_UNICODE);
+            } elseif ($method === 'POST') {
+                $created = $db->createCompany($body);
+                http_response_code(201);
+                echo json_encode([
+                    'message' => 'شرکت/مشتری جدید با موفقیت ثبت شد.',
+                    'data' => $created
+                ], JSON_UNESCAPED_UNICODE);
+            }
+            break;
+
+        case (preg_match('/^companies\/([^\/]+)$/', $route, $matches) ? true : false):
+            $cmpId = $matches[1];
+            if ($method === 'GET') {
+                $companies = $db->getCompanies();
+                $found = null;
+                foreach ($companies as $c) {
+                    if ($c['id'] === $cmpId) { $found = $c; break; }
+                }
+                if ($found) {
+                    echo json_encode($found, JSON_UNESCAPED_UNICODE);
+                } else {
+                    http_response_code(404);
+                    echo json_encode(['error' => 'شرکت مورد نظر یافت نشد.'], JSON_UNESCAPED_UNICODE);
+                }
+            } elseif ($method === 'PUT' || $method === 'POST') {
+                $updated = $db->updateCompany($cmpId, $body);
+                if ($updated) {
+                    echo json_encode([
+                        'message' => 'اطلاعات شرکت با موفقیت بروزرسانی شد.',
+                        'data' => $updated
+                    ], JSON_UNESCAPED_UNICODE);
+                } else {
+                    http_response_code(404);
+                    echo json_encode(['error' => 'شرکت مورد نظر یافت نشد.'], JSON_UNESCAPED_UNICODE);
+                }
+            } elseif ($method === 'DELETE') {
+                $deleted = $db->deleteCompany($cmpId);
+                if ($deleted) {
+                    echo json_encode([
+                        'message' => 'شرکت با موفقیت حذف گردید.',
+                        'companies' => $db->getCompanies(),
+                        'activeCompany' => $db->getCompanyProfile()
+                    ], JSON_UNESCAPED_UNICODE);
+                } else {
+                    http_response_code(400);
+                    echo json_encode(['error' => 'امکان حذف تنها شرکت باقیمانده وجود ندارد.'], JSON_UNESCAPED_UNICODE);
+                }
+            }
+            break;
+
+        case ($route === 'companies/switch-active' || $route === 'company/switch'):
+            $targetId = $body['companyId'] ?? ($body['id'] ?? '');
+            if (!empty($targetId)) {
+                $active = $db->setActiveCompanyId($targetId);
+                echo json_encode([
+                    'message' => 'شرکت فعال با موفقیت تغییر یافت.',
+                    'activeCompany' => $active
+                ], JSON_UNESCAPED_UNICODE);
+            } else {
+                http_response_code(400);
+                echo json_encode(['error' => 'شناسه شرکت الزامی است.'], JSON_UNESCAPED_UNICODE);
             }
             break;
 

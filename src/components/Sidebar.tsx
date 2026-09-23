@@ -10,13 +10,18 @@ import {
   Sparkles,
   Smartphone,
   BookOpen,
+  FolderOpen,
+  BarChart3,
 } from 'lucide-react';
 
 export type TabType =
   | 'company'
+  | 'assets_config'
   | 'platforms'
   | 'campaigns'
   | 'jobs'
+  | 'health_monitor'
+  | 'analytics'
   | 'mobile_companion';
 
 interface SidebarProps {
@@ -43,35 +48,56 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const menuItems = [
     {
       id: 'company' as TabType,
-      label: '۱. اطلاعات کسب‌وکار',
+      label: '۱. پروفایل و مدیریت مشتریان',
       icon: Building2,
       badge: null,
       badgeColor: '',
     },
     {
+      id: 'assets_config' as TabType,
+      label: '۲. دارایی‌ها و کانفیگ مشتری',
+      icon: FolderOpen,
+      badge: 'Assets',
+      badgeColor: 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30',
+    },
+    {
       id: 'platforms' as TabType,
-      label: '۲. کشف رسانه',
+      label: '۳. کشف و پایش رسانه‌ها',
       icon: Globe,
       badge: null,
       badgeColor: '',
     },
     {
       id: 'campaigns' as TabType,
-      label: '۳. مدیریت آگهی‌ها (کمپین)',
+      label: '۴. مدیریت آگهی‌ها (کمپین)',
       icon: Megaphone,
       badge: 'متن & عکس',
       badgeColor: 'bg-purple-500/20 text-purple-300 font-bold',
     },
     {
       id: 'jobs' as TabType,
-      label: '۴. صف انتشار (Jobs)',
+      label: '۵. صف انتشار خودکار (Jobs)',
       icon: Radio,
       badge: activeJobsCount > 0 ? `${activeJobsCount} جاب` : null,
       badgeColor: 'bg-amber-500 text-slate-950 font-bold',
     },
     {
+      id: 'health_monitor' as TabType,
+      label: '۶. پایش سلامت و افت CTR',
+      icon: ShieldCheck,
+      badge: 'هوشمند',
+      badgeColor: 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30',
+    },
+    {
+      id: 'analytics' as TabType,
+      label: '۷. داشبورد تحلیلی و بازدهی',
+      icon: BarChart3,
+      badge: 'Recharts',
+      badgeColor: 'bg-blue-500/20 text-blue-300 font-bold border border-blue-500/30',
+    },
+    {
       id: 'mobile_companion' as TabType,
-      label: '۵. رله خودکار پیامک اشک ۲۴',
+      label: '۸. رله خودکار پیامک اشک ۲۴',
       icon: Smartphone,
       badge: 'SMS Relay',
       badgeColor: 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30',

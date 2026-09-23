@@ -17,6 +17,7 @@ import { ResilienceStatus, CompanyProfile, UserAccount } from '../types/ashk24.j
 interface NavbarProps {
   resilience: ResilienceStatus | null;
   company: CompanyProfile | null;
+  companies?: CompanyProfile[];
   currentUser: UserAccount | null;
   onOpenCompanyModal: () => void;
   onOpenMediaVault?: () => void;
@@ -25,11 +26,13 @@ interface NavbarProps {
   onOpenSecurityModal: () => void;
   onLogout: () => void;
   onRefreshData: () => void;
+  onSelectCompany?: (id: string) => void;
   onMenuToggle?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   company,
+  companies = [],
   currentUser,
   onOpenCompanyModal,
   onOpenMediaVault,
@@ -38,16 +41,22 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenSecurityModal,
   onLogout,
   onRefreshData,
+  onSelectCompany,
   onMenuToggle,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [companyDropdownOpen, setCompanyDropdownOpen] = useState<boolean>(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const companyMenuRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setMobileMenuOpen(false);
+      }
+      if (companyMenuRef.current && !companyMenuRef.current.contains(event.target as Node)) {
+        setCompanyDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -121,16 +130,60 @@ export const Navbar: React.FC<NavbarProps> = ({
             <RefreshCw className="w-4 h-4" />
           </button>
 
-          {/* Company Profile Button */}
-          <button
-            onClick={onOpenCompanyModal}
-            className="flex items-center space-x-1.5 space-x-reverse px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 text-xs font-medium transition-colors shrink-0"
-          >
-            <Building2 className="w-4 h-4 text-amber-400 shrink-0" />
-            <span className="truncate max-w-[120px]">
-              {company?.companyName || 'پروفایل شرکت'}
-            </span>
-          </button>
+          {/* Company Profile Quick Switcher */}
+          <div className="relative" ref={companyMenuRef}>
+            <button
+              onClick={() => {
+                if (companies.length > 1) {
+                  setCompanyDropdownOpen(!companyDropdownOpen);
+                } else {
+                  onOpenCompanyModal();
+                }
+              }}
+              className="flex items-center space-x-1.5 space-x-reverse px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 text-xs font-medium transition-colors shrink-0"
+              title="تغییر یا ویرایش شرکت و مشتریان تبلیغاتی"
+            >
+              <Building2 className="w-4 h-4 text-amber-400 shrink-0" />
+              <span className="truncate max-w-[130px]">
+                {company?.brandName || company?.name || 'پروفایل شرکت'}
+              </span>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+            </button>
+
+            {companyDropdownOpen && (
+              <div className="absolute left-0 top-full mt-2 w-64 bg-slate-900 border border-slate-800 rounded-2xl p-2 shadow-2xl z-50 space-y-1 text-xs">
+                <div className="px-2.5 py-1.5 text-[10px] text-slate-400 border-b border-slate-800 font-bold flex items-center justify-between">
+                  <span>سوییچ سریع شرکت فعال:</span>
+                  <button
+                    onClick={() => {
+                      setCompanyDropdownOpen(false);
+                      onOpenCompanyModal();
+                    }}
+                    className="text-amber-400 hover:underline"
+                  >
+                    مدیریت همه‌جانبه ⛭
+                  </button>
+                </div>
+                {companies.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => {
+                      if (onSelectCompany) onSelectCompany(c.id);
+                      setCompanyDropdownOpen(false);
+                    }}
+                    className={`w-full text-right px-3 py-2 rounded-xl flex items-center justify-between transition-colors ${
+                      c.id === company?.id
+                        ? 'bg-amber-500/10 text-amber-300 font-bold'
+                        : 'hover:bg-slate-800 text-slate-300'
+                    }`}
+                  >
+                    <span className="truncate">{c.brandName || c.name}</span>
+                    {c.id === company?.id && <span className="text-[10px] text-amber-400">فعال</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Security & Accounts Button */}
           <button

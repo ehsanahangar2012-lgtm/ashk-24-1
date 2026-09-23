@@ -347,17 +347,192 @@ class Ashk24Db {
         return $this->getResilienceStatus();
     }
 
+    public function getCompanies() {
+        $db = $this->readDb();
+        if (!isset($db['companies']) || !is_array($db['companies']) || empty($db['companies'])) {
+            $defaultCmp = $db['companyProfile'] ?? [
+                'id' => 'cmp_default_01',
+                'name' => 'مجتمع چاپ، کارتن‌سازی و بسته‌بندی حرفه‌ای اشک قلم',
+                'brandName' => 'اشک قلم (Ashk Ghalam)',
+                'nationalCode' => '10380456789',
+                'phoneNumber' => '09153108763',
+                'email' => 'info@ashkghalam.ir',
+                'website' => 'http://www.ashkghalam.ir',
+                'address' => 'مشهد، شهرک صنعتی کلات',
+                'sector' => 'industrial',
+                'defaultTone' => 'persuasive',
+                'keywords' => ['چاپ و بسته‌بندی اشک قلم', 'جعبه‌سازی سفارشی', 'چاپ افست حرفه‌ای', 'کارتن‌سازی مشهد', 'طراحی زینک اختصاصی', 'طراحی و چاپ لیبل صنعتی', 'شهرک صنعتی کلات'],
+                'targetAudience' => 'تولیدکنندگان کالا، کارخانجات صنعتی، سازمان‌ها و صاحبان کسب‌وکارها جهت صفر تا صد بسته‌بندی، کارتن و چاپ کاتالوگ',
+                'logoUrl' => '/uploads/default_logo.svg',
+                'contactPerson' => 'مهندس احسان آهنگر',
+                'taxId' => 'IR-98153108763',
+                'registrationNumber' => '584920',
+                'telegramChannel' => '@ashkghalam',
+                'instagramHandle' => '@ashkghalam',
+                'catalogPdfUrl' => 'http://www.ashkghalam.ir/catalog.pdf',
+                'productImages' => [
+                    '/uploads/carton_packaging_sample1.svg',
+                    '/uploads/carton_packaging_sample2.svg'
+                ],
+                'aboutUsSummary' => 'اشک قلم: همکار قابل‌اعتماد شما در بسته‌بندی و چاپ حرفه‌ای. از صفر تا صد خدمات چاپ و کارتن‌سازی، جعبه‌سازی سفارشی، چاپ افست کاتالوگ و بروشور، طراحی زینک اختصاصی و لیبل‌های صنعتی در مشهد، شهرک صنعتی کلات. راه‌های تماس: 09153108763 - 09353108763 - 09393108763 وب‌سایت: http://www.ashkghalam.ir',
+                'isActive' => true,
+                'isDefault' => true,
+                'updatedAt' => date('c')
+            ];
+            $defaultCmp['isActive'] = true;
+            $db['companies'] = [$defaultCmp];
+            $db['activeCompanyId'] = $defaultCmp['id'];
+            $this->writeDb($db);
+        }
+        return $db['companies'];
+    }
+
+    public function getActiveCompanyId() {
+        $db = $this->readDb();
+        if (!empty($db['activeCompanyId'])) {
+            return $db['activeCompanyId'];
+        }
+        $companies = $this->getCompanies();
+        return $companies[0]['id'] ?? 'cmp_default_01';
+    }
+
+    public function setActiveCompanyId($id) {
+        $db = $this->readDb();
+        $companies = $this->getCompanies();
+        $found = null;
+        foreach ($companies as &$cmp) {
+            if ($cmp['id'] === $id) {
+                $cmp['isActive'] = true;
+                $found = $cmp;
+            } else {
+                $cmp['isActive'] = false;
+            }
+        }
+        if ($found) {
+            $db['companies'] = $companies;
+            $db['activeCompanyId'] = $id;
+            $db['companyProfile'] = $found;
+            $this->writeDb($db);
+            return $found;
+        }
+        return $this->getCompanyProfile();
+    }
+
     public function getCompanyProfile() {
         $db = $this->readDb();
-        return $db['companyProfile'];
+        $activeId = $this->getActiveCompanyId();
+        $companies = $this->getCompanies();
+        foreach ($companies as $cmp) {
+            if ($cmp['id'] === $activeId) {
+                return $cmp;
+            }
+        }
+        return $companies[0] ?? $db['companyProfile'];
+    }
+
+    public function createCompany($data) {
+        $db = $this->readDb();
+        $companies = $this->getCompanies();
+        $newId = 'cmp_' . time() . '_' . rand(100, 999);
+        $newCompany = array_merge([
+            'id' => $newId,
+            'name' => 'شرکت جدید',
+            'brandName' => '',
+            'nationalCode' => '',
+            'phoneNumber' => '',
+            'email' => '',
+            'website' => '',
+            'address' => '',
+            'sector' => 'industrial',
+            'defaultTone' => 'persuasive',
+            'keywords' => [],
+            'targetAudience' => '',
+            'logoUrl' => '',
+            'contactPerson' => '',
+            'taxId' => '',
+            'registrationNumber' => '',
+            'telegramChannel' => '',
+            'instagramHandle' => '',
+            'catalogPdfUrl' => '',
+            'productImages' => [],
+            'aboutUsSummary' => '',
+            'isActive' => false,
+            'isDefault' => false,
+            'clientType' => 'client_account',
+            'notes' => '',
+            'updatedAt' => date('c')
+        ], $data);
+        $newCompany['id'] = $newId;
+        $newCompany['updatedAt'] = date('c');
+        $companies[] = $newCompany;
+        $db['companies'] = $companies;
+        $this->writeDb($db);
+        return $newCompany;
+    }
+
+    public function updateCompany($id, $data) {
+        $db = $this->readDb();
+        $companies = $this->getCompanies();
+        $updated = null;
+        foreach ($companies as &$cmp) {
+            if ($cmp['id'] === $id) {
+                $cmp = array_merge($cmp, $data);
+                $cmp['id'] = $id; // enforce id
+                $cmp['updatedAt'] = date('c');
+                $updated = $cmp;
+                break;
+            }
+        }
+        if ($updated) {
+            $db['companies'] = $companies;
+            if (($db['activeCompanyId'] ?? '') === $id) {
+                $db['companyProfile'] = $updated;
+            }
+            $this->writeDb($db);
+            return $updated;
+        }
+        return false;
+    }
+
+    public function deleteCompany($id) {
+        $db = $this->readDb();
+        $companies = $this->getCompanies();
+        if (count($companies) <= 1) {
+            return false; // Cannot delete the only remaining company
+        }
+        $newCompanies = [];
+        $deleted = false;
+        foreach ($companies as $cmp) {
+            if ($cmp['id'] === $id) {
+                $deleted = true;
+            } else {
+                $newCompanies[] = $cmp;
+            }
+        }
+        if ($deleted) {
+            $db['companies'] = $newCompanies;
+            if (($db['activeCompanyId'] ?? '') === $id) {
+                $db['activeCompanyId'] = $newCompanies[0]['id'];
+                $newCompanies[0]['isActive'] = true;
+                $db['companyProfile'] = $newCompanies[0];
+            }
+            $this->writeDb($db);
+            return true;
+        }
+        return false;
     }
 
     public function updateCompanyProfile($data) {
-        $db = $this->readDb();
-        $db['companyProfile'] = array_merge($db['companyProfile'], $data);
-        $db['companyProfile']['updatedAt'] = date('c');
-        $this->writeDb($db);
-        return $db['companyProfile'];
+        $activeId = $this->getActiveCompanyId();
+        $updated = $this->updateCompany($activeId, $data);
+        if (!$updated) {
+            $db = $this->readDb();
+            $db['companyProfile'] = array_merge($db['companyProfile'] ?? [], $data);
+            $db['companyProfile']['updatedAt'] = date('c');
+            $this->writeDb($db);
+            return $db['companyProfile'];
+        }
+        return $updated;
     }
 
     public function getMediaPlatforms() {

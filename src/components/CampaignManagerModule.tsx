@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Megaphone,
   Plus,
@@ -26,6 +26,7 @@ import {
   FolderOpen,
   Eye,
   AlertTriangle,
+  Building2,
 } from 'lucide-react';
 import { Campaign, MediaPlatform, BrandTone, BusinessSector, CompanyProfile } from '../types/ashk24.js';
 import { toPersianDigits, toTomanFormat, getCurrentJalaliDate } from '../utils/persianUtils.js';
@@ -35,12 +36,15 @@ import { ImageAnalysisModal } from './ImageAnalysisModal.js';
 import { clientStorage } from '../services/clientStorageService.js';
 import { SmartHelpButton } from './SmartHelpModal.js';
 import { CampaignSmartAssistantModal } from './CampaignSmartAssistantModal.js';
+import { GeminiCampaignWriterModal } from './GeminiCampaignWriterModal.js';
 import { CampaignSmartBlueprint } from '../services/localCampaignAiEngine.js';
 import { KeywordCampaignGeneratorSection } from './KeywordCampaignGeneratorSection.js';
 
 interface CampaignManagerModuleProps {
   campaigns: Campaign[];
   platforms: MediaPlatform[];
+  companies?: CompanyProfile[];
+  activeCompanyId?: string;
   onCreateCampaign: (newCamp: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Campaign | undefined> | void;
   onDeleteCampaign: (id: string) => void;
   onTriggerJob: (campaignId: string, platformId: string) => void;
@@ -50,11 +54,15 @@ interface CampaignManagerModuleProps {
 export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
   campaigns,
   platforms,
+  companies = [],
+  activeCompanyId,
   onCreateCampaign,
   onDeleteCampaign,
   onTriggerJob,
   onRefreshAll,
 }) => {
+  const [filterCompanyId, setFilterCompanyId] = useState<string>('all');
+  const [targetCompanyId, setTargetCompanyId] = useState<string>(activeCompanyId || companies[0]?.id || 'cmp_default_01');
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [showVaultModal, setShowVaultModal] = useState<boolean>(false);
   const [analyzingImage, setAnalyzingImage] = useState<{ url: string; text: string; name: string } | null>(null);
@@ -63,6 +71,13 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
   const [quickPublishSuccess, setQuickPublishSuccess] = useState<string | null>(null);
   const [publishingCampaignId, setPublishingCampaignId] = useState<string | null>(null);
   const [wipeLoading, setWipeLoading] = useState<boolean>(false);
+
+  // Sync targetCompanyId if activeCompanyId changes
+  useEffect(() => {
+    if (activeCompanyId) {
+      setTargetCompanyId(activeCompanyId);
+    }
+  }, [activeCompanyId]);
 
   // Fast-track Preset Templates
   const presetTemplates = [
@@ -106,6 +121,8 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
   const [campaignImages, setCampaignImages] = useState<string[]>([]);
   const [isGeneratingAi, setIsGeneratingAi] = useState<boolean>(false);
   const [showSmartAssistantModal, setShowSmartAssistantModal] = useState<boolean>(false);
+  const [showGeminiWriterModal, setShowGeminiWriterModal] = useState<boolean>(false);
+  const [geminiSelectedCampaign, setGeminiSelectedCampaign] = useState<Campaign | null>(null);
 
   const handleApplySmartBlueprint = (blueprint: CampaignSmartBlueprint) => {
     if (blueprint.title) setTitle(blueprint.title);
@@ -244,16 +261,21 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
     e.preventDefault();
     if (!title || !productName) return;
 
+    const currentCmp = companies.find((c) => c.id === targetCompanyId) || companies[0];
+    const defaultKws = currentCmp?.keywords && currentCmp.keywords.length > 0
+      ? currentCmp.keywords
+      : [productName, currentCmp?.brandName || 'اشک قلم'];
+
     onCreateCampaign({
       title,
-      companyId: 'cmp_default_01',
+      companyId: targetCompanyId || currentCmp?.id || 'cmp_default_01',
       selectedPlatformIds: selectedPlatforms,
       productName,
       productDescription,
       priceToman,
       sector,
       tone,
-      targetKeywords: ['اشک قلم', 'کارتن سازی', 'بسته بندی', 'جعبه مقوایی'],
+      targetKeywords: defaultKws,
       jalaliScheduleDate: scheduleDate,
       jalaliScheduleTime: scheduleTime,
       status: 'scheduled',
@@ -298,17 +320,22 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
       return;
     }
 
+    const currentCmp = companies.find((c) => c.id === targetCompanyId) || companies[0];
+    const defaultKws = currentCmp?.keywords && currentCmp.keywords.length > 0
+      ? currentCmp.keywords
+      : [productName, currentCmp?.brandName || 'اشک قلم'];
+
     const targetPlatforms = selectedPlatforms.length > 0 ? selectedPlatforms : platforms.slice(0, 5).map((p) => p.id);
     const newCampData = {
       title,
-      companyId: 'cmp_default_01',
+      companyId: targetCompanyId || currentCmp?.id || 'cmp_default_01',
       selectedPlatformIds: targetPlatforms,
       productName,
       productDescription,
       priceToman,
       sector,
       tone,
-      targetKeywords: ['اشک قلم', 'کارتن سازی', 'بسته بندی', 'جعبه مقوایی'],
+      targetKeywords: defaultKws,
       jalaliScheduleDate: getCurrentJalaliDate(),
       jalaliScheduleTime: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }),
       status: 'scheduled' as const,
@@ -544,28 +571,62 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
         )}
       </div>
 
+      {/* Company Filter & Campaigns Grid Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <div className="flex items-center space-x-2 space-x-reverse text-xs font-bold text-slate-300">
+          <Building2 className="w-4 h-4 text-amber-400" />
+          <span>فیلتر بر اساس شرکت / مشتری:</span>
+          <select
+            value={filterCompanyId}
+            onChange={(e) => setFilterCompanyId(e.target.value)}
+            className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 outline-none focus:border-amber-500"
+          >
+            <option value="all">همه شرکت‌ها و مشتریان ({toPersianDigits(campaigns.length)} کمپین)</option>
+            {companies.map((c) => {
+              const count = campaigns.filter((camp) => camp.companyId === c.id).length;
+              return (
+                <option key={c.id} value={c.id}>
+                  {c.brandName || c.name} ({toPersianDigits(count)} کمپین)
+                </option>
+              );
+            })}
+          </select>
+        </div>
+      </div>
+
       {/* Campaigns Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {(campaigns || []).map((camp) => (
-          <div
-            key={camp.id}
-            className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 flex flex-col justify-between"
-          >
-            <div className="space-y-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-100">{camp.title}</h3>
-                  <div className="text-xs text-slate-400 mt-0.5">محصول: {camp.productName}</div>
-                </div>
+        {(campaigns || [])
+          .filter((camp) => (filterCompanyId === 'all' ? true : camp.companyId === filterCompanyId))
+          .map((camp) => {
+            const campCompany = companies.find((c) => c.id === camp.companyId);
+            return (
+              <div
+                key={camp.id}
+                className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center space-x-2 space-x-reverse">
+                        <h3 className="text-sm font-bold text-slate-100">{camp.title}</h3>
+                        {campCompany && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-300 font-medium">
+                            {campCompany.brandName || campCompany.name}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-slate-400 mt-0.5">محصول: {camp.productName}</div>
+                    </div>
 
-                <button
-                  onClick={() => onDeleteCampaign(camp.id)}
-                  title="حذف کمپین"
-                  className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-slate-800 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
+                    <button
+                      onClick={() => onDeleteCampaign(camp.id)}
+                      title="حذف کمپین"
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-slate-800 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
 
               <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 space-y-2">
                 <div className="flex items-center justify-between">
@@ -707,7 +768,8 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
               </div>
             </div>
           </div>
-        ))}
+        );
+      })}
       </div>
 
       {/* Create Modal */}
@@ -725,6 +787,53 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
             </div>
 
             <form onSubmit={handleSubmitNewCampaign} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300">انتخاب شرکت / مشتری هدف:</label>
+                <select
+                  value={targetCompanyId}
+                  onChange={(e) => {
+                    const newCmpId = e.target.value;
+                    setTargetCompanyId(newCmpId);
+                    const selCmp = companies.find((c) => c.id === newCmpId);
+                    if (selCmp) {
+                      setSector(selCmp.sector || 'industrial');
+                      setTone(selCmp.defaultTone || 'persuasive');
+                    }
+                  }}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-amber-300 font-bold outline-none focus:border-amber-500"
+                >
+                  {companies.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.brandName || c.name} ({c.clientType === 'client_account' ? 'مشتری تبلیغاتی' : 'شرکت اصلی'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Gemini AI Auto-Writer Banner & Button */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-amber-600/15 border border-amber-500/40 flex items-center justify-between gap-3 shadow-inner">
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shrink-0">
+                    <Sparkles className="w-4 h-4 fill-slate-950" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-amber-300">نگارش هوشمند با Gemini AI</div>
+                    <div className="text-[11px] text-slate-400">تولید ۵ تیتر سئو + شرح آگهی بر اساس بیزنس انتخاب‌شده</div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGeminiSelectedCampaign(null);
+                    setShowGeminiWriterModal(true);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold shadow-md transition-all shrink-0 flex items-center space-x-1 space-x-reverse"
+                >
+                  <Sparkles className="w-3.5 h-3.5 fill-slate-950" />
+                  <span>تولید با جمنای</span>
+                </button>
+              </div>
+
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-slate-300">عنوان کمپین:</label>
                 <input
@@ -955,6 +1064,20 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
           sector={sector}
           tone={tone}
           onApplyBlueprint={handleApplySmartBlueprint}
+        />
+      )}
+
+      {/* Gemini AI Campaign Copywriting Modal */}
+      {showGeminiWriterModal && (
+        <GeminiCampaignWriterModal
+          isOpen={showGeminiWriterModal}
+          onClose={() => setShowGeminiWriterModal(false)}
+          campaign={geminiSelectedCampaign}
+          company={companies.find((c) => c.id === targetCompanyId) || companies[0]}
+          onApplyContent={(content) => {
+            if (content.title) setTitle(content.title);
+            if (content.bodyText) setProductDescription(content.bodyText);
+          }}
         />
       )}
     </div>

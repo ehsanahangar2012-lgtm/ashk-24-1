@@ -11,6 +11,9 @@ import { PublicationReportModule } from './components/PublicationReportModule';
 import { ProductionTestHarnessModule } from './components/ProductionTestHarnessModule';
 import { CompanyProfileView } from './components/CompanyProfileView';
 import { CompanyProfileModal } from './components/CompanyProfileModal';
+import { CompanyAssetsAndConfigModule } from './components/CompanyAssetsAndConfigModule';
+import { CampaignHealthMonitorModule } from './components/CampaignHealthMonitorModule';
+import { AnalyticsDashboardModule } from './components/AnalyticsDashboardModule';
 import { ImageUploadVaultModal } from './components/ImageUploadVaultModal';
 import { CpanelGuideModal } from './components/CpanelGuideModal';
 import { StepByStepGuideModal } from './components/StepByStepGuideModal';
@@ -67,6 +70,7 @@ export default function App() {
 
   // Data states
   const [company, setCompany] = useState<CompanyProfile | null>(null);
+  const [companies, setCompanies] = useState<CompanyProfile[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [platforms, setPlatforms] = useState<MediaPlatform[]>([]);
   const [jobs, setJobs] = useState<PublicationJob[]>([]);
@@ -76,8 +80,9 @@ export default function App() {
   // Fetch all initial data using unified clientStorage service
   const fetchAllData = async () => {
     try {
-      const [cmpRes, campRes, platRes, jobRes, smsRes, resilRes] = await Promise.all([
+      const [cmpRes, cmpsRes, campRes, platRes, jobRes, smsRes, resilRes] = await Promise.all([
         clientStorage.getCompanyProfile(),
+        clientStorage.getCompanies(),
         clientStorage.getCampaigns(),
         clientStorage.getPlatforms(),
         clientStorage.getJobs(),
@@ -86,6 +91,7 @@ export default function App() {
       ]);
 
       setCompany(cmpRes);
+      setCompanies(cmpsRes);
       setCampaigns(campRes);
       setPlatforms(platRes);
       setJobs(jobRes);
@@ -108,6 +114,45 @@ export default function App() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Handlers
+  const handleSelectCompany = async (id: string) => {
+    try {
+      const updated = await clientStorage.setActiveCompany(id);
+      const all = await clientStorage.getCompanies();
+      setCompany(updated);
+      setCompanies(all);
+    } catch (e) {
+      console.error('Error switching active company:', e);
+    }
+  };
+
+  const handleCreateCompany = async (newCompany: Omit<CompanyProfile, 'id' | 'updatedAt'>) => {
+    try {
+      const created = await clientStorage.createCompanyProfile(newCompany);
+      const all = await clientStorage.getCompanies();
+      setCompanies(all);
+      if (all.length === 1) {
+        setCompany(created);
+      }
+    } catch (e) {
+      console.error('Error creating new company:', e);
+    }
+  };
+
+  const handleDeleteCompany = async (id: string) => {
+    try {
+      const success = await clientStorage.deleteCompanyProfile(id);
+      if (success) {
+        const all = await clientStorage.getCompanies();
+        const active = await clientStorage.getCompanyProfile();
+        setCompanies(all);
+        setCompany(active);
+      }
+    } catch (e) {
+      console.error('Error deleting company:', e);
+    }
+  };
 
   // Handlers
   const handleTriggerJob = async (campaignId: string, platformId: string) => {
@@ -196,6 +241,7 @@ export default function App() {
         <Navbar
           resilience={resilience}
           company={company}
+          companies={companies}
           currentUser={currentUser}
           onOpenCompanyModal={() => setShowCompanyModal(true)}
           onOpenMediaVault={() => setShowMediaVaultModal(true)}
@@ -204,6 +250,7 @@ export default function App() {
           onOpenSecurityModal={() => setShowSecurityModal(true)}
           onLogout={handleLogout}
           onRefreshData={fetchAllData}
+          onSelectCompany={handleSelectCompany}
           onMenuToggle={() => setMobileSidebarOpen((prev) => !prev)}
         />
 
@@ -234,6 +281,22 @@ export default function App() {
           </div>
         )}
 
+        {/* Smart Stalled / CTR Health Bar Notification */}
+        {jobs.some((j) => j.status === 'failed' || j.status === 'paused_user_action') && activeTab !== 'health_monitor' && activeTab !== 'jobs' && (
+          <div className="bg-red-950/80 border-b border-red-500/40 text-red-200 px-4 sm:px-6 py-2 flex items-center justify-between gap-2 text-xs font-medium shrink-0 backdrop-blur-sm">
+            <div className="flex items-center space-x-2 space-x-reverse">
+              <span className="w-2 h-2 rounded-full bg-red-400 animate-ping"></span>
+              <span>⚠️ سیستم پایش: توقف یا چالش امنیتی در فرآیند ارسال چند نوبت کاری شناسایی شد.</span>
+            </div>
+            <button
+              onClick={() => setActiveTab('health_monitor')}
+              className="px-3 py-1 rounded-lg bg-red-500 hover:bg-red-400 text-white font-bold text-[11px] transition-all shrink-0"
+            >
+              مشاهده در مرکز پایش سلامت ←
+            </button>
+          </div>
+        )}
+
         {/* Main Content Area */}
         <div className="flex flex-1 min-h-0 overflow-hidden">
           {/* Sidebar Navigation */}
@@ -254,7 +317,21 @@ export default function App() {
                 {activeTab === 'company' && (
                   <CompanyProfileView
                     company={company}
+                    companies={companies}
                     onSave={handleSaveCompanyProfile}
+                    onSelectCompany={handleSelectCompany}
+                    onCreateCompany={handleCreateCompany}
+                    onDeleteCompany={handleDeleteCompany}
+                  />
+                )}
+
+                {activeTab === 'assets_config' && (
+                  <CompanyAssetsAndConfigModule
+                    companies={companies}
+                    activeCompany={company}
+                    platforms={platforms}
+                    onSelectCompany={handleSelectCompany}
+                    onRefreshData={fetchAllData}
                   />
                 )}
 
@@ -272,6 +349,8 @@ export default function App() {
                   <CampaignManagerModule
                     campaigns={campaigns}
                     platforms={platforms}
+                    companies={companies}
+                    activeCompanyId={company?.id}
                     onCreateCampaign={handleCreateCampaign}
                     onDeleteCampaign={handleDeleteCampaign}
                     onTriggerJob={handleTriggerJob}
@@ -280,6 +359,28 @@ export default function App() {
 
                 {activeTab === 'jobs' && (
                   <JobQueueMonitorModule jobs={jobs} onRefreshJobs={fetchAllData} />
+                )}
+
+                {activeTab === 'health_monitor' && (
+                  <CampaignHealthMonitorModule
+                    campaigns={campaigns}
+                    companies={companies}
+                    platforms={platforms}
+                    jobs={jobs}
+                    onTriggerJob={handleTriggerJob}
+                    onNavigateToCampaigns={() => setActiveTab('campaigns')}
+                    onRefreshData={fetchAllData}
+                  />
+                )}
+
+                {activeTab === 'analytics' && (
+                  <AnalyticsDashboardModule
+                    companies={companies}
+                    campaigns={campaigns}
+                    platforms={platforms}
+                    jobs={jobs}
+                    onRefreshData={fetchAllData}
+                  />
                 )}
 
                 {activeTab === 'mobile_companion' && (
@@ -334,8 +435,12 @@ export default function App() {
         {showCompanyModal && (
           <CompanyProfileModal
             company={company}
+            companies={companies}
             onClose={() => setShowCompanyModal(false)}
             onSave={handleSaveCompanyProfile}
+            onSelectCompany={handleSelectCompany}
+            onCreateCompany={handleCreateCompany}
+            onDeleteCompany={handleDeleteCompany}
           />
         )}
 
