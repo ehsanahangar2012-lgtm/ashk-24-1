@@ -328,6 +328,19 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
     }
   };
 
+  const handleRetryAllFailed = async () => {
+    setBulkActionLoading(true);
+    try {
+      const count = await clientStorage.retryAllFailedJobs();
+      showNotification(`${toPersianDigits(count)} وظیفه ناموفق مجدداً به صف پردازش هوشمند برگشتند.`);
+      onRefreshJobs();
+    } catch {
+      showNotification('خطا در تلاش مجدد وظایف.', 'error');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
   const handleStopAllJobs = async () => {
     if (!window.confirm('آیا مایلید کلیه نوبت‌های فعال انتشار در صف متوقف گردند؟')) return;
     setBulkActionLoading(true);
@@ -686,6 +699,19 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
             <Play className="w-3.5 h-3.5 fill-current" />
             <span>⚡ پردازش زنده نوبت‌های در صف</span>
           </button>
+
+          {/* Bulk Retry Failed Jobs */}
+          {statusStats.failed > 0 && (
+            <button
+              onClick={handleRetryAllFailed}
+              disabled={bulkActionLoading}
+              title="تلاش مجدد و اجرای هوشمند برای کلیه وظایف با خطا"
+              className="px-3 py-1.5 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/40 text-xs font-bold transition-all flex items-center space-x-1.5 space-x-reverse disabled:opacity-50"
+            >
+              <RotateCw className="w-3.5 h-3.5 text-blue-400" />
+              <span>تلاش مجدد خطاها ({toPersianDigits(statusStats.failed)})</span>
+            </button>
+          )}
 
           {/* Bulk Job Management Buttons */}
           <button
@@ -1072,7 +1098,19 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
                   : statusStats.waitingAction > 0
                   ? `📱 تشخیص وضعیت: ${toPersianDigits(statusStats.waitingAction)} وظیفه در انتظار دریافت پیامک تایید OTP خط ۰۹۱۵۳۱۰۸۷۶۳ هستند.`
                   : statusStats.failed > 0
-                  ? `⚠️ تشخیص وضعیت: ${toPersianDigits(statusStats.failed)} وظیفه با خطا مواجه شدند که با دکمه «تلاش مجدد» قابل بازیابی هستند.`
+                  ? (
+                    <span className="flex items-center gap-1.5 flex-wrap">
+                      <span>⚠️ تشخیص وضعیت: {toPersianDigits(statusStats.failed)} وظیفه با خطای درگاه مواجه شدند.</span>
+                      <button
+                        type="button"
+                        onClick={handleRetryAllFailed}
+                        disabled={bulkActionLoading}
+                        className="text-blue-400 hover:text-blue-300 font-bold underline cursor-pointer"
+                      >
+                        [تلاش مجدد و انتقال به صف]
+                      </button>
+                    </span>
+                  )
                   : `✓ کلیه وظایف فعال در صف با موفقیت در گردش هستند.`}
               </span>
             </div>

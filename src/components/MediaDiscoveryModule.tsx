@@ -320,12 +320,38 @@ switch ($action) {
   const handleApplyDomMapping = async () => {
     if (!inspectingPlatform) return;
     try {
+      const fieldMapObj: Record<string, string> = {};
+      if (domAnalysisResult?.detectedFields) {
+        for (const f of domAnalysisResult.detectedFields) {
+          if (f.mappingKey && f.fieldName) {
+            fieldMapObj[f.mappingKey] = f.fieldName;
+          }
+        }
+      }
+
+      const adapterConfig = {
+        endpoint: domAnalysisResult?.formActionUrl || `https://${inspectingPlatform.domain}/ad/new`,
+        submitMethod: 'POST',
+        requestFormat: 'form_urlencoded',
+        fieldMap: Object.keys(fieldMapObj).length > 0 ? fieldMapObj : {
+          title: 'title',
+          description: 'description',
+          phone: 'phone',
+          email: 'email'
+        },
+        defaultCategory: '1',
+        defaultProvince: '11',
+        hasDirectForm: true,
+        inspectedAt: new Date().toISOString()
+      };
+
       await clientStorage.updatePlatform(inspectingPlatform.id, {
         formType: domAnalysisResult?.formType || inspectingPlatform.formType || 'classified',
         active: true,
         trustScore: Math.max(inspectingPlatform.trustScore || 85, 95),
+        adapterConfig: adapterConfig as any
       });
-      setDomMappingSuccess(`ساختار فرم و فیلدهای ورودی ${inspectingPlatform.persianName} با موفقیت تایید و با اطلاعات شرکت اشک قلم نگاشت شد.`);
+      setDomMappingSuccess(`ساختار فرم، فیلدها و adapterConfig پلتفرم «${inspectingPlatform.persianName}» مستقیماً در پایگاه داده ذخیره و آماده انتشار شد.`);
       if (typeof onRefreshPlatforms === 'function') {
         onRefreshPlatforms();
       }

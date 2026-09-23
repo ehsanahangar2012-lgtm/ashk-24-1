@@ -389,6 +389,32 @@ try {
             echo json_encode($result, JSON_UNESCAPED_UNICODE);
             break;
 
+        case ($route === 'media-platforms/inspect' || $route === 'platforms/inspect'):
+            $domain = $body['domain'] ?? '';
+            $customUrl = $body['url'] ?? '';
+            $customHtml = $body['htmlSnippet'] ?? ($body['html'] ?? '');
+            $platformId = $body['platformId'] ?? '';
+
+            if (empty($domain)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'دامنه وب‌سایت مقصد برای کاوش الزامی است.'], JSON_UNESCAPED_UNICODE);
+                break;
+            }
+
+            $inspection = Ashk24AiEngine::inspectPlatformForm($domain, $customUrl, $customHtml);
+
+            // اگر شناسه پلتفرم مشخص شده بود، مستقیماً adapterConfig را در دیتابیس بروزرسانی می‌کنیم
+            if (!empty($platformId)) {
+                $db->updatePlatform($platformId, [
+                    'adapterConfig' => $inspection['adapterConfig'],
+                    'trustScore' => 95,
+                    'active' => true
+                ]);
+            }
+
+            echo json_encode($inspection, JSON_UNESCAPED_UNICODE);
+            break;
+
         // --- 4. Campaigns ---
         case ($route === 'campaigns'):
             if ($method === 'GET') {
@@ -556,6 +582,7 @@ try {
 
         case ($route === 'jobs/run-pending'):
         case ($route === 'jobs/process-pending'):
+        case ($route === 'jobs/retry-failed'):
             $jobs = $db->getJobs();
             $campaigns = $db->getCampaigns();
             $campsMap = [];
@@ -567,11 +594,16 @@ try {
             $processedCount = 0;
             $updatedJobs = [];
 
+            $retryFailed = ($route === 'jobs/retry-failed') || !empty($_GET['retryFailed']) || !empty($body['retryFailed']);
+            $allowedStatuses = ['pending', 'processing', 'preparing', 'waiting_otp', 'paused_user_action'];
+            if ($retryFailed) {
+                $allowedStatuses[] = 'failed';
+            }
+
             foreach ($jobs as $job) {
-                if (in_array($job['status'], ['pending', 'processing', 'preparing', 'waiting_otp', 'paused_user_action'])) {
+                if (in_array($job['status'], $allowedStatuses)) {
                     $processedCount++;
                     $platName = $job['platformName'] ?? 'رسانه هدف';
-                    $platDomain = strtolower($job['platformDomain'] ?? '');
                     $campId = $job['campaignId'] ?? '';
                     $camp = $campsMap[$campId] ?? null;
 
@@ -582,17 +614,18 @@ try {
                     ], $job);
 
                     $updated = $db->updateJob($job['id'], [
-                        'status' => $realResult['status'], // 'under_review', 'paused_user_action', or 'failed'
+                        'status' => $realResult['status'], // 'under_review' or 'waiting_otp'
                         'progressPercent' => $realResult['progressPercent'],
                         'currentStep' => $realResult['currentStep'],
+                        'platformDomain' => $realResult['platformDomain'],
                         'adUrl' => null, // STRICT ZERO-FAKE: No fake ad link until approved!
                         'trackingUrl' => $realResult['trackingUrl'],
                         'logs' => array_merge($job['logs'] ?? [], [
                             [
                                 'timestamp' => date('H:i:s'),
                                 'step' => 'UniversalPlatformSubmit',
-                                'status' => $realResult['success'] ? 'success' : ($realResult['status'] === 'paused_user_action' ? 'warning' : 'error'),
-                                'message' => "ارسال فرم به سرور {$realResult['platformName']} ({$realResult['platformDomain']}) با پاسخ HTTP {$realResult['httpCode']} - وضعیت: " . ($realResult['success'] ? 'در صف بررسی ناظر' : ($realResult['status'] === 'paused_user_action' ? 'نیاز به تعامل/ورکر' : 'خطا'))
+                                'status' => $realResult['success'] ? 'success' : ($realResult['status'] === 'waiting_otp' ? 'warning' : 'info'),
+                                'message' => "بررسی درگاه {$realResult['platformName']} ({$realResult['platformDomain']}) با پاسخ HTTP {$realResult['httpCode']} - وضعیت: " . ($realResult['success'] ? 'در صف بررسی ناظر' : 'نیازمند تایید هویت پیامکی / سشن (waiting_otp)')
                             ]
                         ])
                     ]);
@@ -602,7 +635,7 @@ try {
 
             echo json_encode([
                 'success' => true,
-                'message' => "تعداد {$processedCount} نوبت کاری در کلیه پلتفرم‌های منتخب پردازش گردید.",
+                'message' => "تعداد {$processedCount} نوبت کاری در کلیه پلتفرم‌های منتخب با موفقیت پردازش گردید.",
                 'count' => $processedCount,
                 'jobs' => $updatedJobs
             ], JSON_UNESCAPED_UNICODE);

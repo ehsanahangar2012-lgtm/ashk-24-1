@@ -1493,6 +1493,14 @@ class ClientStorageService {
     };
   }
 
+  public async inspectPlatform(domain: string, url: string = '', htmlSnippet: string = '', platformId: string = ''): Promise<any> {
+    const serverResult = await callCpanelApi<any>('media-platforms/inspect', {
+      method: 'POST',
+      body: JSON.stringify({ domain, url, htmlSnippet, platformId }),
+    });
+    return serverResult;
+  }
+
   public async syncDiscoveredMediaJson(platforms: MediaPlatform[]): Promise<{ success: boolean; message: string; writtenPath?: string }> {
     const res = await callCpanelApi<{ message: string; path?: string }>('platforms/sync-json', {
       method: 'POST',
@@ -2033,6 +2041,24 @@ ${suggestedHashtags.join(' ')}`;
       ],
     });
     return true;
+  }
+
+  public async retryAllFailedJobs(): Promise<number> {
+    const jobs = await this.getPublicationJobs();
+    const failedJobs = jobs.filter((j) => j.status === 'failed');
+    for (const j of failedJobs) {
+      await this.retryJob(j.id);
+    }
+    try {
+      await fetch('/api/jobs/retry-failed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ retryFailed: true })
+      });
+    } catch {
+      // Ignored if offline or handled via cron
+    }
+    return failedJobs.length;
   }
 
   public async instantPublishCampaign(campaignId: string): Promise<{ success: boolean; triggeredCount: number; platforms: string[] }> {

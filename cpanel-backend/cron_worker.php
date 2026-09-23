@@ -115,8 +115,11 @@ try {
     foreach ($jobs as $job) {
         $status = $job['status'] ?? 'pending';
         
-        // اگر وظیفه در صف یا در حال پردازش طولانی مانده باشد
-        if (in_array($status, ['pending', 'submitting', 'authenticated', 'processing', 'preparing'], true)) {
+        // اگر وظیفه در صف، در حال پردازش یا بعد از مدتی در وضعیت خطا مانده باشد (تلاش مجدد خودکار)
+        $isRetryable = in_array($status, ['pending', 'submitting', 'authenticated', 'processing', 'preparing'], true)
+            || ($status === 'failed' && (time() - strtotime($job['updatedAt'] ?? '2000-01-01')) > 60);
+
+        if ($isRetryable) {
             $platformId = $job['platformId'] ?? '';
             
             // اگر انتشار در وبلاگ داخلی است
