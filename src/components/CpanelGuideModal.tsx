@@ -102,7 +102,8 @@ export const CpanelGuideModal: React.FC<CpanelGuideModalProps> = ({ isOpen, onCl
   Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
 </IfModule>`;
 
-  const cronCommand = `/usr/local/bin/php /home/USER_NAME/public_html/cpanel-backend/cron_worker.php >/dev/null 2>&1`;
+  const cronCommand = `curl -s -L "https://secret.ashkghalam.ir/cpanel-backend/cron_worker.php?key=ashk24_cron_secret" > /dev/null 2>&1`;
+  const cronCliCommand = `/usr/local/bin/php /home/USER_NAME/public_html/cpanel-backend/cron_worker.php >/dev/null 2>&1`;
 
   const phpIniCode = `; cPanel PHP 8.1+ Recommended Settings (php.ini)
 upload_max_filesize = 64M
@@ -493,15 +494,15 @@ extension = pdo_sqlite`;
             <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 space-y-3">
               <div className="font-bold text-sm flex items-center space-x-2 space-x-reverse text-emerald-200">
                 <Clock className="w-5 h-5 text-emerald-400" />
-                <span>تنظیم وظایف زمانبندی شده (Cron Jobs) در cPanel</span>
+                <span>تنظیم وظایف زمانبندی شده (Cron Jobs) در هاست معمولی و اشتراکی cPanel</span>
               </div>
               <p className="text-xs text-emerald-200/90 leading-relaxed">
-                برای فعال‌سازی منشی ۲۴ ساعته، پایش خودکار انتشار و تمدید دوره‌ای آگهی‌ها در پس‌زمینه بدون نیاز به باز بودن مرورگر، کران‌جاب زیر را در بخش <strong>Cron Jobs</strong> هاست خود ثبت کنید:
+                در هاست‌های اشتراکی سی‌پنل نیازی به دسترسی ترمینال یا دانستن نام کاربری ریشه ندارید. فقط کافیست دستور زیر را که از طریق <strong>curl</strong> اجرا می‌شود، در صفحه <strong>Cron Jobs</strong> سی‌پنل وارد کنید:
               </p>
               
               <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
                 <div className="flex items-center justify-between text-xs text-slate-300">
-                  <span className="font-bold text-amber-400">دستور کران جاب (اجرا هر ۵ دقیقه):</span>
+                  <span className="font-bold text-amber-400">دستور استاندارد سی‌پنل (پیشنهادی - اجرا هر ۵ دقیقه):</span>
                   <button
                     onClick={() => handleCopy(cronCommand, 'cron')}
                     className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-bold flex items-center space-x-1 space-x-reverse"
@@ -510,11 +511,21 @@ extension = pdo_sqlite`;
                     <span>{copiedCronCmd ? 'کپی شد' : 'کپی دستور'}</span>
                   </button>
                 </div>
-                <div className="p-2.5 rounded-lg bg-slate-900 font-mono text-[11px] text-slate-200 overflow-x-auto text-left" dir="ltr">
+                <div className="p-2.5 rounded-lg bg-slate-900 font-mono text-[11px] text-emerald-300 overflow-x-auto text-left" dir="ltr">
                   {cronCommand}
                 </div>
-                <p className="text-[10px] text-slate-400">
-                  * توجه: به جای عبارت <code className="text-amber-400">USER_NAME</code> نام کاربری اکانت cPanel خود را قرار دهید.
+                <p className="text-[10px] text-slate-400 leading-relaxed">
+                  * این دستور بدون نیاز به ترمینال یا دانستن مسیرهای لینوکس، ورکر خودکار اشک ۲۴ را هر ۵ دقیقه فراخوانی کرده و کمپین‌ها را از صف خارج و منتشر می‌کند.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-[11px] text-slate-300 space-y-1.5">
+                <div className="font-bold text-amber-300 flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>نکته مهم پس از آپلود فایل ZIP در File Manager:</span>
+                </div>
+                <p className="text-slate-400 leading-relaxed text-[11px]">
+                  پس از آپلود فایل <code className="text-amber-400">ashk24-cpanel-v{APP_VERSION}.zip</code> در مسیر هاست، حتماً روی فایل زیپ راست‌کلیک کرده یا از نوار بالای صفحه دکمه <strong>Extract</strong> را بزنید تا فایل‌های جدید جانشین شوند.
                 </p>
               </div>
             </div>

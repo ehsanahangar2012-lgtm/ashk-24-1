@@ -672,11 +672,14 @@ class Ashk24Db {
 
     public function getAutonomousSettings() {
         $db = $this->readDb();
-        return $db['autonomousSettings'];
+        return $db['autonomousSettings'] ?? ['enabled' => true, 'checkIntervalMinutes' => 10, 'autoRenew' => true];
     }
 
     public function updateAutonomousSettings($data) {
         $db = $this->readDb();
+        if (!isset($db['autonomousSettings']) || !is_array($db['autonomousSettings'])) {
+            $db['autonomousSettings'] = ['enabled' => true, 'checkIntervalMinutes' => 10, 'autoRenew' => true];
+        }
         $db['autonomousSettings'] = array_merge($db['autonomousSettings'], $data);
         $this->writeDb($db);
         return $db['autonomousSettings'];
@@ -684,6 +687,9 @@ class Ashk24Db {
 
     public function addAutonomousLog($log) {
         $db = $this->readDb();
+        if (!isset($db['autonomousLogs']) || !is_array($db['autonomousLogs'])) {
+            $db['autonomousLogs'] = [];
+        }
         $log['id'] = 'autolog_' . time() . '_' . rand(100, 999);
         $log['timestamp'] = date('c');
         array_unshift($db['autonomousLogs'], $log);

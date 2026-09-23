@@ -1,10 +1,10 @@
 <?php
 /**
- * Ashk 24 - 24/7 Standalone Background Cron Secretary Worker (v2.0.0)
- * Run this via cPanel Cron Jobs:
- * */15 * * * * /usr/local/bin/php /home/USERNAME/public_html/cpanel-backend/ashk_cron_publisher.php >> /dev/null 2>&1
- * Or trigger via Web URL with secret key:
- * https://yourdomain.com/cpanel-backend/ashk_cron_publisher.php?key=ashk24_secret_key
+ * Ashk 24 - 24/7 Standalone Background Cron Secretary Worker (v4.4.1)
+ * Optimized for standard cPanel Shared Hosting (No Terminal Required)
+ * 
+ * cPanel Cron Job Command:
+ * curl -s -L "https://secret.ashkghalam.ir/cpanel-backend/ashk_cron_publisher.php?key=ashk24_secret_key" > /dev/null 2>&1
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -12,26 +12,28 @@ header('Content-Type: application/json; charset=utf-8');
 $SECRET_KEY = getenv('ASHK24_SECRET_KEY') ?: 'ashk24_secret_key';
 $providedKey = $_GET['key'] ?? ($_SERVER['HTTP_X_ASHK_SECRET'] ?? '');
 
-// If triggered from web, check security key
 if (php_sapi_name() !== 'cli') {
     if (!empty($SECRET_KEY) && $providedKey !== $SECRET_KEY) {
         http_response_code(401);
-        echo json_encode(['success' => false, 'error' => 'UNAUTHORIZED']);
+        echo json_encode(['success' => false, 'error' => 'UNAUTHORIZED'], JSON_UNESCAPED_UNICODE);
         exit;
     }
 }
 
-$logFile = __DIR__ . '/cron_logs.txt';
+$dataDir = __DIR__ . '/data';
+if (!is_dir($dataDir)) {
+    @mkdir($dataDir, 0775, true);
+}
+$logFile = $dataDir . '/cron_logs.txt';
 $startTime = date('Y-m-d H:i:s');
 
 function appendLog($msg) {
     global $logFile;
-    file_put_contents($logFile, "[" . date('Y-m-d H:i:s') . "] " . $msg . "\n", FILE_APPEND);
+    @file_put_contents($logFile, "[" . date('Y-m-d H:i:s') . "] " . $msg . "\n", FILE_APPEND);
 }
 
 appendLog("شروع اجرای ورکر منشی ۲۴ ساعته در cPanel");
 
-// Perform auto check and execution
 $result = [
     'success' => true,
     'startTime' => $startTime,
