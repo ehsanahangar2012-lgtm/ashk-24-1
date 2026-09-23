@@ -37,7 +37,7 @@ import { SmartHelpButton } from './SmartHelpModal.js';
 import { SmsRelayMonitorModule } from './SmsRelayMonitorModule.js';
 
 export const MobileCompanionModule: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'host_bridge' | 'sms_relay_monitor' | 'otp_checker' | 'apk_download' | 'smart_guide' | 'emulator' | 'pairing'>('sms_relay_monitor');
+  const [activeTab, setActiveTab] = useState<'host_bridge' | 'sms_relay_monitor' | 'otp_checker' | 'pwa_download' | 'smart_guide' | 'emulator' | 'pairing'>('sms_relay_monitor');
   const [config, setConfig] = useState<MobileDeviceConfig | null>(null);
   const [notifications, setNotifications] = useState<MobileNotificationLog[]>([]);
   const [smsLogs, setSmsLogs] = useState<SmsWebhookPayload[]>([]);
@@ -327,34 +327,6 @@ export const MobileCompanionModule: React.FC = () => {
     }
   };
 
-  const handleDownloadApkFile = () => {
-    const apkUrl = `/downloads/Ashk24_OTP_Companion_v${APP_VERSION}.apk`;
-    const a = document.createElement('a');
-    a.href = apkUrl;
-    a.download = `Ashk24_OTP_Companion_v${APP_VERSION}.apk`;
-    a.target = '_blank';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    setDownloadSuccess('apk');
-    setTimeout(() => setDownloadSuccess(null), 5000);
-  };
-
-  const handleDownloadAndroidProjectZip = () => {
-    const zipUrl = `/downloads/Ashk24_Android_Project_v${APP_VERSION}.zip`;
-    const a = document.createElement('a');
-    a.href = zipUrl;
-    a.download = `Ashk24_Android_Project_v${APP_VERSION}.zip`;
-    a.target = '_blank';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    setDownloadSuccess('project_zip');
-    setTimeout(() => setDownloadSuccess(null), 5000);
-  };
-
   const handleDownloadMacroDroidRule = () => {
     const ruleUrl = '/downloads/Ashk24_MacroDroid_Relay.json';
     const a = document.createElement('a');
@@ -479,14 +451,14 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
             <div>
               <div className="flex items-center space-x-2 space-x-reverse">
                 <h1 className="text-xl font-bold text-slate-100">
-                  برنامه اختصاصی همراه اندروید، سنسور OTP و خوانش جیمیل
+                  رله خودکار پیامک با اشک ۲۴ (Ashk24 SMS Relay)
                 </h1>
                 <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-0.5 rounded-full border border-emerald-500/30">
-                  نسخه ۱.۰.۶ آماده
+                  Ashk24 Relay Active
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                دریافت و استخراج خودکار کدهای تایید پیامک (OTP) به شماره ۰۹۱۵۳۱۰۸۷۶۳، پایش ایمیل‌های تایید جیمیل و ارسال نوتیفیکیشن لحظه‌ای وضعیت انتشار آگهی‌ها.
+                سامانه رله خودکار پیامک اشک ۲۴ جهت دریافت لحظه‌ای کدهای تایید ورود (OTP) از پلتفرم‌های نیازمندی و انتقال امن آنی به سرور cPanel و موتور انتشار خودکار.
               </p>
             </div>
           </div>
@@ -559,7 +531,7 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
           }`}
         >
           <Activity className="w-4 h-4 text-emerald-400" />
-          <span>پایش و هشدار سلامت SMS Relay & cPanel</span>
+          <span>پایش زنده رله خودکار پیامک اشک ۲۴ (Ashk24 SMS Relay)</span>
           <span className="flex h-2 w-2 relative">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -597,15 +569,15 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
         </button>
 
         <button
-          onClick={() => setActiveTab('apk_download')}
+          onClick={() => setActiveTab('pwa_download')}
           className={`flex items-center space-x-2 space-x-reverse px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === 'apk_download'
+            activeTab === 'pwa_download'
               ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30 shadow-sm'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
           }`}
         >
-          <Download className="w-4 h-4" />
-          <span>دانلود APK و نصب مستقیم PWA</span>
+          <Smartphone className="w-4 h-4" />
+          <span>نصب وب‌اپلیکیشن (PWA) و رله پیامک</span>
         </button>
 
         <button
@@ -859,13 +831,13 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
         </div>
       )}
 
-      {/* TAB 1: APK Download & PWA Install */}
-      {activeTab === 'apk_download' && (
+      {/* TAB 1: PWA Install & Mobile Relay */}
+      {activeTab === 'pwa_download' && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 space-x-reverse text-amber-400 font-bold text-base">
-              <Download className="w-5 h-5 shrink-0" />
-              <span>پل ارتباطی موبایل و هاست: ۵ راهکار تخصصی و فایل‌های اجرایی</span>
+              <Smartphone className="w-5 h-5 shrink-0" />
+              <span>پل ارتباطی موبایل و هاست: راهکارهای عملیاتی و پایدار انتقال پیامک</span>
             </div>
             <SmartHelpButton
               content={{
@@ -996,77 +968,22 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Box 1: Dedicated Native Android APK Package */}
-            <div className="p-6 rounded-2xl bg-slate-900/80 border border-amber-500/30 space-y-4 relative overflow-hidden">
-              <div className="absolute top-0 left-0 bg-amber-500 text-slate-950 text-[10px] font-bold px-3 py-1 rounded-br-xl">
-                فایل نصبی مستقیم APK
-              </div>
+            {/* Box 1: Instant PWA Install on Android / iOS */}
+            <div className="p-6 rounded-2xl bg-slate-900/80 border border-amber-500/30 space-y-4">
               <div className="flex items-center space-x-2 space-x-reverse text-amber-400 font-bold text-sm">
-                <FileCode className="w-5 h-5 shrink-0" />
-                <span>دانلود بسته نصبی سنسور اندروید (APK)</span>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                بسته استاندارد APK شامل مانیفست اندروید، سرویس‌های پایش پیامک، شنودگر جیمیل و فایل کانفیگ اختصاصی جهت اتصال خودکار به هاست.
-              </p>
-
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
-                <div className="flex justify-between text-slate-400 text-[11px]">
-                  <span>نسخه پکیج:</span>
-                  <span className="text-amber-400 font-bold">{APP_VERSION}</span>
-                </div>
-                <div className="flex justify-between text-slate-400 text-[11px]">
-                  <span>سرویس‌های تعبیه‌شده:</span>
-                  <span className="text-emerald-400 font-bold">SMS Receiver + Background Sync</span>
-                </div>
-                <div className="flex justify-between text-slate-400 text-[11px]">
-                  <span>تلفن هدف پایش:</span>
-                  <span className="text-slate-200 font-mono">09153108763</span>
-                </div>
-              </div>
-
-              {/* Notice on Android APK Installation on modern devices */}
-              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5 text-[11px] text-amber-300 leading-relaxed">
-                <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
-                <div>
-                  <strong>نکته مهم نصب:</strong> روی گوشی‌های مدرن اندروید، به دلیل سیاست‌های امنیتی گوگل روی پکیج‌های فاقد امضای Google Play، جهت نصب پایدار و ۱۰۰٪ تضمینی از <strong>وب‌اپلیکیشن PWA</strong> (کادر کناری) یا فایل <strong>ماکروید MacroDroid</strong> (گزینه ۳) استفاده فرمایید که بدون هیچ خطایی پیامک‌ها را خودکار به هاست منتقل می‌نماید.
-                </div>
-              </div>
-
-              <div className="pt-2 flex flex-col gap-2">
-                <button
-                  type="button"
-                  onClick={handleDownloadApkFile}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg transition-all flex items-center justify-center space-x-2 space-x-reverse"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>{downloadSuccess === 'apk' ? '✓ فایل APK دانلود شد' : `دانلود فایل نصبی APK (${APP_VERSION})`}</span>
-                </button>
-                <a
-                  href={`/downloads/Ashk24_OTP_Companion_v${APP_VERSION}.apk`}
-                  download={`Ashk24_OTP_Companion_v${APP_VERSION}.apk`}
-                  className="text-center text-[11px] text-amber-400 hover:underline pt-1"
-                >
-                  لینک مستقیم فایل: {`Ashk24_OTP_Companion_v${APP_VERSION}.apk`}
-                </a>
-              </div>
-            </div>
-
-            {/* Box 2: Instant PWA Install on Android / iOS */}
-            <div className="p-6 rounded-2xl bg-slate-900/80 border border-indigo-500/30 space-y-4">
-              <div className="flex items-center space-x-2 space-x-reverse text-indigo-400 font-bold text-sm">
                 <Smartphone className="w-5 h-5 shrink-0" />
-                <span>نصب فوری وب‌اپلیکیشن (PWA / WebAPK) روی گوشی</span>
+                <span>نصب وب‌اپلیکیشن (PWA) روی گوشی</span>
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
-                بدون نیاز به دانلود فایل APK، با یک کلیک آیکون اختصاصی سامانه اشک ۲۴ را مانند یک برنامه بومی روی صفحه اصلی گوشی اندروید یا آیفون خود قرار دهید.
+                آیکون اختصاصی سامانه اشک ۲۴ را با یک لمس روی صفحه اصلی موبایل قرار دهید و بدون فیلترشکن، اعلان‌ها و وضعیت‌ها را زنده مشاهده کنید.
               </p>
 
               <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs text-slate-300">
-                <div className="font-bold text-indigo-400">راهنمای نصب سریع روی گوشی:</div>
+                <div className="font-bold text-amber-400">راهنمای نصب سریع روی گوشی:</div>
                 <ol className="list-decimal list-inside space-y-1.5 text-[11px] leading-relaxed">
                   <li>آدرس سامانه را در مرورگر Chrome گوشی باز کنید.</li>
-                  <li>دکمه زیر را بزنید یا در منوی مرورگر گزینه <strong className="text-amber-400">«افزودن به صفحه اصلی / Install App»</strong> را لمس کنید.</li>
-                  <li>سامانه به عنوان اپلیکیشن دائمی بدون نوار آدرس روی گوشی فعال می‌شود.</li>
+                  <li>در منوی مرورگر گزینه <strong className="text-amber-400">«افزودن به صفحه اصلی / Install App»</strong> را لمس نمایید.</li>
+                  <li>برنامه بدون نیاز به فایل‌های غیرمعتبر خارجی روی گوشی فعال می‌شود.</li>
                 </ol>
               </div>
 
@@ -1074,7 +991,7 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
                 <button
                   type="button"
                   onClick={handleInstallPWA}
-                  className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg transition-all flex items-center justify-center space-x-2 space-x-reverse"
+                  className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-lg transition-all flex items-center justify-center space-x-2 space-x-reverse"
                 >
                   <Smartphone className="w-4 h-4" />
                   <span>{downloadSuccess === 'pwa_installed' ? '✓ وب‌اپلیکیشن با موفقیت نصب شد' : 'نصب مستقیم وب‌اپلیکیشن روی صفحه اصلی گوشی'}</span>
@@ -1090,14 +1007,14 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
               </div>
             </div>
 
-            {/* Box 3: 1-Click MacroDroid & Tasker Auto Forwarder */}
+            {/* Box 2: 1-Click MacroDroid & Tasker Auto Forwarder */}
             <div className="p-6 rounded-2xl bg-slate-900/80 border border-emerald-500/30 space-y-4">
               <div className="flex items-center space-x-2 space-x-reverse text-emerald-400 font-bold text-sm">
                 <Zap className="w-5 h-5 shrink-0" />
-                <span>تنظیمات ۱-کلیکی انتقال خودکار پیامک با MacroDroid</span>
+                <span>انتقال ۱-کلیکی پیامک با MacroDroid (تضمینی)</span>
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
-                آسان‌ترین روش برای ارسال خودکار پیامک‌ها به هاست بدون نیاز به فعال‌سازی دولوپر مود: کافیست MacroDroid را روی گوشی نصب و این فایل را درون‌ریزی کنید.
+                استانداردترین راهکار انتقال امن پیامک‌های حاوی کد به cPanel بدون نیاز به فایل APK یا روت: فایل قوانین ماکروید را دانلود و درون‌ریزی کنید.
               </p>
 
               <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs text-slate-300">
@@ -1118,40 +1035,7 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
                   className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg transition-all flex items-center justify-center space-x-2 space-x-reverse"
                 >
                   <Download className="w-4 h-4" />
-                  <span>{downloadSuccess === 'macrodroid' ? '✓ فایل ماکرو دانلود شد' : 'دانلود رول انتقال پیامک MacroDroid (JSON)'}</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Box 4: Full Android Studio Project Source ZIP */}
-            <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
-              <div className="flex items-center space-x-2 space-x-reverse text-slate-200 font-bold text-sm">
-                <FileCode className="w-5 h-5 shrink-0 text-amber-400" />
-                <span>سورس کامل پروژه اندروید استودیو (Gradle + Kotlin)</span>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                پروژه کامل سورس‌کد اندروید استودیو شامل کلیه لایبری‌های OkHttp، کلا‌س‌های ریسیور، مانیفست و سرویس‌های پس‌زمینه آماده بیلد اختصاصی.
-              </p>
-
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs text-slate-300">
-                <div className="flex justify-between text-slate-400 text-[11px]">
-                  <span>زبان و پلتفرم:</span>
-                  <span className="text-slate-200 font-bold">Kotlin / Android SDK 34</span>
-                </div>
-                <div className="flex justify-between text-slate-400 text-[11px]">
-                  <span>معماری شبکه:</span>
-                  <span className="text-amber-400 font-bold">OkHttp Background Coroutines</span>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={handleDownloadAndroidProjectZip}
-                  className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs shadow-lg transition-all flex items-center justify-center space-x-2 space-x-reverse"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>{downloadSuccess === 'project_zip' ? '✓ پروژه دانلود شد' : 'دانلود سورس پروژه کامل اندروید (ZIP)'}</span>
+                  <span>{downloadSuccess === 'macrodroid' ? '✓ فایل ماکروید دانلود شد' : 'دانلود فایل کانفیگ MacroDroid'}</span>
                 </button>
               </div>
             </div>

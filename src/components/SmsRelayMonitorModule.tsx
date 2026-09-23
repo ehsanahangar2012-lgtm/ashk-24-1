@@ -262,7 +262,7 @@ export const SmsRelayMonitorModule: React.FC<SmsRelayMonitorProps> = ({
             <div>
               <div className="flex items-center gap-2.5 flex-wrap">
                 <h2 className="text-lg font-bold text-white">
-                  ماژول پایش و هشدار وضعیت ارتباط cPanel با SMS Relay
+                  رله خودکار پیامک اشک ۲۴ (Ashk24 SMS Relay) - پایش و انتقال آنی کد OTP
                 </h2>
                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${statusConfig.bg} flex items-center gap-1.5`}>
                   <span className={`w-2 h-2 rounded-full ${statusConfig.dot}`} />
@@ -270,7 +270,7 @@ export const SmsRelayMonitorModule: React.FC<SmsRelayMonitorProps> = ({
                 </span>
               </div>
               <p className="text-sm text-slate-400 mt-1">
-                نظارت مستمر ۲۴ ساعته بر درگاه دریافت پیامک‌های کد تایید (OTP)، سلامت وب‌هوک و هشدارهای بلادرنگ تاخیر
+                رله خودکار و بدون وقفه پیامک‌های کد تایید (OTP) از تلفن همراه به سرور cPanel و نوبت‌های انتشار فعال
               </p>
             </div>
           </div>

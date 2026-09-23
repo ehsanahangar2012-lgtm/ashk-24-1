@@ -71,9 +71,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'mobile_companion' as TabType,
-      label: '۵. همراه اندروید & پل OTP',
+      label: '۵. رله خودکار پیامک اشک ۲۴',
       icon: Smartphone,
-      badge: 'IP ایران',
+      badge: 'SMS Relay',
       badgeColor: 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30',
     },
   ];

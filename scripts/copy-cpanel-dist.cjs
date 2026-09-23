@@ -104,11 +104,11 @@ async function generateFinalPackages() {
   function addFolderToZip(folderPath, zipFolder, baseDir) {
     const items = fs.readdirSync(folderPath);
     for (const item of items) {
-      if (item.endsWith('.zip') || item.endsWith('.map') || item === 'server.cjs' || item === 'server.cjs.map' || item === 'ashk24-agent.tar.gz') continue;
+      if (item.endsWith('.zip') || item.endsWith('.map') || item.endsWith('.apk') || item === 'server.cjs' || item === 'server.cjs.map' || item === 'ashk24-agent.tar.gz' || item === 'local-agent') continue;
       const fullPath = path.join(folderPath, item);
       const stat = fs.statSync(fullPath);
       if (stat.isDirectory()) {
-        if (item === 'node_modules' || item === '.git') continue;
+        if (item === 'node_modules' || item === '.git' || item === 'local-agent' || item === 'evidence') continue;
         addFolderToZip(fullPath, zipFolder.folder(item), baseDir);
       } else {
         zipFolder.file(item, fs.readFileSync(fullPath));
@@ -137,41 +137,27 @@ async function generateFinalPackages() {
   fs.writeFileSync(prodVersionedPath, prodZipBuffer);
   fs.writeFileSync(prodDistVersionedPath, prodZipBuffer);
 
-  // Copy to downloads directories (both public and dist)
-  const publicDir = path.join(rootDir, 'public');
-  const publicDownloads = path.join(rootDir, 'public', 'downloads');
-  const distDownloads = path.join(distDir, 'downloads');
-  const cpanelUploads = path.join(rootDir, 'cpanel-backend', 'uploads');
-  const distCpanelUploads = path.join(distDir, 'cpanel-backend', 'uploads');
-  const rootUploads = path.join(rootDir, 'uploads');
-  const distUploads = path.join(distDir, 'uploads');
-
-  const allSyncDirs = [
-    publicDir,
-    publicDownloads,
-    distDownloads,
-    cpanelUploads,
-    distCpanelUploads,
-    rootUploads,
-    distUploads
+  // Keep single official zip in public/downloads and dist/downloads
+  const targetSyncDirs = [
+    path.join(rootDir, 'public', 'downloads'),
+    path.join(distDir, 'downloads'),
   ];
 
   // Purge any older version zip archives from all targets
-  allSyncDirs.forEach(dir => {
+  targetSyncDirs.forEach(dir => {
     if (fs.existsSync(dir)) {
       fs.readdirSync(dir).forEach(file => {
-        if (file.startsWith('ashk24-cpanel') && file.endsWith('.zip') && !file.includes(`v${version}`) && !file.includes('latest')) {
+        if (file.endsWith('.zip') || file.endsWith('.apk')) {
           try { fs.unlinkSync(path.join(dir, file)); } catch (e) {}
         }
       });
     }
   });
 
-  allSyncDirs.forEach(dir => {
+  targetSyncDirs.forEach(dir => {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, `ashk24-cpanel-v${version}.zip`), prodZipBuffer);
     fs.writeFileSync(path.join(dir, `ashk24-cpanel-latest.zip`), prodZipBuffer);
-    fs.writeFileSync(path.join(dir, `ashk24-cpanel.zip`), prodZipBuffer);
   });
 
   console.log(`📦 [Production cPanel] Created single production package: ${prodVersionedPath} (${(prodZipBuffer.length / 1024).toFixed(1)} KB / ${(prodZipBuffer.length / 1024 / 1024).toFixed(2)} MB)`);

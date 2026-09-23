@@ -42,6 +42,14 @@ targetDirs.forEach(dir => {
           return;
         }
 
+        // Purge any APK and Android Project files completely
+        if (file.endsWith('.apk') || file.includes('Android_Project') || file.includes('OTP_Companion')) {
+          fs.unlinkSync(fullPath);
+          console.log(`  🗑️ Removed obsolete APK/Android file in ${path.relative(rootDir, dir)}: ${file}`);
+          purgedCount++;
+          return;
+        }
+
         // Purge if older version
         const isOutdated = isArchive && (
           (file.includes('_v') || file.includes('-v')) &&
