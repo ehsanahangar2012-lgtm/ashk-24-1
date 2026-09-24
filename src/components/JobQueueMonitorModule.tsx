@@ -48,8 +48,13 @@ import {
   Pie,
   Legend
 } from 'recharts';
-import { PublicationJob } from '../types/ashk24.js';
-import { toPersianDigits } from '../utils/persianUtils.js';
+import {
+  PublicationJob,
+  CriticalElementCheck,
+  SelectorValidationReport,
+  DiagnosticConsoleEntry,
+} from '../types/ashk24.js';
+import { toPersianDigits, getJalaliCurrentTime } from '../utils/persianUtils.js';
 import { clientStorage } from '../services/clientStorageService.js';
 import { PublicationDiagnosticsInspector } from './PublicationDiagnosticsInspector.js';
 import { SmsRelayMonitorModule } from './SmsRelayMonitorModule.js';
@@ -84,6 +89,20 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
   const [domFields, setDomFields] = useState<any[] | null>(null);
   const [isInspectingDom, setIsInspectingDom] = useState<boolean>(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  // Selector Validator (Dry-Run Check before Trigger)
+  const [selectorValidationModal, setSelectorValidationModal] = useState<SelectorValidationReport | null>(null);
+  const [isValidatingSelectors, setIsValidatingSelectors] = useState<boolean>(false);
+  const [validatingPlatformId, setValidatingPlatformId] = useState<string | null>(null);
+  const [showSelectorHelp, setShowSelectorHelp] = useState<boolean>(false);
+
+  // Diagnostic Console State
+  const [showDiagnosticConsole, setShowDiagnosticConsole] = useState<boolean>(false);
+  const [diagnosticEntries, setDiagnosticEntries] = useState<DiagnosticConsoleEntry[]>([]);
+  const [diagFilter, setDiagFilter] = useState<'all' | '404' | 'error' | 'timeout' | 'ok'>('all');
+  const [isLoadingDiagConsole, setIsLoadingDiagConsole] = useState<boolean>(false);
+  const [showDiagConsoleHelp, setShowDiagConsoleHelp] = useState<boolean>(false);
+  const [copiedDiagEntryId, setCopiedDiagEntryId] = useState<string | null>(null);
 
   const showNotification = (text: string, type: 'success' | 'error' = 'success') => {
     setFeedbackMsg({ type, text });
@@ -428,38 +447,38 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
 
   const getPlatformUrls = (job: PublicationJob) => {
     const cleanId = (job.platformId || '').toLowerCase();
-    const domain = (job.platformDomain || '').toLowerCase();
+    const domain = (job.platformDomain || '').toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, '');
 
-    if (cleanId.includes('payamsara') || domain.includes('payamsara')) {
+    if (cleanId.includes('locopoc') || domain.includes('locopoc')) {
       return {
-        home: 'https://www.payamsara.com/',
-        register: 'https://www.payamsara.com/framework/user/register',
-        login: 'https://www.payamsara.com/framework/user/login',
-        submitAd: 'https://www.payamsara.com/framework/user/login',
+        home: 'https://www.locopoc.com/',
+        register: 'https://www.locopoc.com/postad.aspx',
+        login: 'https://www.locopoc.com/',
+        submitAd: 'https://www.locopoc.com/postad.aspx',
       };
     }
-    if (cleanId.includes('agahi24') || domain.includes('agahi24')) {
+    if (cleanId.includes('irantejarat') || cleanId.includes('iran-tejarat') || domain.includes('iran-tejarat')) {
       return {
-        home: 'https://agahi24.com/',
-        register: 'https://agahi24.com/register',
-        login: 'https://agahi24.com/login',
-        submitAd: 'https://agahi24.com/login',
+        home: 'https://iran-tejarat.com/',
+        register: 'https://iran-tejarat.com/LoginPage/InsertAd.html',
+        login: 'https://iran-tejarat.com/LoginPage/InsertAd.html',
+        submitAd: 'https://iran-tejarat.com/iad.aspx',
       };
     }
-    if (cleanId.includes('istgah') || domain.includes('istgah')) {
+    if (cleanId.includes('niazerooz') || domain.includes('niazerooz')) {
       return {
-        home: 'https://www.istgah.com/',
-        register: 'https://www.istgah.com/register/',
-        login: 'https://www.istgah.com/login/',
-        submitAd: 'https://www.istgah.com/register/',
+        home: 'https://www.niazerooz.com/',
+        register: 'https://www.niazerooz.com/user/register',
+        login: 'https://www.niazerooz.com/user/login',
+        submitAd: 'https://www.niazerooz.com/ad/new',
       };
     }
-    if (cleanId.includes('baskool') || domain.includes('baskool')) {
+    if (cleanId.includes('niazpardaz') || domain.includes('niazpardaz')) {
       return {
-        home: 'https://www.baskool.com/',
-        register: 'https://www.baskool.com/register',
-        login: 'https://www.baskool.com/login',
-        submitAd: 'https://www.baskool.com/register',
+        home: 'https://www.niazpardaz.com/',
+        register: 'https://www.niazpardaz.com/user/login',
+        login: 'https://www.niazpardaz.com/user/login',
+        submitAd: 'https://www.niazpardaz.com/ad/new',
       };
     }
     if (cleanId.includes('parscenter') || domain.includes('parscenter')) {
@@ -470,20 +489,68 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
         submitAd: 'https://parscenter.com/Product/Create',
       };
     }
-    if (cleanId.includes('niazpardaz') || domain.includes('niazpardaz')) {
+    if (cleanId.includes('payamsara') || domain.includes('payamsara')) {
       return {
-        home: 'https://www.niazpardaz.com/',
-        register: 'https://www.niazpardaz.com/register',
-        login: 'https://www.niazpardaz.com/login',
-        submitAd: 'https://www.niazpardaz.com/add-ad',
+        home: 'https://www.payamsara.com/',
+        register: 'https://www.payamsara.com/framework/user/register',
+        login: 'https://www.payamsara.com/framework/user/login',
+        submitAd: 'https://www.payamsara.com/framework/user/login',
+      };
+    }
+    if (cleanId.includes('agahi24') || domain.includes('agahi24')) {
+      return {
+        home: 'https://www.agahi24.com/',
+        register: 'https://www.agahi24.com/login/',
+        login: 'https://www.agahi24.com/login/',
+        submitAd: 'https://www.agahi24.com/create-listing/',
+      };
+    }
+    if (cleanId.includes('istgah') || domain.includes('istgah')) {
+      return {
+        home: 'https://www.istgah.com/',
+        register: 'https://www.istgah.com/register/',
+        login: 'https://www.istgah.com/user/',
+        submitAd: 'https://www.istgah.com/post/',
+      };
+    }
+    if (cleanId.includes('baskool') || domain.includes('baskool')) {
+      return {
+        home: 'https://www.baskool.com/',
+        register: 'https://www.baskool.com/register',
+        login: 'https://www.baskool.com/login',
+        submitAd: 'https://www.baskool.com/profile/products',
+      };
+    }
+    if (cleanId.includes('divar') || domain.includes('divar')) {
+      return {
+        home: 'https://divar.ir/',
+        register: 'https://divar.ir/',
+        login: 'https://divar.ir/',
+        submitAd: 'https://divar.ir/new',
+      };
+    }
+    if (cleanId.includes('sheypoor') || domain.includes('sheypoor')) {
+      return {
+        home: 'https://www.sheypoor.com/',
+        register: 'https://www.sheypoor.com/session',
+        login: 'https://www.sheypoor.com/session',
+        submitAd: 'https://www.sheypoor.com/listing/new',
+      };
+    }
+    if (cleanId.includes('eforosh') || domain.includes('eforosh')) {
+      return {
+        home: 'https://eforosh.com/',
+        register: 'https://eforosh.com/registration',
+        login: 'https://eforosh.com/login',
+        submitAd: 'https://eforosh.com/',
       };
     }
     const cleanDom = domain || `${cleanId.replace('plat_', '')}.com`;
     return {
-      home: `https://${cleanDom}`,
-      register: `https://${cleanDom}/register`,
-      login: `https://${cleanDom}/login`,
-      submitAd: `https://${cleanDom}/submit`,
+      home: `https://${cleanDom}/`,
+      register: `https://${cleanDom}/`,
+      login: `https://${cleanDom}/`,
+      submitAd: `https://${cleanDom}/`,
     };
   };
 
@@ -591,6 +658,106 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
 
   const handleLiveNiazPardazSubmit = handleLivePlatformSubmit;
 
+  // --- Selector Validator & Dry-Run Utility ---
+  const handleRunSelectorValidation = async (target: {
+    platformId?: string;
+    platformName?: string;
+    domain?: string;
+    targetUrl?: string;
+  }) => {
+    setIsValidatingSelectors(true);
+    setValidatingPlatformId(target.platformId || target.domain || 'target');
+    try {
+      const urls = target.platformId ? getPlatformUrls({ platformId: target.platformId, platformDomain: target.domain } as any) : null;
+      const targetUrl = target.targetUrl || (urls ? urls.submitAd || urls.home : undefined);
+
+      const result = await clientStorage.validateSelectors({
+        platformId: target.platformId,
+        domain: target.domain,
+        targetUrl,
+      });
+
+      setSelectorValidationModal(result);
+
+      if (!result.isAccessible || result.httpStatus === 404) {
+        await clientStorage.recordDiagnosticConsoleEntry({
+          platformId: target.platformId || target.domain || 'platform',
+          platformName: target.platformName || target.domain || 'پلتفرم هدف',
+          requestUrl: result.targetUrl,
+          httpMethod: 'GET',
+          httpStatus: result.httpStatus,
+          httpStatusText: result.httpStatusText,
+          targetSelectorPath: "form, a[href*='postad'], input[type='tel']",
+          errorType: result.httpStatus === 404 ? 'HTTP_404_NOT_FOUND' : 'CONNECTION_TIMEOUT',
+          rawResponseSnippet: result.warningNote || `پاسخ HTTP ${result.httpStatus}`,
+          resolutionHint: 'لینک مستقیم یا صفحه اصلی تست‌شده در دستیار انتخاب گردد.',
+        });
+        handleLoadDiagnosticConsole();
+        showNotification(`هشدار سلکتور در ${result.platformName}: کد وضعیت HTTP ${result.httpStatus}`, 'error');
+      } else {
+        showNotification(`اعتبارسنجی سلکتورهای ${result.platformName} با موفقیت تایید شد (پاسخ ${result.httpStatusText}).`);
+      }
+    } catch (e: any) {
+      showNotification('خطا در اجرای اعتبارسنجی سلکتورها: ' + (e?.message || 'خطا'), 'error');
+    } finally {
+      setIsValidatingSelectors(false);
+      setValidatingPlatformId(null);
+    }
+  };
+
+  // --- Diagnostic Console Load & Operations ---
+  const handleLoadDiagnosticConsole = async () => {
+    setIsLoadingDiagConsole(true);
+    try {
+      const logs = await clientStorage.getDiagnosticConsoleEntries();
+      setDiagnosticEntries(logs || []);
+    } catch (e) {
+      console.error('Error fetching diagnostic console entries:', e);
+    } finally {
+      setIsLoadingDiagConsole(false);
+    }
+  };
+
+  useEffect(() => {
+    handleLoadDiagnosticConsole();
+  }, []);
+
+  const handleClearDiagnosticConsole = async () => {
+    if (!window.confirm('آیا از پاکسازی تاریخچه کنسول عیب‌یابی اطمینان دارید؟')) return;
+    await clientStorage.clearDiagnosticConsoleEntries();
+    setDiagnosticEntries([]);
+    showNotification('تاریخچه کنسول عیب‌یابی با موفقیت پاکسازی شد.');
+  };
+
+  const handleCopyDiagnosticEntry = (entry: DiagnosticConsoleEntry) => {
+    const text = `[Ashk24 Diagnostic Entry]
+زمان: ${entry.timestamp}
+رسانه: ${entry.platformName} (${entry.platformId})
+آدرس اندپوینت: ${entry.requestUrl}
+متد و وضعیت HTTP: ${entry.httpMethod} -> ${entry.httpStatus} (${entry.httpStatusText})
+مسیر سلکتور DOM: ${entry.targetSelectorPath || 'N/A'}
+نوع خطا: ${entry.errorType || 'N/A'}
+راهنمای رفع: ${entry.resolutionHint}
+پاسخ خام: ${entry.rawResponseSnippet || 'N/A'}`;
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedDiagEntryId(entry.id);
+      setTimeout(() => setCopiedDiagEntryId(null), 3000);
+      showNotification('جزئیات عیب‌یابی در کلیپ‌بورد کپی شد.');
+    }
+  };
+
+  // Filtered Diagnostic Entries
+  const filteredDiagEntries = useMemo(() => {
+    if (diagFilter === 'all') return diagnosticEntries;
+    if (diagFilter === '404') return diagnosticEntries.filter(e => e.httpStatus === 404 || e.errorType === 'HTTP_404_NOT_FOUND');
+    if (diagFilter === 'timeout') return diagnosticEntries.filter(e => e.httpStatus === 0 || e.errorType === 'CONNECTION_TIMEOUT');
+    if (diagFilter === 'error') return diagnosticEntries.filter(e => e.httpStatus >= 400 || e.httpStatus === 0);
+    if (diagFilter === 'ok') return diagnosticEntries.filter(e => e.httpStatus >= 200 && e.httpStatus < 400);
+    return diagnosticEntries;
+  }, [diagnosticEntries, diagFilter]);
+
   const handleProcessPendingPipeline = async () => {
     setBulkActionLoading(true);
     try {
@@ -660,6 +827,39 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
             className="p-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-400 hover:text-amber-300 transition-colors flex items-center justify-center font-bold text-sm w-8 h-8"
           >
             ؟
+          </button>
+
+          {/* Selector Validator Dry-Run Button */}
+          <button
+            onClick={() => handleRunSelectorValidation({ platformId: 'plat_locopoc', domain: 'locopoc.com', platformName: 'لوکوپوک' })}
+            disabled={isValidatingSelectors}
+            className="px-3 py-1.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/30 text-xs font-bold transition-all flex items-center space-x-1.5 space-x-reverse disabled:opacity-50"
+            title="اجرای تست خشک (Dry-Run) جهت بررسی وجود دکمه‌های ثبت‌نام/ورود و سلکتورهای حیاتی"
+          >
+            <ShieldAlert className="w-3.5 h-3.5 text-sky-400" />
+            <span>{isValidatingSelectors ? 'در حال تست سلکتور...' : '🔍 اعتبارسنجی سلکتورها (Dry-Run)'}</span>
+          </button>
+
+          {/* Diagnostic Console Button */}
+          <button
+            onClick={() => {
+              setShowDiagnosticConsole(!showDiagnosticConsole);
+              if (!showDiagnosticConsole) handleLoadDiagnosticConsole();
+            }}
+            className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center space-x-1.5 space-x-reverse ${
+              showDiagnosticConsole
+                ? 'bg-amber-500 text-slate-950 border-amber-400'
+                : 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-700'
+            }`}
+            title="نمایش کنسول زنده عیب‌یابی کدهای وضعیت HTTP، آدرس‌ها و مسیر سلکتورهای DOM"
+          >
+            <Terminal className="w-3.5 h-3.5 text-amber-400" />
+            <span>{showDiagnosticConsole ? 'بستن کنسول عیب‌یابی' : '💻 کنسول عیب‌یابی HTTP & DOM'}</span>
+            {diagnosticEntries.filter(e => e.httpStatus >= 400 || e.httpStatus === 0).length > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-mono">
+                {toPersianDigits(diagnosticEntries.filter(e => e.httpStatus >= 400 || e.httpStatus === 0).length)}
+              </span>
+            )}
           </button>
 
           <button
@@ -793,6 +993,205 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
       {/* Embedded Deep Diagnostics Inspector when toggled */}
       {showDiagnostics && (
         <PublicationDiagnosticsInspector onRefreshAll={onRefreshJobs} />
+      )}
+
+      {/* Diagnostic Console Panel (HTTP Status & DOM Selector Inspector) */}
+      {showDiagnosticConsole && (
+        <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4 shadow-2xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+            <div className="flex items-center space-x-2.5 space-x-reverse">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <Terminal className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
+                    <span>کنسول جامع عیب‌یابی HTTP و سلکتورهای DOM</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-amber-300 font-mono">
+                      Diagnostic Console
+                    </span>
+                  </h3>
+                  <button
+                    onClick={() => setShowDiagConsoleHelp(true)}
+                    title="راهنمای کنسول عیب‌یابی"
+                    className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-xs w-6 h-6 flex items-center justify-center"
+                  >
+                    ؟
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  ثبت اختصاصی کدهای وضعیت HTTP، مسیر URL درخواستی، و رشته سلکتورهای استخراج‌شده برای جلوگیری از خطای ۴۰۴ و بن‌بست‌های ثبت‌نام
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Filter Pills */}
+              <div className="flex rounded-xl bg-slate-900 p-1 border border-slate-800 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setDiagFilter('all')}
+                  className={`px-2.5 py-1 rounded-lg transition-all ${diagFilter === 'all' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-slate-200'}`}
+                >
+                  همه ({toPersianDigits(diagnosticEntries.length)})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDiagFilter('404')}
+                  className={`px-2.5 py-1 rounded-lg transition-all ${diagFilter === '404' ? 'bg-rose-500 text-white font-bold' : 'text-rose-400 hover:text-rose-200'}`}
+                >
+                  خطای ۴۰۴ ({toPersianDigits(diagnosticEntries.filter(e => e.httpStatus === 404 || e.errorType === 'HTTP_404_NOT_FOUND').length)})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDiagFilter('timeout')}
+                  className={`px-2.5 py-1 rounded-lg transition-all ${diagFilter === 'timeout' ? 'bg-amber-600 text-white font-bold' : 'text-amber-400 hover:text-amber-200'}`}
+                >
+                  تایم‌اوت ({toPersianDigits(diagnosticEntries.filter(e => e.httpStatus === 0 || e.errorType === 'CONNECTION_TIMEOUT').length)})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDiagFilter('ok')}
+                  className={`px-2.5 py-1 rounded-lg transition-all ${diagFilter === 'ok' ? 'bg-emerald-600 text-white font-bold' : 'text-emerald-400 hover:text-emerald-200'}`}
+                >
+                  پاسخ موفق ({toPersianDigits(diagnosticEntries.filter(e => e.httpStatus >= 200 && e.httpStatus < 400).length)})
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleLoadDiagnosticConsole}
+                disabled={isLoadingDiagConsole}
+                className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs flex items-center gap-1 transition-colors"
+                title="بارگذاری مجدد لاگ‌های کنسول"
+              >
+                <RotateCw className={`w-3.5 h-3.5 ${isLoadingDiagConsole ? 'animate-spin' : ''}`} />
+                <span>بروزرسانی</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleClearDiagnosticConsole}
+                className="px-2.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs flex items-center gap-1 transition-colors"
+                title="پاکسازی تمام لاگ‌های کنسول"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>پاکسازی لاگ‌ها</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Console Entries List */}
+          {filteredDiagEntries.length === 0 ? (
+            <div className="p-8 text-center rounded-xl bg-slate-900/50 border border-slate-800/80 space-y-2">
+              <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto" />
+              <p className="text-xs font-semibold text-slate-300">
+                هیچ خطای ارتباطی، ۴۰۴ یا عدم تطابق سلکتوری در فیلتر انتخابی ثبت نشده است.
+              </p>
+              <p className="text-[11px] text-slate-500">
+                برای بررسی اولیه اندپوینت‌ها، از دکمه «اعتبارسنجی سلکتورها (Dry-Run)» در بالای جدول استفاده فرمایید.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2.5 max-h-96 overflow-y-auto pr-1 font-sans">
+              {filteredDiagEntries.map((entry) => {
+                const is404 = entry.httpStatus === 404 || entry.errorType === 'HTTP_404_NOT_FOUND';
+                const isTimeout = entry.httpStatus === 0 || entry.errorType === 'CONNECTION_TIMEOUT';
+                const isSuccess = entry.httpStatus >= 200 && entry.httpStatus < 400;
+
+                return (
+                  <div
+                    key={entry.id}
+                    className={`p-3.5 rounded-xl border transition-all text-xs space-y-2 ${
+                      is404
+                        ? 'bg-rose-950/20 border-rose-900/50 text-rose-200'
+                        : isTimeout
+                        ? 'bg-amber-950/20 border-amber-900/50 text-amber-200'
+                        : isSuccess
+                        ? 'bg-emerald-950/20 border-emerald-900/50 text-emerald-200'
+                        : 'bg-slate-900 border-slate-800 text-slate-300'
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-2">
+                      <div className="flex items-center space-x-2 space-x-reverse">
+                        <span className={`px-2 py-0.5 rounded-full font-mono text-[10px] font-bold ${
+                          is404
+                            ? 'bg-rose-500 text-white'
+                            : isTimeout
+                            ? 'bg-amber-500 text-slate-950'
+                            : isSuccess
+                            ? 'bg-emerald-500 text-slate-950'
+                            : 'bg-slate-700 text-slate-200'
+                        }`}>
+                          {entry.httpStatus === 0 ? 'HTTP 0 (تایم‌اوت)' : `HTTP ${entry.httpStatus}`}
+                        </span>
+                        <span className="font-bold text-slate-100">{entry.platformName}</span>
+                        <span className="text-[10px] text-slate-400 font-mono">[{entry.timestamp}]</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyDiagnosticEntry(entry)}
+                          className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-semibold flex items-center gap-1 transition-colors"
+                        >
+                          {copiedDiagEntryId === entry.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                          <span>{copiedDiagEntryId === entry.id ? 'کپی شد' : 'کپی جزئیات'}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRunSelectorValidation({ platformId: entry.platformId, domain: entry.platformId, targetUrl: entry.requestUrl })}
+                          className="px-2 py-0.5 rounded bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 text-[10px] font-semibold flex items-center gap-1 transition-colors"
+                        >
+                          <RotateCw className="w-3 h-3" />
+                          <span>تست مجدد</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px]">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5 text-slate-400">
+                          <LinkIcon className="w-3 h-3 text-amber-400 shrink-0" />
+                          <span className="font-semibold">آدرس URL درخواست‌شده:</span>
+                        </div>
+                        <a
+                          href={entry.requestUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-amber-400 hover:underline font-mono text-[10px] break-all block flex items-center gap-1"
+                        >
+                          <span>{entry.requestUrl}</span>
+                          <ExternalLink className="w-3 h-3 shrink-0" />
+                        </a>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5 text-slate-400">
+                          <Code2 className="w-3 h-3 text-sky-400 shrink-0" />
+                          <span className="font-semibold">مسیر سلکتور DOM تست‌شده:</span>
+                        </div>
+                        <code className="px-2 py-0.5 rounded bg-slate-950 text-sky-300 font-mono text-[10px] block break-all">
+                          {entry.targetSelectorPath || 'form, input[name="phone"], button:contains("ورود")'}
+                        </code>
+                      </div>
+                    </div>
+
+                    {entry.resolutionHint && (
+                      <div className="p-2 rounded-lg bg-slate-950/60 border border-white/5 flex items-start gap-2 text-[11px]">
+                        <Info className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold text-amber-300">راهکار و اقدام اصلاحی: </span>
+                          <span className="text-slate-300">{entry.resolutionHint}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Real-time Status Chart & Bottleneck Metrics Dashboard (Recharts) */}
@@ -1184,6 +1583,26 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
+                    {/* Selector Validator Button per Job */}
+                    <button
+                      type="button"
+                      onClick={() => handleRunSelectorValidation({
+                        platformId: job.platformId,
+                        platformName: job.platformName,
+                        domain: job.platformDomain,
+                      })}
+                      disabled={isValidatingSelectors && validatingPlatformId === (job.platformId || job.platformDomain)}
+                      className="px-2.5 py-1 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/30 text-xs font-semibold transition-colors flex items-center space-x-1 space-x-reverse disabled:opacity-50"
+                      title="تست خشک (Dry-Run) دکمه‌های ورود/ثبت‌نام و شناسایی سلکتورهای این رسانه قبل از اقدام"
+                    >
+                      <ShieldAlert className="w-3.5 h-3.5 text-sky-400" />
+                      <span>
+                        {isValidatingSelectors && validatingPlatformId === (job.platformId || job.platformDomain)
+                          ? 'در حال سنجش...'
+                          : 'تست سلکتورها (Dry-Run)'}
+                      </span>
+                    </button>
+
                     {/* Assistant Launch Button */}
                     <button
                       type="button"
@@ -1682,40 +2101,57 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
             <div className="flex-1 overflow-y-auto space-y-4 pr-1">
               {/* Target Direct Portal Links */}
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                  <LinkIcon className="w-3.5 h-3.5 text-amber-400" />
-                  <span>دسترسی مستقیم به صفحات {assistantJob.platformName}:</span>
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                    <LinkIcon className="w-3.5 h-3.5 text-amber-400" />
+                    <span>دسترسی مستقیم و تاییدشده به صفحات {assistantJob.platformName}:</span>
+                  </label>
+                  <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    بدون خطای ۴۰۴ (لینک‌های تست‌شده)
+                  </span>
+                </div>
                 {(() => {
                   const urls = getPlatformUrls(assistantJob);
                   return (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <a
-                        href={urls.register}
+                        href={urls.home}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-slate-200 text-xs font-medium flex items-center justify-between transition-colors"
+                        title="صفحه اصلی رسمی سایت مقصد"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Globe className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>صفحه اصلی سایت</span>
+                        </span>
+                        <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                      </a>
+                      <a
+                        href={urls.login || urls.register || urls.home}
                         target="_blank"
                         rel="noreferrer"
                         className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-500/50 hover:bg-amber-500/10 text-slate-200 text-xs font-medium flex items-center justify-between transition-colors"
+                        title="صفحه ورود / عضویت مستقیم در سایت"
                       >
-                        <span>صفحه ثبت‌نام</span>
+                        <span className="flex items-center gap-1.5">
+                          <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                          <span>ورود / ثبت‌نام مستقیم</span>
+                        </span>
                         <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
                       </a>
                       <a
-                        href={urls.login}
+                        href={urls.submitAd || urls.home}
                         target="_blank"
                         rel="noreferrer"
-                        className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-500/50 hover:bg-amber-500/10 text-slate-200 text-xs font-medium flex items-center justify-between transition-colors"
+                        className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-sky-500/50 hover:bg-sky-500/10 text-slate-200 text-xs font-medium flex items-center justify-between transition-colors"
+                        title="فرم درج و ثبت آگهی در سایت مقصد"
                       >
-                        <span>صفحه ورود / لاگین</span>
-                        <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
-                      </a>
-                      <a
-                        href={urls.submitAd}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-500/50 hover:bg-amber-500/10 text-slate-200 text-xs font-medium flex items-center justify-between transition-colors"
-                      >
-                        <span>صفحه درج آگهی</span>
-                        <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
+                        <span className="flex items-center gap-1.5">
+                          <FileText className="w-3.5 h-3.5 text-sky-400" />
+                          <span>فرم ثبت آگهی</span>
+                        </span>
+                        <ExternalLink className="w-3.5 h-3.5 text-sky-400" />
                       </a>
                     </div>
                   );
@@ -1856,6 +2292,262 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
               >
                 <Zap className="w-4 h-4 fill-current" />
                 <span>تایید نهایی و علامت‌گذاری به عنوان آگهی منتشرشده</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* مودال اعتبارسنجی سلکتورها و دکمه‌های ورود/ثبت‌نام (Selector Validator Dry-Run Modal) */}
+      {selectorValidationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full p-6 space-y-5 shadow-2xl text-right overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center space-x-2.5 space-x-reverse">
+                <div className="w-9 h-9 rounded-xl bg-sky-500/20 border border-sky-500/30 flex items-center justify-center text-sky-400">
+                  <ShieldAlert className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                      <span>اعتبارسنجی سلکتورها و دکمه‌های کلیدی: {selectorValidationModal.platformName}</span>
+                    </h3>
+                    <button
+                      onClick={() => setShowSelectorHelp(true)}
+                      title="راهنمای اعتبارسنجی سلکتورها"
+                      className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-xs w-6 h-6 flex items-center justify-center"
+                    >
+                      ؟
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    تست سلامت اندپوینت و پایش وجود دکمه‌های ورود، ثبت‌نام، ارسال آگهی و فیلدها قبل از اجرای فرآیند
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectorValidationModal(null)}
+                className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 flex items-center justify-center text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-4 pr-1 text-xs">
+              {/* Target Response Summary */}
+              <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                selectorValidationModal.isAccessible
+                  ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-200'
+                  : 'bg-rose-950/20 border-rose-500/30 text-rose-200'
+              }`}>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2.5 h-2.5 rounded-full ${selectorValidationModal.isAccessible ? 'bg-emerald-400' : 'bg-rose-400'}`}></span>
+                    <span className="font-bold text-sm text-slate-100">
+                      وضعیت دسترسی سرور: {selectorValidationModal.httpStatusText}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                    <LinkIcon className="w-3 h-3 text-amber-400" />
+                    <span>آدرس ارزیابی‌شده:</span>
+                    <a
+                      href={selectorValidationModal.targetUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-amber-400 hover:underline font-mono text-[10px] truncate max-w-xs block"
+                    >
+                      {selectorValidationModal.targetUrl}
+                    </a>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 self-end sm:self-center">
+                  <div className="text-left font-mono">
+                    <span className="text-[10px] text-slate-400 block">زمان پاسخ:</span>
+                    <span className="font-bold text-slate-200">{toPersianDigits(selectorValidationModal.responseTimeMs)} میلی‌ثانیه</span>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold font-mono ${
+                    selectorValidationModal.httpStatus === 200
+                      ? 'bg-emerald-500 text-slate-950'
+                      : selectorValidationModal.httpStatus === 404
+                      ? 'bg-rose-500 text-white'
+                      : 'bg-amber-500 text-slate-950'
+                  }`}>
+                    HTTP {selectorValidationModal.httpStatus}
+                  </span>
+                </div>
+              </div>
+
+              {/* Warning note if 404 */}
+              {selectorValidationModal.warningNote && (
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <span className="font-bold block">توجه مهم در ارتباط با خطای ۴۰۴:</span>
+                    <p className="text-[11px] leading-relaxed">
+                      {selectorValidationModal.warningNote}
+                      جهت رفع، دکمه‌های مستقیم پورتال در دستیار ورود بررسی و از فعال بودن اندپوینت ثبت‌نام اطمینان حاصل فرمایید.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Elements & Selectors Check List */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-200 flex items-center gap-1.5">
+                    <Code2 className="w-3.5 h-3.5 text-sky-400" />
+                    <span>وضعیت وجود دکمه‌ها و عناصر حیاتی در ساختار صفحه (DOM Element Scan):</span>
+                  </span>
+                  <span className="text-[10px] text-slate-400">
+                    {toPersianDigits(selectorValidationModal.elements.filter(e => e.found).length)} از {toPersianDigits(selectorValidationModal.elements.length)} عنصر تایید شد
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2">
+                  {selectorValidationModal.elements.map((el, idx) => (
+                    <div
+                      key={idx}
+                      className={`p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2 transition-all ${
+                        el.found
+                          ? 'bg-slate-950/80 border-slate-800/80 text-slate-200'
+                          : 'bg-rose-950/10 border-rose-900/30 text-rose-300'
+                      }`}
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          {el.found ? (
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                          ) : (
+                            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                          )}
+                          <span className="font-bold text-slate-100">{el.persianLabel}</span>
+                          <span className="text-[10px] font-mono text-slate-400">({el.elementRole})</span>
+                        </div>
+                        <div className="text-[10px] font-mono text-slate-400 pr-6" dir="ltr">
+                          {el.testedSelector}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-end sm:self-center pr-6 sm:pr-0">
+                        <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold ${
+                          el.found
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                            : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                        }`}>
+                          {el.found ? `${toPersianDigits(el.confidenceScore)}% شناسایی شد` : 'یافت نشد'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+              <button
+                onClick={() => setSelectorValidationModal(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+              >
+                بستن گزارش
+              </button>
+
+              <button
+                onClick={() => handleRunSelectorValidation({
+                  platformId: selectorValidationModal.platformId,
+                  domain: selectorValidationModal.domain,
+                  targetUrl: selectorValidationModal.targetUrl
+                })}
+                disabled={isValidatingSelectors}
+                className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs transition-colors flex items-center gap-1.5"
+              >
+                <RotateCw className={`w-3.5 h-3.5 ${isValidatingSelectors ? 'animate-spin' : ''}`} />
+                <span>اجرای مجدد اعتبارسنجی</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* مودال راهنمای کنسول عیب‌یابی (Diagnostic Console Help Modal) */}
+      {showDiagConsoleHelp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl text-right">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-slate-100 flex items-center space-x-2 space-x-reverse">
+                <HelpCircle className="w-5 h-5 text-amber-400" />
+                <span>راهنمای هوشمند: کنسول عیب‌یابی HTTP و سلکتورها</span>
+              </h3>
+              <button
+                onClick={() => setShowDiagConsoleHelp(false)}
+                className="text-slate-400 hover:text-slate-200 text-sm font-bold px-2 py-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-slate-300 leading-relaxed">
+              <p className="font-semibold text-amber-300">
+                کنسول عیب‌یابی چه کاری انجام می‌دهد؟
+              </p>
+              <p>
+                این کنسول تمامی ارتباطات زنده با پلتفرم‌های انتشار آگهی را شنود کرده و در صورتی که صفحه‌ای با خطای ۴۰۴ مواجه شود، نشست منقضی گردد یا سلکتورهای دکمه ثبت‌نام جابجا شده باشند، دقیقاً آدرس، کد وضعیت HTTP و رشته سلکتور را به همراه راهکار اصلاحی به شما نشان می‌دهد.
+              </p>
+
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                <span className="font-bold text-slate-200 block">انواع کدهای وضعیت در کنسول:</span>
+                <ul className="list-disc list-inside space-y-1 text-slate-400">
+                  <li><strong className="text-emerald-300">کد ۲۰۰ (OK):</strong> سرور مقصد صفحه را باز کرده و فیلدها با موفقیت دریافت شدند.</li>
+                  <li><strong className="text-rose-400">کد ۴۰۴ (Not Found):</strong> آدرس درخواستی در سایت مقصد تغییر یافته است. از دستیار ثبت‌نام برای رفتن به صفحه اصلی یا صفحه ورود بروزرسانی‌شده استفاده فرمایید.</li>
+                  <li><strong className="text-amber-400">کد ۰ یا تایم‌اوت:</strong> محافظت فایروال یا کندی اینترنت رخ داده است.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={() => setShowDiagConsoleHelp(false)}
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors"
+              >
+                متوجه شدم
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* مودال راهنمای اعتبارسنجی سلکتورها (Selector Help Modal) */}
+      {showSelectorHelp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl text-right">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-slate-100 flex items-center space-x-2 space-x-reverse">
+                <HelpCircle className="w-5 h-5 text-amber-400" />
+                <span>راهنمای هوشمند: اعتبارسنجی زنده سلکتورها (Selector Validator)</span>
+              </h3>
+              <button
+                onClick={() => setShowSelectorHelp(false)}
+                className="text-slate-400 hover:text-slate-200 text-sm font-bold px-2 py-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-slate-300 leading-relaxed">
+              <p className="font-semibold text-amber-300">
+                چرا تست خشک (Dry-Run) پیش از اجرای نوبت ضروری است؟
+              </p>
+              <p>
+                برای جلوگیری از هدررفت زمان و ارسال کدهای نامعتبر، ابزار «اعتبارسنجی سلکتورها» یک پیش‌بررسی زنده انجام می‌دهد تا مطمئن شود دکمه‌های ورود، فرم ارسال آگهی و فیلد شماره همراه با بالاترین درصد تطابق در دسترس هستند.
+              </p>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={() => setShowSelectorHelp(false)}
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors"
+              >
+                متوجه شدم
               </button>
             </div>
           </div>

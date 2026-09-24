@@ -567,6 +567,47 @@ export interface DomWatcherEvent {
   screenshotBase64?: string;
 }
 
+export interface CriticalElementCheck {
+  elementRole: 'login_button' | 'register_button' | 'submit_ad_button' | 'phone_input' | 'title_input' | 'description_input' | 'otp_input';
+  persianLabel: string;
+  testedSelector: string;
+  found: boolean;
+  elementTag?: string;
+  elementHtmlSnippet?: string;
+  confidenceScore: number;
+}
+
+export interface SelectorValidationReport {
+  platformId: string;
+  platformName: string;
+  domain: string;
+  targetUrl: string;
+  httpStatus: number;
+  httpStatusText: string;
+  isAccessible: boolean;
+  validatedAt: string;
+  responseTimeMs: number;
+  allCriticalElementsFound: boolean;
+  elements: CriticalElementCheck[];
+  warningNote?: string;
+}
+
+export interface DiagnosticConsoleEntry {
+  id: string;
+  timestamp: string;
+  jobId?: string;
+  platformId: string;
+  platformName: string;
+  requestUrl: string;
+  httpMethod: string;
+  httpStatus: number;
+  httpStatusText: string;
+  targetSelectorPath?: string;
+  errorType?: 'HTTP_404_NOT_FOUND' | 'HTTP_403_FORBIDDEN' | 'CONNECTION_TIMEOUT' | 'SELECTOR_MISSING' | 'OTP_CHALLENGE' | 'UNKNOWN';
+  rawResponseSnippet?: string;
+  resolutionHint: string;
+}
+
 export interface DomBaselineSchema {
   platformId: string;
   platformName: string;

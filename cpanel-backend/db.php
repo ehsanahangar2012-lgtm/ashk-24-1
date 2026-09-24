@@ -845,6 +845,37 @@ class Ashk24Db {
         return $db['emailLogs'] ?? [];
     }
 
+    public function addDiagnosticLog($entry) {
+        $db = $this->readDb();
+        if (!isset($db['diagnosticLogs']) || !is_array($db['diagnosticLogs'])) {
+            $db['diagnosticLogs'] = [];
+        }
+        if (empty($entry['id'])) {
+            $entry['id'] = 'diag_' . time() . '_' . rand(100, 999);
+        }
+        if (empty($entry['timestamp'])) {
+            $entry['timestamp'] = date('H:i:s');
+        }
+        array_unshift($db['diagnosticLogs'], $entry);
+        if (count($db['diagnosticLogs']) > 150) {
+            $db['diagnosticLogs'] = array_slice($db['diagnosticLogs'], 0, 150);
+        }
+        $this->writeDb($db);
+        return $entry;
+    }
+
+    public function getDiagnosticLogs() {
+        $db = $this->readDb();
+        return $db['diagnosticLogs'] ?? [];
+    }
+
+    public function clearDiagnosticLogs() {
+        $db = $this->readDb();
+        $db['diagnosticLogs'] = [];
+        $this->writeDb($db);
+        return true;
+    }
+
     public function getAutonomousSettings() {
         $db = $this->readDb();
         return $db['autonomousSettings'] ?? ['enabled' => true, 'checkIntervalMinutes' => 10, 'autoRenew' => true];

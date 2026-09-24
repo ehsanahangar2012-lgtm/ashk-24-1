@@ -144,14 +144,14 @@ class UniversalPlatformPublisher {
         ],
         'locopoc.com' => [
             'name' => 'لوکوپوک',
-            'submitUrl' => 'https://locopoc.com/ad/new',
-            'loginUrl' => 'https://locopoc.com/login',
-            'trackingUrl' => 'https://locopoc.com/my-account',
+            'submitUrl' => 'https://www.locopoc.com/postad.aspx',
+            'loginUrl' => 'https://www.locopoc.com/',
+            'trackingUrl' => 'https://www.locopoc.com/',
             'method' => 'POST',
             'fieldMap' => [
-                'title' => 'title',
-                'description' => 'desc',
-                'phone' => 'mobile'
+                'title' => 'txtTitle',
+                'description' => 'txtBody',
+                'phone' => 'txtMobile'
             ],
             'defaultCategory' => 'services',
             'defaultProvince' => '11'

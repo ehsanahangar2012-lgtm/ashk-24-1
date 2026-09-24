@@ -641,6 +641,176 @@ try {
             echo json_encode($analysis, JSON_UNESCAPED_UNICODE);
             break;
 
+        case ($route === 'platform/validate-selectors' || $route === 'selectors/validate'):
+            $platId = $body['platformId'] ?? ($_GET['platformId'] ?? '');
+            $targetUrl = $body['targetUrl'] ?? ($_GET['targetUrl'] ?? '');
+            $domain = $body['domain'] ?? ($_GET['domain'] ?? '');
+
+            $plat = null;
+            if (!empty($platId)) {
+                $plat = $db->getPlatformById($platId);
+                if ($plat && empty($domain)) {
+                    $domain = $plat['domain'] ?? '';
+                }
+            }
+
+            if (empty($targetUrl)) {
+                $cleanDom = !empty($domain) ? preg_replace('/^(https?:\/\/)?(www\.)?/', '', $domain) : 'locopoc.com';
+                $targetUrl = "https://www.{$cleanDom}/";
+            }
+
+            $startTime = microtime(true);
+            $ch = curl_init($targetUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36');
+            curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            $html = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $effectiveUrl = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL) ?: $targetUrl;
+            $curlError = curl_error($ch);
+            curl_close($ch);
+            $elapsedMs = round((microtime(true) - $startTime) * 1000);
+
+            $isAccessible = ($httpCode >= 200 && $httpCode < 400);
+
+            $elements = [];
+
+            // 1. Login button/link
+            $loginFound = $html && (
+                preg_match('/<a[^>]*href=["\'][^"\']*(login|signin|ورود)[^"\']*["\']/i', $html) ||
+                preg_match('/<button[^>]*>[^<]*(ورود|login)[^<]*<\/button>/ui', $html) ||
+                preg_match('/id=["\'][^"\']*login[^"\']*/i', $html)
+            );
+            $elements[] = [
+                'elementRole' => 'login_button',
+                'persianLabel' => 'دکمه یا لینک ورود',
+                'testedSelector' => "a[href*='login'], button:contains('ورود'), #login-btn",
+                'found' => (bool)$loginFound,
+                'confidenceScore' => $loginFound ? 95 : 0
+            ];
+
+            // 2. Register button/link
+            $registerFound = $html && (
+                preg_match('/<a[^>]*href=["\'][^"\']*(register|signup|ثبت[\s_-]*نام|postad)[^"\']*["\']/i', $html) ||
+                preg_match('/<button[^>]*>[^<]*(ثبت[\s_-]*نام|عضویت)[^<]*<\/button>/ui', $html)
+            );
+            $elements[] = [
+                'elementRole' => 'register_button',
+                'persianLabel' => 'دکمه ثبت‌نام / عضویت',
+                'testedSelector' => "a[href*='register'], button:contains('ثبت نام'), a[href*='postad']",
+                'found' => (bool)$registerFound,
+                'confidenceScore' => $registerFound ? 92 : 0
+            ];
+
+            // 3. Submit Ad / Post Ad button
+            $submitAdFound = $html && (
+                preg_match('/<a[^>]*href=["\'][^"\']*(postad|new|create|iad|ثبت[\s_-]*آگهی|درج[\s_-]*آگهی|add)[^"\']*["\']/i', $html) ||
+                preg_match('/(درج آگهی|ثبت آگهی رایگان|ارسال آگهی)/ui', $html)
+            );
+            $elements[] = [
+                'elementRole' => 'submit_ad_button',
+                'persianLabel' => 'دکمه درج و ارسال آگهی',
+                'testedSelector' => "a[href*='postad'], a[href*='iad'], button:contains('درج آگهی')",
+                'found' => (bool)$submitAdFound,
+                'confidenceScore' => $submitAdFound ? 96 : 0
+            ];
+
+            // 4. Phone input
+            $phoneFound = $html && (
+                preg_match('/<input[^>]*name=["\'][^"\']*(phone|mobile|tel|txtMobile|txtTel)[^"\']*/i', $html) ||
+                preg_match('/type=["\']tel["\']/i', $html)
+            );
+            $elements[] = [
+                'elementRole' => 'phone_input',
+                'persianLabel' => 'فیلد شماره موبایل / تماس',
+                'testedSelector' => "input[type='tel'], input[name*='mobile'], #txtMobile",
+                'found' => (bool)$phoneFound,
+                'confidenceScore' => $phoneFound ? 94 : 0
+            ];
+
+            // 5. Title input
+            $titleFound = $html && (
+                preg_match('/<input[^>]*name=["\'][^"\']*(title|subject|txtTitle|heading)[^"\']*/i', $html)
+            );
+            $elements[] = [
+                'elementRole' => 'title_input',
+                'persianLabel' => 'فیلد عنوان آگهی',
+                'testedSelector' => "input[name*='title'], #txtTitle, input[name='subject']",
+                'found' => (bool)$titleFound,
+                'confidenceScore' => $titleFound ? 90 : 0
+            ];
+
+            // 6. Description input
+            $descFound = $html && (
+                preg_match('/<textarea[^>]*name=["\'][^"\']*(desc|comment|body|txtComment|content)[^"\']*/i', $html)
+            );
+            $elements[] = [
+                'elementRole' => 'description_input',
+                'persianLabel' => 'فیلد متن و توضیحات آگهی',
+                'testedSelector' => "textarea[name*='desc'], #txtComment, textarea#body",
+                'found' => (bool)$descFound,
+                'confidenceScore' => $descFound ? 92 : 0
+            ];
+
+            $allCriticalFound = $isAccessible && ($loginFound || $registerFound || $submitAdFound);
+
+            $httpStatusText = ($httpCode === 200 ? '200 OK' : ($httpCode === 404 ? '404 Not Found' : ($httpCode === 0 ? 'Connection Timeout (HTTP 0)' : "HTTP {$httpCode}")));
+
+            $report = [
+                'platformId' => $platId,
+                'platformName' => $plat['persianName'] ?? ($domain ?: 'پلتفرم هدف'),
+                'domain' => $domain,
+                'targetUrl' => $effectiveUrl,
+                'httpStatus' => $httpCode,
+                'httpStatusText' => $httpStatusText,
+                'isAccessible' => $isAccessible,
+                'validatedAt' => date('Y/m/d H:i:s'),
+                'responseTimeMs' => $elapsedMs,
+                'allCriticalElementsFound' => $allCriticalFound,
+                'elements' => $elements,
+                'warningNote' => !$isAccessible ? "پاسخ سرور با کد خطای {$httpCode} مواجه گردید (عدم دسترسی یا خطای ۴۰۴)." : null
+            ];
+
+            // Record into diagnostics if error occurred
+            if (!$isAccessible || $httpCode === 404) {
+                $diagEntry = [
+                    'id' => 'diag_' . time() . '_' . rand(100, 999),
+                    'timestamp' => date('H:i:s'),
+                    'platformId' => $platId,
+                    'platformName' => $plat['persianName'] ?? $domain,
+                    'requestUrl' => $effectiveUrl,
+                    'httpMethod' => 'GET',
+                    'httpStatus' => $httpCode,
+                    'httpStatusText' => $httpStatusText,
+                    'targetSelectorPath' => "form, a[href*='postad'], input[type='tel']",
+                    'errorType' => ($httpCode === 404 ? 'HTTP_404_NOT_FOUND' : ($httpCode === 0 ? 'CONNECTION_TIMEOUT' : 'HTTP_403_FORBIDDEN')),
+                    'rawResponseSnippet' => $curlError ? "cURL: {$curlError}" : substr(strip_tags($html ?: ''), 0, 180),
+                    'resolutionHint' => 'از آدرس تاییدشده صفحه اصلی یا پورتال مستقیم در دستیار استفاده فرمایید.'
+                ];
+                $db->addDiagnosticLog($diagEntry);
+            }
+
+            echo json_encode($report, JSON_UNESCAPED_UNICODE);
+            break;
+
+        case ($route === 'diagnostics/console-entries'):
+            if ($method === 'POST') {
+                $entry = $body;
+                $saved = $db->addDiagnosticLog($entry);
+                echo json_encode(['success' => true, 'entry' => $saved], JSON_UNESCAPED_UNICODE);
+            } else {
+                $logs = $db->getDiagnosticLogs();
+                echo json_encode($logs, JSON_UNESCAPED_UNICODE);
+            }
+            break;
+
+        case ($route === 'diagnostics/clear'):
+            $db->clearDiagnosticLogs();
+            echo json_encode(['success' => true, 'message' => 'تاریخچه کنسول عیب‌یابی پاکسازی گردید.'], JSON_UNESCAPED_UNICODE);
+            break;
+
         case ($route === 'system/wipe-data'):
         case ($route === 'data/reset'):
             $res = $db->wipeAllDataToRawState();
