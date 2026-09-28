@@ -179,8 +179,44 @@ async function pollPendingJobs() {
   }
 }
 
+async function sendWorkerHeartbeat() {
+  try {
+    await fetch(`${CPANEL_URL}?route=orchestrator/heartbeat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${CPANEL_AGENT_TOKEN}` },
+      body: JSON.stringify({
+        agentId: AGENT_ID,
+        channelType: 'worker',
+        platform: IS_HEADLESS ? 'headless_worker' : 'desktop_headed',
+        timestamp: new Date().toISOString()
+      })
+    });
+  } catch (e) {}
+}
+
+async function claimBalancedJob() {
+  try {
+    await sendWorkerHeartbeat();
+    const res = await fetch(`${CPANEL_URL}?route=orchestrator/claim-balanced`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${CPANEL_AGENT_TOKEN}` },
+      body: JSON.stringify({
+        channel: 'worker',
+        agentId: AGENT_ID
+      })
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.success && data.job ? data : null;
+  } catch (err) {
+    console.error(`❌ [Claim Balanced Error]: ${err.message}`);
+    return null;
+  }
+}
+
 async function claimJob(jobId) {
   try {
+    await sendWorkerHeartbeat();
     const res = await fetch(`${CPANEL_URL}?route=jobs/claim`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${CPANEL_AGENT_TOKEN}` },
@@ -622,23 +658,22 @@ async function main() {
   await handshake();
 
   if (IS_ONCE) {
-    console.log(`🔍 [Single Execution Mode] Checking for pending jobs...`);
-    const pending = await pollPendingJobs();
-    if (pending.length > 0) {
-      const targetJob = pending[0];
-      const claim = await claimJob(targetJob.id);
-      if (claim) {
-        const success = await executeJob(targetJob, claim);
-        if (!success) {
-          console.error(`❌ [Execution Finished] Job ${targetJob.id} could not complete successfully.`);
-          if (process.env.CI) {
-            console.log(`ℹ️ [CI Mode] Exiting gracefully with code 0 to prevent false workflow failure alerts on GitHub.`);
-            process.exit(0);
-          }
-          process.exit(1);
-        }
-      } else {
-        console.error(`⚠️ Could not claim job ${targetJob.id}.`);
+    console.log(`🔍 [Single Execution Mode] Checking for balanced pending jobs via Orchestrator...`);
+    let targetJob = null;
+    let claim = null;
+
+    if (TARGET_JOB_ID) {
+      claim = await claimJob(TARGET_JOB_ID);
+      if (claim && claim.job) targetJob = claim.job;
+    } else {
+      claim = await claimBalancedJob();
+      if (claim && claim.job) targetJob = claim.job;
+    }
+
+    if (targetJob && claim) {
+      const success = await executeJob(targetJob, claim);
+      if (!success) {
+        console.error(`❌ [Execution Finished] Job ${targetJob.id} could not complete successfully.`);
         if (process.env.CI) {
           console.log(`ℹ️ [CI Mode] Exiting gracefully with code 0 to prevent false workflow failure alerts on GitHub.`);
           process.exit(0);
@@ -646,19 +681,21 @@ async function main() {
         process.exit(1);
       }
     } else {
-      console.log(`✅ No pending jobs found in queue. Worker gracefully terminating.`);
+      console.log(`✅ No eligible balanced jobs found in queue. Worker gracefully terminating.`);
     }
     process.exit(0);
   } else {
     console.log(`🔄 [Continuous Loop Started] Interval: ${POLL_INTERVAL_MS}ms`);
     setInterval(async () => {
-      const pending = await pollPendingJobs();
-      if (pending.length > 0) {
-        const targetJob = pending[0];
-        const claim = await claimJob(targetJob.id);
-        if (claim) {
-          await executeJob(targetJob, claim);
-        }
+      let claim = null;
+      if (TARGET_JOB_ID) {
+        claim = await claimJob(TARGET_JOB_ID);
+      } else {
+        claim = await claimBalancedJob();
+      }
+
+      if (claim && claim.job) {
+        await executeJob(claim.job, claim);
       }
     }, POLL_INTERVAL_MS);
   }

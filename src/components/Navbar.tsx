@@ -77,8 +77,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           )}
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-red-600 flex items-center justify-center shadow-lg shadow-amber-500/20 text-slate-950 font-black text-sm sm:text-xl shrink-0">
-            ۲۴
+          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-slate-900 border border-amber-500/40 p-0.5 shadow-lg shadow-amber-500/20 shrink-0 flex items-center justify-center overflow-hidden">
+            <img
+              src={company?.logoUrl || '/uploads/default_logo.svg'}
+              alt="لوگو اشک ۲۴"
+              className="w-full h-full object-contain rounded-lg"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/uploads/default_logo.svg';
+              }}
+            />
           </div>
           <div className="min-w-0">
             <div className="flex items-center space-x-1.5 sm:space-x-2 space-x-reverse">

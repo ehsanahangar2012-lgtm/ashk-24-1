@@ -104,7 +104,8 @@ async function generateFinalPackages() {
   function addFolderToZip(folderPath, zipFolder, baseDir) {
     const items = fs.readdirSync(folderPath);
     for (const item of items) {
-      if (item.endsWith('.zip') || item.endsWith('.map') || item.endsWith('.apk') || item === 'server.cjs' || item === 'server.cjs.map' || item === 'ashk24-agent.tar.gz' || item === 'local-agent') continue;
+      // Do not include the cpanel package itself inside the zip to prevent recursion, but DO include extension zips
+      if ((item.startsWith('ashk24-cpanel') && item.endsWith('.zip')) || item.endsWith('.map') || item.endsWith('.apk') || item === 'server.cjs' || item === 'server.cjs.map' || item === 'ashk24-agent.tar.gz' || item === 'local-agent') continue;
       const fullPath = path.join(folderPath, item);
       const stat = fs.statSync(fullPath);
       if (stat.isDirectory()) {
@@ -147,8 +148,10 @@ async function generateFinalPackages() {
   targetSyncDirs.forEach(dir => {
     if (fs.existsSync(dir)) {
       fs.readdirSync(dir).forEach(file => {
-        if (file.endsWith('.zip') || file.endsWith('.apk')) {
-          try { fs.unlinkSync(path.join(dir, file)); } catch (e) {}
+        if ((file.endsWith('.zip') || file.endsWith('.apk')) && file.startsWith('ashk24-cpanel-')) {
+          if (!file.includes(`v${version}`) && !file.includes('latest')) {
+            try { fs.unlinkSync(path.join(dir, file)); } catch (e) {}
+          }
         }
       });
     }

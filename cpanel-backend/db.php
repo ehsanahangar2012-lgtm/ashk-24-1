@@ -779,6 +779,32 @@ class Ashk24Db {
         return $updated;
     }
 
+    public function claimNextPendingJob($agentId, $leaseSeconds = 300, $platformFilter = null) {
+        $db = $this->readDb();
+        $now = time();
+        foreach ($db['publicationJobs'] as &$j) {
+            $status = $j['status'] ?? 'pending';
+            if ($platformFilter && ($j['platformId'] ?? '') !== $platformFilter && ($j['platformDomain'] ?? '') !== $platformFilter) {
+                continue;
+            }
+            $claimedAt = !empty($j['claimedAtTimestamp']) ? intval($j['claimedAtTimestamp']) : 0;
+            $isLeaseExpired = ($now - $claimedAt) > $leaseSeconds;
+
+            if (in_array($status, ['pending', 'queued', 'resumed']) || ($status === 'processing' && $isLeaseExpired)) {
+                $claimToken = 'claim_' . bin2hex(random_bytes(12));
+                $j['status'] = 'processing';
+                $j['claimedBy'] = $agentId;
+                $j['claimToken'] = $claimToken;
+                $j['claimedAtTimestamp'] = $now;
+                $j['leaseExpiresAt'] = date('c', $now + $leaseSeconds);
+                $j['updatedAt'] = date('c');
+                $this->writeDb($db);
+                return $j;
+            }
+        }
+        return null;
+    }
+
     public function addJobLog($jobId, $log) {
         $db = $this->readDb();
         foreach ($db['publicationJobs'] as &$j) {
@@ -1943,6 +1969,208 @@ class Ashk24Db {
         } catch (\Exception $e) {
             return null;
         }
+    }
+
+    // =========================================================================
+    // موتور هماهنگ‌کننده چندکاناله خودمختار اشک ۲۴ (Autonomous Orchestrator v5.1.0)
+    // =========================================================================
+
+    public function recordOrchestratorHeartbeat($agentId, $channelType = 'extension', $meta = []) {
+        $db = $this->readDb();
+        if (!isset($db['orchestrator'])) {
+            $db['orchestrator'] = [];
+        }
+        $now = time();
+        $db['orchestrator']['channels'][$channelType] = [
+            'agentId' => $agentId,
+            'lastHeartbeat' => $now,
+            'lastHeartbeatIso' => date('c'),
+            'ip' => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1',
+            'isUserActive' => !empty($meta['isUserActive']),
+            'metadata' => $meta
+        ];
+        $this->writeDb($db);
+        return $this->getOrchestrationState();
+    }
+
+    public function getOrchestrationState() {
+        $db = $this->readDb();
+        $orch = $db['orchestrator'] ?? [];
+        $now = time();
+
+        $extChannel = $orch['channels']['extension'] ?? null;
+        $workerChannel = $orch['channels']['worker'] ?? null;
+
+        // افزونه ظرف ۹۰ ثانیه اخیر فعال بوده؟
+        $isExtensionOnline = $extChannel && ($now - ($extChannel['lastHeartbeat'] ?? 0)) < 90;
+        // ورکر محلی ظرف ۱۲۰ ثانیه اخیر فعال بوده؟
+        $isWorkerOnline = $workerChannel && ($now - ($workerChannel['lastHeartbeat'] ?? 0)) < 120;
+
+        // تعیین هوشمند کانال اولویت‌دار:
+        // اگر کاربر آنلاین است و افزونه پاسخگوست -> اولویت کانال افزونه است (استفاده از IP خانگی و تکمیل کارهای ناتمام)
+        // اگر کاربر پشت سیستم نیست -> اولویت کانال ورکر پس‌زمینه محلی است
+        $activeMode = 'IDLE';
+        $recommendedChannel = 'none';
+
+        if ($isExtensionOnline) {
+            $activeMode = 'BROWSER_ONLINE_ACTIVE';
+            $recommendedChannel = 'extension';
+        } elseif ($isWorkerOnline) {
+            $activeMode = 'USER_OFFLINE_AUTONOMOUS_WORKER';
+            $recommendedChannel = 'worker';
+        } else {
+            $activeMode = 'QUEUED_CRON_WAITING';
+            $recommendedChannel = 'cron_or_any';
+        }
+
+        $jobs = $db['publicationJobs'] ?? [];
+        $pendingCount = 0;
+        $inProgressCount = 0;
+        $waitingOtpCount = 0;
+        $publishedCount = 0;
+
+        foreach ($jobs as $j) {
+            $st = $j['status'] ?? 'pending';
+            if (in_array($st, ['pending', 'queued', 'resumed'])) $pendingCount++;
+            if ($st === 'processing' || $st === 'filling') $inProgressCount++;
+            if ($st === 'waiting_otp' || $st === 'paused_user_action') $waitingOtpCount++;
+            if ($st === 'published') $publishedCount++;
+        }
+
+        // پایش رله پیامک
+        $smsLogs = $db['smsLogs'] ?? [];
+        $lastSms = !empty($smsLogs) ? $smsLogs[0] : null;
+
+        return [
+            'activeMode' => $activeMode,
+            'recommendedChannel' => $recommendedChannel,
+            'isExtensionOnline' => $isExtensionOnline,
+            'isWorkerOnline' => $isWorkerOnline,
+            'isSmsRelayConnected' => !empty($lastSms),
+            'extensionInfo' => $extChannel,
+            'workerInfo' => $workerChannel,
+            'lastSmsReceived' => $lastSms ? $lastSms['timestamp'] ?? null : null,
+            'policy' => [
+                'roundRobinEnabled' => true,
+                'minDelaySeconds' => 180, // ۳ دقیقه
+                'maxDelaySeconds' => 480, // ۸ دقیقه
+                'prioritizeUnfinished' => true
+            ],
+            'queueStats' => [
+                'pending' => $pendingCount,
+                'inProgress' => $inProgressCount,
+                'waitingOtp' => $waitingOtpCount,
+                'published' => $publishedCount,
+                'total' => count($jobs)
+            ],
+            'serverTime' => date('c')
+        ];
+    }
+
+    public function getBalancedNextJob($channel = 'any', $agentId = 'agent_auto') {
+        $db = $this->readDb();
+        $now = time();
+        $jobs = &$db['publicationJobs'];
+        if (empty($jobs)) return null;
+
+        // پیدا کردن پلتفرم‌هایی که اخیراً ثبت شدند برای جلوگیری از ارسال مکرر به یک پلتفرم (Anti-Spam / Anti-Flood)
+        $recentlyPublishedPlatforms = [];
+        foreach ($jobs as $j) {
+            if (($j['status'] ?? '') === 'published') {
+                $pubTime = !empty($j['updatedAt']) ? strtotime($j['updatedAt']) : 0;
+                if (($now - $pubTime) < 300) { // در ۵ دقیقه اخیر
+                    $recentlyPublishedPlatforms[] = $j['platformId'] ?? '';
+                    $recentlyPublishedPlatforms[] = $j['platformDomain'] ?? '';
+                }
+            }
+        }
+
+        // ۱. اولویت اول: کارهای ناتمام و از سرگیری شده (Resumed یا Waiting_OTP که کد پیامک دارند)
+        foreach ($jobs as &$j) {
+            $status = $j['status'] ?? 'pending';
+            if ($status === 'resumed' || ($status === 'waiting_otp' && !empty($j['otpCode']))) {
+                $claimToken = 'claim_' . bin2hex(random_bytes(12));
+                $j['status'] = 'processing';
+                $j['claimedBy'] = $agentId;
+                $j['claimedChannel'] = $channel;
+                $j['claimToken'] = $claimToken;
+                $j['claimedAtTimestamp'] = $now;
+                $j['leaseExpiresAt'] = date('c', $now + 300);
+                $j['updatedAt'] = date('c');
+                $this->writeDb($db);
+                return $this->enrichJobForExecution($j, $db);
+            }
+        }
+
+        // ۲. اولویت دوم: کارهای در صف با رعایت چرخش پلتفرم (Round-Robin)
+        foreach ($jobs as &$j) {
+            $status = $j['status'] ?? 'pending';
+            $claimedAt = !empty($j['claimedAtTimestamp']) ? intval($j['claimedAtTimestamp']) : 0;
+            $isLeaseExpired = ($now - $claimedAt) > 300;
+
+            if (in_array($status, ['pending', 'queued']) || ($status === 'processing' && $isLeaseExpired)) {
+                $plat = $j['platformId'] ?? '';
+                $dom = $j['platformDomain'] ?? '';
+
+                // اگر پلتفرم در ۵ دقیقه اخیر آگهی دریافت نکرده، اولویت دارد
+                if (!in_array($plat, $recentlyPublishedPlatforms) && !in_array($dom, $recentlyPublishedPlatforms)) {
+                    $claimToken = 'claim_' . bin2hex(random_bytes(12));
+                    $j['status'] = 'processing';
+                    $j['claimedBy'] = $agentId;
+                    $j['claimedChannel'] = $channel;
+                    $j['claimToken'] = $claimToken;
+                    $j['claimedAtTimestamp'] = $now;
+                    $j['leaseExpiresAt'] = date('c', $now + 300);
+                    $j['updatedAt'] = date('c');
+                    $this->writeDb($db);
+                    return $this->enrichJobForExecution($j, $db);
+                }
+            }
+        }
+
+        // ۳. اگر هیچ کار اولویت‌داری نبود، هر کار معلق دیگری را بردار
+        foreach ($jobs as &$j) {
+            $status = $j['status'] ?? 'pending';
+            $claimedAt = !empty($j['claimedAtTimestamp']) ? intval($j['claimedAtTimestamp']) : 0;
+            $isLeaseExpired = ($now - $claimedAt) > 300;
+
+            if (in_array($status, ['pending', 'queued']) || ($status === 'processing' && $isLeaseExpired)) {
+                $claimToken = 'claim_' . bin2hex(random_bytes(12));
+                $j['status'] = 'processing';
+                $j['claimedBy'] = $agentId;
+                $j['claimedChannel'] = $channel;
+                $j['claimToken'] = $claimToken;
+                $j['claimedAtTimestamp'] = $now;
+                $j['leaseExpiresAt'] = date('c', $now + 300);
+                $j['updatedAt'] = date('c');
+                $this->writeDb($db);
+                return $this->enrichJobForExecution($j, $db);
+            }
+        }
+
+        return null;
+    }
+
+    private function enrichJobForExecution($job, $db) {
+        if (!$job) return null;
+        $campaign = null;
+        if (!empty($job['campaignId'])) {
+            foreach (($db['campaigns'] ?? []) as $c) {
+                if ($c['id'] === $job['campaignId']) {
+                    $campaign = $c;
+                    break;
+                }
+            }
+        }
+        $company = $db['companyProfile'] ?? [];
+        $job['campaign'] = $campaign;
+        $job['company'] = $company;
+        $job['campaignTitle'] = $campaign['title'] ?? ($job['campaignTitle'] ?? 'تولید و فروش انواع کارتن و جعبه بسته‌بندی اشک ۲۴');
+        $job['campaignContent'] = $campaign['content'] ?? ($job['campaignContent'] ?? 'تولید تخصصی کارتن، کارتن لمینتی، دایکاتی، مقوایی صادراتی با بالاترین کیفیت و قیمت رقابتی. ارسال فوری به سراسر کشور.');
+        $job['contactPhone'] = $company['phoneNumber'] ?? '09153108763';
+        $job['contactPerson'] = $company['contactPerson'] ?? 'مهندس احسان آهنگر';
+        $job['contactEmail'] = $company['email'] ?? 'ashkghalam@gmail.com';
+        return $job;
     }
 }
 

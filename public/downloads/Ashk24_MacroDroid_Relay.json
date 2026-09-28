@@ -1,0 +1,22 @@
+{
+  "macroName": "Ashk24_SMS_Relay_Macro",
+  "version": "4.8.1",
+  "description": "رله خودکار پیامک‌های تایید و OTP سامانه اشک ۲۴ به وب‌هوک سی‌پنل",
+  "trigger": {
+    "type": "SMS_RECEIVED",
+    "filter": "کد|رمز|ورود|تایید|OTP|ثبت|دیوار|شیپور|ایران تجارت|نیازمندی"
+  },
+  "action": {
+    "type": "HTTP_REQUEST",
+    "method": "POST",
+    "endpoint": "/cpanel-backend/api/index.php/sms/webhook",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "sender": "{sms_number}",
+      "text": "{sms_body}",
+      "receivedAt": "{system_date_time}"
+    }
+  }
+}

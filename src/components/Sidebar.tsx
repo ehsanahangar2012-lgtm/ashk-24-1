@@ -12,6 +12,8 @@ import {
   BookOpen,
   FolderOpen,
   BarChart3,
+  Puzzle,
+  Workflow,
 } from 'lucide-react';
 
 export type TabType =
@@ -22,7 +24,9 @@ export type TabType =
   | 'jobs'
   | 'health_monitor'
   | 'analytics'
-  | 'mobile_companion';
+  | 'mobile_companion'
+  | 'extension_bridge'
+  | 'orchestrator_matrix';
 
 interface SidebarProps {
   activeTab: TabType;
@@ -101,6 +105,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Smartphone,
       badge: 'SMS Relay',
       badgeColor: 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30',
+    },
+    {
+      id: 'extension_bridge' as TabType,
+      label: '۹. لوله ارتباطی و ورکر افزونه',
+      icon: Puzzle,
+      badge: 'Bridge',
+      badgeColor: 'bg-sky-500/20 text-sky-300 font-bold border border-sky-500/30',
+    },
+    {
+      id: 'orchestrator_matrix' as TabType,
+      label: '۱۰. ماتریس هماهنگی خودمختار',
+      icon: Workflow,
+      badge: 'هوشمند',
+      badgeColor: 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30',
     },
   ];
 

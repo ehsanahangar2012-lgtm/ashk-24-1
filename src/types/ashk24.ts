@@ -334,7 +334,7 @@ export interface DomAnalysisResult {
   parsedBy: 'offline-semantic-parser' | 'cpanel-native-parser';
 }
 
-export type JobStatus = 'pending' | 'processing' | 'claimed' | 'navigating' | 'parsing_dom' | 'filling_data' | 'waiting_otp' | 'otp_received' | 'solving_captcha' | 'waiting_human_action' | 'paused_user_action' | 'resumed' | 'submitting' | 'verifying' | 'submitted' | 'under_review' | 'published' | 'failed';
+export type JobStatus = 'pending' | 'processing' | 'claimed' | 'navigating' | 'parsing_dom' | 'filling_data' | 'waiting_otp' | 'otp_received' | 'solving_captcha' | 'waiting_human_action' | 'paused_user_action' | 'resumed' | 'submitting' | 'verifying' | 'submitted' | 'under_review' | 'published' | 'failed' | 'cancelled' | 'paused';
 
 export interface JobStepLog {
   timestamp: string;
@@ -705,6 +705,73 @@ export interface ExtensionTargetSiteConfig {
     captchaImgSelector?: string;
     submitSelector: string;
   };
+}
+
+// =========================================================================
+// انواع داده‌های سامانه خودمختار ثبت‌نام و شکار سشن (Autonomous Session Harvester)
+// =========================================================================
+export type HarvestTargetStatus =
+  | 'queued'
+  | 'navigating'
+  | 'filling'
+  | 'waiting_otp_captcha'
+  | 'session_acquired'
+  | 'saved_to_db'
+  | 'failed'
+  | 'skipped';
+
+export interface AutonomousHarvestTarget {
+  platformId: string;
+  domain: string;
+  persianName: string;
+  category: string;
+  registerUrl: string;
+  loginUrl?: string;
+  authTier?: AuthTierType;
+  authMethod?: AuthMethodType;
+  requiresOtp: boolean;
+  status: HarvestTargetStatus;
+  currentStepMessage?: string;
+  harvestedCookies?: Record<string, string>;
+  harvestedToken?: string;
+  errorReason?: string;
+  startedAt?: string;
+  completedAt?: string;
+  durationMs?: number;
+  extractedUsername?: string;
+}
+
+export interface AutonomousHarvestCredentials {
+  phone: string;
+  email: string;
+  username: string;
+  password: string;
+  fullName: string;
+}
+
+export interface AutonomousHarvestSessionLog {
+  id: string;
+  timestamp: string;
+  platformName: string;
+  domain: string;
+  status: 'info' | 'success' | 'warning' | 'error';
+  message: string;
+  details?: string;
+}
+
+export interface AutonomousSessionHarvesterState {
+  isRunning: boolean;
+  isPaused: boolean;
+  currentIndex: number;
+  totalTargets: number;
+  completedCount: number;
+  successCount: number;
+  failedCount: number;
+  activeTarget: AutonomousHarvestTarget | null;
+  targets: AutonomousHarvestTarget[];
+  credentials: AutonomousHarvestCredentials;
+  logs: AutonomousHarvestSessionLog[];
+  executionMode: 'browser_extension' | 'in_app_web_runner';
 }
 
 export interface PublicationDebuggerReport {

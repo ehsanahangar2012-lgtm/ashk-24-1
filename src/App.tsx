@@ -18,9 +18,14 @@ import { ImageUploadVaultModal } from './components/ImageUploadVaultModal';
 import { CpanelGuideModal } from './components/CpanelGuideModal';
 import { StepByStepGuideModal } from './components/StepByStepGuideModal';
 import { MobileCompanionModule } from './components/MobileCompanionModule';
-import { LoginGate, UserSecurityModal } from './components/LoginGate';
+import { ExtensionBridgeModule } from './components/ExtensionBridgeModule';
+import { AutonomousOrchestratorMatrixModule } from './components/AutonomousOrchestratorMatrixModule';
+import { ExtensionConnectionBanner } from './components/ExtensionConnectionBanner';
+import { DiagnosticLoggerModal } from './components/DiagnosticLoggerModal';
+import { LoginGate } from './components/LoginGate';
+import { UserSecurityModal } from './components/UserSecurityModal';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { KeyRound, Sparkles, RefreshCw, ShieldCheck, Database } from 'lucide-react';
+import { KeyRound, Sparkles, RefreshCw, ShieldCheck, Database, Terminal } from 'lucide-react';
 import { clientStorage } from './services/clientStorageService';
 
 import {
@@ -41,6 +46,7 @@ export default function App() {
   const [showMediaVaultModal, setShowMediaVaultModal] = useState<boolean>(false);
   const [showCpanelModal, setShowCpanelModal] = useState<boolean>(false);
   const [showStepByStepGuideModal, setShowStepByStepGuideModal] = useState<boolean>(false);
+  const [showDiagnosticLoggerModal, setShowDiagnosticLoggerModal] = useState<boolean>(false);
 
   // Authentication state initialized only with saved localStorage or null (force login gate)
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
@@ -312,6 +318,10 @@ export default function App() {
 
           {/* Dynamic Main View & Footer in Vertical Column */}
           <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+            <div className="pt-4 max-w-7xl w-full mx-auto">
+              <ExtensionConnectionBanner onNavigateTab={setActiveTab} />
+            </div>
+
             <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto">
               <ErrorBoundary fallbackTitle="خطا در رندر این بخش" onReset={fetchAllData}>
                 {activeTab === 'company' && (
@@ -354,6 +364,7 @@ export default function App() {
                     onCreateCampaign={handleCreateCampaign}
                     onDeleteCampaign={handleDeleteCampaign}
                     onTriggerJob={handleTriggerJob}
+                    onRefreshAll={fetchAllData}
                   />
                 )}
 
@@ -386,6 +397,14 @@ export default function App() {
                 {activeTab === 'mobile_companion' && (
                   <MobileCompanionModule />
                 )}
+
+                {activeTab === 'extension_bridge' && (
+                  <ExtensionBridgeModule onOpenHarvesterModal={() => setActiveTab('platforms')} />
+                )}
+
+                {activeTab === 'orchestrator_matrix' && (
+                  <AutonomousOrchestratorMatrixModule />
+                )}
               </ErrorBoundary>
             </main>
 
@@ -412,6 +431,14 @@ export default function App() {
 
               <div className="flex items-center space-x-3 space-x-reverse">
                 <button
+                  onClick={() => setShowDiagnosticLoggerModal(true)}
+                  className="flex items-center space-x-1.5 space-x-reverse px-2.5 py-1 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-sky-400 transition-colors text-[11px] font-semibold"
+                  title="مشاهده و استخراج لاگ‌های عیب‌یابی اتصال افزونه و خطاهای رندر"
+                >
+                  <Terminal className="w-3.5 h-3.5 text-sky-400" />
+                  <span>لاگ‌های عیب‌یابی (JSON)</span>
+                </button>
+                <button
                   onClick={async () => {
                     await clientStorage.clearAllOldStorageCache();
                     fetchAllData();
@@ -430,6 +457,13 @@ export default function App() {
             </footer>
           </div>
         </div>
+
+        {/* Modal for Diagnostic Logger */}
+        {showDiagnosticLoggerModal && (
+          <DiagnosticLoggerModal
+            onClose={() => setShowDiagnosticLoggerModal(false)}
+          />
+        )}
 
         {/* Modal for editing company profile */}
         {showCompanyModal && (

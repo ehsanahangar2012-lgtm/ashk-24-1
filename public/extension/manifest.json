@@ -1,41 +1,49 @@
 {
   "manifest_version": 3,
-  "name": "ASHK 24 Local Execution Agent",
-  "version": "1.0",
-  "description": "Local execution agent for ASHK 24 Orchestrator.",
+  "name": "اشک ۲۴ - سامانه یکپارچه انتشار هوشمند آگهی و مدیریت سشن",
+  "version": "5.3.0",
+  "description": "موتور یکپارچه انتشار خودکار آگهی در دایرکتوری‌های ایرانی با IP بومی و دورزدن پایدار فیلترینگ و تحریم‌ها",
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
   "permissions": [
     "storage",
+    "cookies",
     "tabs",
     "alarms",
-    "scripting"
+    "scripting",
+    "webNavigation",
+    "activeTab",
+    "notifications"
   ],
   "host_permissions": [
-    "https://*.parscenter.com/*",
-    "https://*.locopoc.com/*",
-    "https://*.istgah.com/*",
-    "https://*.niazpardaz.com/*",
-    "https://*.payamsara.com/*",
-    "https://*.niazerooz.com/*",
-    "https://*.rahnama.com/*",
-    "https://*.agahi24.com/*"
+    "*://*/*"
   ],
   "background": {
     "service_worker": "background.js"
   },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "افزونه خودمختار استخراج سشن اشک ۲۴",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
   "content_scripts": [
     {
       "matches": [
-        "https://*.parscenter.com/*",
-        "https://*.locopoc.com/*",
-        "https://*.istgah.com/*",
-        "https://*.niazpardaz.com/*",
-        "https://*.payamsara.com/*",
-        "https://*.niazerooz.com/*",
-        "https://*.rahnama.com/*",
-        "https://*.agahi24.com/*"
+        "*://*/*"
       ],
-      "js": ["content.js"],
-      "run_at": "document_idle"
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true,
+      "match_about_blank": true
     }
   ]
 }

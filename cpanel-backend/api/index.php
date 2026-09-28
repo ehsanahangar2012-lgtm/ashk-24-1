@@ -62,9 +62,10 @@ $route = $_GET['route'] ?? '';
 if (empty($route)) {
     $uri = $_SERVER['REQUEST_URI'] ?? '';
     $path = parse_url($uri, PHP_URL_PATH);
-    $path = preg_replace('/^.*\/api\//', '', $path);
+    $path = preg_replace('/^.*\/api\/(?:index\.php\/)?/', '', $path);
     $route = trim($path, '/');
 }
+$route = preg_replace('/^index\.php\/?/', '', $route);
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $inputJSON = file_get_contents('php://input');
@@ -914,6 +915,70 @@ try {
             ], JSON_UNESCAPED_UNICODE);
             break;
 
+        case ($route === 'jobs/stop'):
+            $jobId = $body['id'] ?? ($body['jobId'] ?? ($_GET['id'] ?? ''));
+            $targetStatus = $body['status'] ?? 'cancelled';
+            if ($jobId) {
+                $existing = $db->getJobById($jobId);
+                if ($existing) {
+                    $reason = $targetStatus === 'paused' ? 'توقف موقت (Pause) توسط کاربر' : 'نوبت انتشار توسط کاربر صریحاً متوقف/لغو گردید.';
+                    $db->addJobLog($jobId, [
+                        'step' => 'ManualStop',
+                        'status' => 'warning',
+                        'message' => $reason
+                    ]);
+                    $updated = $db->updateJob($jobId, [
+                        'status' => $targetStatus,
+                        'currentStep' => $reason
+                    ]);
+                    echo json_encode(['success' => true, 'message' => "نوبت کاری $jobId به وضعیت $targetStatus تغییر یافت.", 'job' => $updated], JSON_UNESCAPED_UNICODE);
+                    break;
+                }
+            }
+            http_response_code(404);
+            echo json_encode(['error' => 'نوبت کاری یافت نشد.'], JSON_UNESCAPED_UNICODE);
+            break;
+
+        case ($route === 'jobs/stop-all'):
+            $targetStatus = $body['status'] ?? 'cancelled';
+            $jobs = $db->getJobs();
+            $stoppedCount = 0;
+            foreach ($jobs as $j) {
+                if ($j['status'] !== 'published' && $j['status'] !== 'failed' && $j['status'] !== 'cancelled') {
+                    $db->addJobLog($j['id'], [
+                        'step' => 'StopAll',
+                        'status' => 'warning',
+                        'message' => "نوبت به دستور کاربر به وضعیت $targetStatus تغییر یافت."
+                    ]);
+                    $db->updateJob($j['id'], [
+                        'status' => $targetStatus,
+                        'currentStep' => "توقف دسته‌جمعی ($targetStatus) توسط کاربر"
+                    ]);
+                    $stoppedCount++;
+                }
+            }
+            echo json_encode(['success' => true, 'stoppedCount' => $stoppedCount, 'message' => "تعداد $stoppedCount نوبت کاری به وضعیت $targetStatus تغییر یافتند."], JSON_UNESCAPED_UNICODE);
+            break;
+
+        case ($route === 'jobs/delete'):
+            $jobId = $body['id'] ?? ($body['jobId'] ?? ($_GET['id'] ?? ''));
+            if (!empty($jobId)) {
+                if ($jobId === 'all') {
+                    $db->clearAllJobs();
+                    echo json_encode(['success' => true, 'message' => 'کلیه نوبت‌ها حذف شدند.'], JSON_UNESCAPED_UNICODE);
+                } elseif ($jobId === 'completed') {
+                    $db->clearCompletedJobs();
+                    echo json_encode(['success' => true, 'message' => 'نوبت‌های تکمیل شده حذف شدند.'], JSON_UNESCAPED_UNICODE);
+                } else {
+                    $deleted = $db->deleteJob($jobId);
+                    echo json_encode(['success' => $deleted, 'message' => $deleted ? 'نوبت با موفقیت حذف گردید.' : 'نوبت یافت نشد.'], JSON_UNESCAPED_UNICODE);
+                }
+            } else {
+                http_response_code(400);
+                echo json_encode(['error' => 'شناسه نوبت برای حذف ارسال نشده است.'], JSON_UNESCAPED_UNICODE);
+            }
+            break;
+
         case ($route === 'jobs/clear-completed'):
             $db->clearCompletedJobs();
             echo json_encode(['success' => true, 'message' => 'نوبت‌های تکمیل شده یا ناموفق پاکسازی شدند.'], JSON_UNESCAPED_UNICODE);
@@ -1195,15 +1260,22 @@ try {
             if ($method !== 'POST') { http_response_code(405); echo json_encode(['error' => 'Method Not Allowed']); break; }
             $jobId = $body['jobId'] ?? ($_GET['jobId'] ?? '');
             $agentId = $body['agentId'] ?? ($_GET['agentId'] ?? 'agent_local_default');
-            if (empty($jobId)) {
-                http_response_code(400);
-                echo json_encode(['error' => 'شناسه جاب جهت دریافت قفل الزامی است.'], JSON_UNESCAPED_UNICODE);
-                break;
+            $platformFilter = $body['platformFilter'] ?? ($body['platform'] ?? null);
+
+            $claimedJob = null;
+            if (!empty($jobId)) {
+                $claimedJob = $db->claimJob($jobId, $agentId, 300);
+            } else {
+                $claimedJob = $db->claimNextPendingJob($agentId, 300, $platformFilter);
             }
-            $claimedJob = $db->claimJob($jobId, $agentId, 300);
+
             if (!$claimedJob) {
-                http_response_code(409);
-                echo json_encode(['error' => 'جاب توسط ایجنت دیگری قفل شده و مهلت آن هنوز به پایان نرسیده است.'], JSON_UNESCAPED_UNICODE);
+                http_response_code(200);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'هیچ نوبت کاری معلقی برای انجام توسط این ایجنت یافت نشد.',
+                    'job' => null
+                ], JSON_UNESCAPED_UNICODE);
                 break;
             }
             echo json_encode([
@@ -1211,6 +1283,52 @@ try {
                 'claimToken' => $claimedJob['claimToken'],
                 'leaseExpiresAt' => $claimedJob['leaseExpiresAt'],
                 'job' => $claimedJob
+            ], JSON_UNESCAPED_UNICODE);
+            break;
+
+        // --- Autonomous Multi-Channel Orchestrator Routes (v5.1.0) ---
+
+        case ($route === 'orchestrator/state' || $route === 'orchestrator/status'):
+            $state = $db->getOrchestrationState();
+            echo json_encode([
+                'success' => true,
+                'orchestrator' => $state
+            ], JSON_UNESCAPED_UNICODE);
+            break;
+
+        case ($route === 'orchestrator/heartbeat' || $route === 'worker/heartbeat' || $route === 'worker/status'):
+            $agentId = $body['agentId'] ?? ($_GET['agentId'] ?? 'unknown_agent');
+            $channelType = $body['channelType'] ?? ($body['channel'] ?? 'extension');
+            $meta = $body['meta'] ?? $body;
+            $state = $db->recordOrchestratorHeartbeat($agentId, $channelType, $meta);
+            echo json_encode([
+                'success' => true,
+                'status' => 'online',
+                'version' => '5.2.0',
+                'message' => "هارت‌بیت کانال {$channelType} با موفقیت ثبت شد.",
+                'orchestrator' => $state
+            ], JSON_UNESCAPED_UNICODE);
+            break;
+
+        case ($route === 'orchestrator/claim-balanced'):
+            if ($method !== 'POST') { http_response_code(405); echo json_encode(['error' => 'Method Not Allowed']); break; }
+            $channel = $body['channel'] ?? ($_GET['channel'] ?? 'any');
+            $agentId = $body['agentId'] ?? ($_GET['agentId'] ?? 'agent_orchestrator');
+            $job = $db->getBalancedNextJob($channel, $agentId);
+            if (!$job) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'هیچ نوبت کاری واجد شرایطی در این بازه زمانی یافت نشد.',
+                    'job' => null
+                ], JSON_UNESCAPED_UNICODE);
+                break;
+            }
+            echo json_encode([
+                'success' => true,
+                'channel' => $channel,
+                'claimToken' => $job['claimToken'],
+                'leaseExpiresAt' => $job['leaseExpiresAt'],
+                'job' => $job
             ], JSON_UNESCAPED_UNICODE);
             break;
 
@@ -1929,6 +2047,86 @@ try {
             break;
 
         
+        case ($route === 'sessions/harvest'):
+            $domain = $body['domain'] ?? '';
+            $platformId = $body['platformId'] ?? '';
+            $cookies = $body['sessionCookies'] ?? ($body['cookies'] ?? []);
+            $token = $body['sessionToken'] ?? ($body['token'] ?? null);
+            $accountUsername = $body['accountUsername'] ?? ($body['username'] ?? '');
+
+            $platforms = $db->getMediaPlatforms();
+            $targetPlat = null;
+            foreach ($platforms as $p) {
+                if ($platformId && $p['id'] === $platformId) {
+                    $targetPlat = $p;
+                    break;
+                }
+                if ($domain) {
+                    $cleanTargetDom = preg_replace('/^https?:\/\//i', '', trim($domain));
+                    $cleanTargetDom = preg_replace('/\/.*$/', '', $cleanTargetDom);
+                    $cleanPlatDom = preg_replace('/^https?:\/\//i', '', trim($p['domain'] ?? ''));
+                    $cleanPlatDom = preg_replace('/\/.*$/', '', $cleanPlatDom);
+                    if (strcasecmp($cleanPlatDom, $cleanTargetDom) === 0 || stripos($cleanPlatDom, $cleanTargetDom) !== false || stripos($cleanTargetDom, $cleanPlatDom) !== false) {
+                        $targetPlat = $p;
+                        break;
+                    }
+                }
+            }
+
+            if ($targetPlat) {
+                $updates = [
+                    'sessionStatus' => 'authenticated',
+                    'sessionCookies' => $cookies,
+                    'sessionToken' => $token,
+                    'accountUsername' => !empty($accountUsername) ? $accountUsername : ($targetPlat['accountUsername'] ?? 'اشک قلم'),
+                    'sessionExpiresAt' => date('Y-m-d H:i:s', strtotime('+30 days')),
+                    'updatedAt' => date('Y-m-d H:i:s')
+                ];
+                $db->updatePlatformSession($targetPlat['id'], $updates);
+
+                $db->addAutonomousLog([
+                    'action' => 'session_harvest',
+                    'title' => "استخراج سشن برای {$targetPlat['persianName']}",
+                    'details' => "سشن و کوکی‌ها با موفقیت توسط افزونه مرورگر دریافت و در دیتابیس سی‌پنل ثبت شد.",
+                    'status' => 'success'
+                ]);
+
+                echo json_encode([
+                    'success' => true,
+                    'message' => "سشن پلتفرم {$targetPlat['persianName']} در دیتابیس سی‌پنل تثبیت گردید.",
+                    'platformId' => $targetPlat['id'],
+                    'platform' => $db->getPlatformById($targetPlat['id'])
+                ], JSON_UNESCAPED_UNICODE);
+            } else {
+                http_response_code(404);
+                echo json_encode(['error' => 'پلتفرم متناظر با دامنه ارسالی یافت نشد.'], JSON_UNESCAPED_UNICODE);
+            }
+            break;
+
+        case ($route === 'sessions/unauthenticated-platforms' || $route === 'harvester/queue'):
+            $platforms = $db->getMediaPlatforms();
+            $unauth = [];
+            foreach ($platforms as $p) {
+                $hasAuth = ($p['sessionStatus'] ?? '') === 'authenticated';
+                $hasCookies = !empty($p['sessionCookies']) && count((array)$p['sessionCookies']) > 0;
+                if (!$hasAuth || !$hasCookies) {
+                    $unauth[] = [
+                        'platformId' => $p['id'],
+                        'domain' => $p['domain'],
+                        'persianName' => $p['persianName'] ?? $p['name'] ?? $p['domain'],
+                        'category' => $p['category'] ?? 'classifieds',
+                        'registerUrl' => $p['adapterConfig']['endpoint'] ?? "https://{$p['domain']}",
+                        'requiresOtp' => !empty($p['requiresOtp'])
+                    ];
+                }
+            }
+            echo json_encode([
+                'success' => true,
+                'count' => count($unauth),
+                'targets' => $unauth
+            ], JSON_UNESCAPED_UNICODE);
+            break;
+
         case ($route === 'sessions/update'):
             $platformId = $body['platformId'] ?? '';
             $updates = $body['updates'] ?? [];
@@ -1973,6 +2171,99 @@ try {
                 $saved = $db->savePlatformStorageState($platformId, $storageState);
                 echo json_encode(['success' => $saved, 'message' => 'نشست ذخیره‌سازی شده مرورگر با موفقیت در مخزن سی‌پنل ثبت شد.'], JSON_UNESCAPED_UNICODE);
             }
+            break;
+
+        // --- 10.1 Autonomous Browser Worker Node Endpoints ---
+        case ($route === 'worker/heartbeat'):
+            $workerId = $body['workerId'] ?? 'ashk24_browser_worker_' . substr(md5($_SERVER['REMOTE_ADDR'] ?? 'local'), 0, 8);
+            $workerState = [
+                'workerId' => $workerId,
+                'status' => 'online',
+                'activeSessionsCount' => intval($body['activeSessionsCount'] ?? 0),
+                'queueStatus' => $body['queueStatus'] ?? 'idle',
+                'browser' => $body['browser'] ?? 'Chrome (Ashk24 Extension v4.8.2)',
+                'ip' => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1',
+                'lastPing' => date('Y-m-d H:i:s'),
+                'lastPingTimestamp' => time()
+            ];
+
+            // Save worker status in data folder
+            $workerStatusFile = __DIR__ . '/../data/worker_status.json';
+            @file_put_contents($workerStatusFile, json_encode($workerState, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+
+            // Log heartbeat to audit log
+            $db->addAutonomousLog([
+                'action' => 'worker_heartbeat',
+                'workerId' => $workerId,
+                'status' => 'online',
+                'details' => "ورکر خودمختار مرورگر فعال و متصل به سرور سی‌پنل است. (سشن‌های فعال: {$workerState['activeSessionsCount']})"
+            ]);
+
+            // Count pending tasks
+            $platforms = $db->getMediaPlatforms();
+            $unauthCount = 0;
+            foreach ($platforms as $p) {
+                if (($p['sessionStatus'] ?? '') !== 'authenticated') {
+                    $unauthCount++;
+                }
+            }
+
+            echo json_encode([
+                'success' => true,
+                'workerId' => $workerId,
+                'serverStatus' => 'connected',
+                'serverTime' => date('c'),
+                'pendingRegistrationTargets' => $unauthCount,
+                'heartbeatIntervalSeconds' => 60
+            ], JSON_UNESCAPED_UNICODE);
+            break;
+
+        case ($route === 'worker/tasks'):
+            $platforms = $db->getMediaPlatforms();
+            $tasks = [];
+            foreach ($platforms as $p) {
+                if (($p['sessionStatus'] ?? '') !== 'authenticated') {
+                    $tasks[] = [
+                        'id' => 'task_reg_' . $p['id'],
+                        'type' => 'harvest_session',
+                        'platformId' => $p['id'],
+                        'domain' => $p['domain'],
+                        'persianName' => $p['persianName'] ?? $p['name'] ?? $p['domain'],
+                        'endpoint' => $p['adapterConfig']['endpoint'] ?? "https://{$p['domain']}",
+                        'requiresOtp' => !empty($p['requiresOtp'])
+                    ];
+                }
+            }
+            echo json_encode([
+                'success' => true,
+                'tasks' => $tasks,
+                'count' => count($tasks)
+            ], JSON_UNESCAPED_UNICODE);
+            break;
+
+        case ($route === 'sessions/sync-batch'):
+            $sessions = $body['sessions'] ?? (is_array($body) ? $body : []);
+            $syncedCount = 0;
+            foreach ($sessions as $item) {
+                $domain = $item['domain'] ?? '';
+                if (!$domain) continue;
+                $matching = $db->findPlatformByDomain($domain);
+                if ($matching) {
+                    $db->updatePlatformSession($matching['id'], [
+                        'sessionStatus' => 'authenticated',
+                        'sessionCookies' => $item['sessionCookies'] ?? [],
+                        'sessionToken' => $item['sessionToken'] ?? null,
+                        'accountUsername' => $item['accountUsername'] ?? '',
+                        'lastTested' => date('c')
+                    ]);
+                    $syncedCount++;
+                }
+            }
+            echo json_encode([
+                'success' => true,
+                'syncedCount' => $syncedCount,
+                'message' => "تعداد {$syncedCount} سشن با موفقیت در دیتابیس سی‌پنل همگام‌سازی شد."
+            ], JSON_UNESCAPED_UNICODE);
             break;
 
         // --- 11. Local Reasoning ---

@@ -24,7 +24,7 @@ interface LoginGateProps {
 
 type ServerStatusType = 'checking' | 'node_online' | 'cpanel_online' | 'offline_vault';
 
-export function LoginGate({ currentUser, onLoginSuccess, onLogout, children }: LoginGateProps) {
+export const LoginGate: React.FC<LoginGateProps> = ({ currentUser, onLoginSuccess, onLogout, children }) => {
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -401,6 +401,5 @@ export function LoginGate({ currentUser, onLoginSuccess, onLogout, children }: L
       </div>
     </div>
   );
-}
+};
 
-export { UserSecurityModal } from './UserSecurityModal.js';

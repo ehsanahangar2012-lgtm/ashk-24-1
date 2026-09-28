@@ -34,7 +34,9 @@ import {
   ChevronUp,
   Info,
   ArrowRight,
-  Workflow
+  Workflow,
+  Puzzle,
+  Power
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -56,6 +58,7 @@ import {
 } from '../types/ashk24.js';
 import { toPersianDigits, getJalaliCurrentTime } from '../utils/persianUtils.js';
 import { clientStorage } from '../services/clientStorageService.js';
+import { extensionBridge, ExtensionWorkerStatus } from '../utils/extensionBridge.js';
 import { PublicationDiagnosticsInspector } from './PublicationDiagnosticsInspector.js';
 import { SmsRelayMonitorModule } from './SmsRelayMonitorModule.js';
 
@@ -103,6 +106,16 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
   const [isLoadingDiagConsole, setIsLoadingDiagConsole] = useState<boolean>(false);
   const [showDiagConsoleHelp, setShowDiagConsoleHelp] = useState<boolean>(false);
   const [copiedDiagEntryId, setCopiedDiagEntryId] = useState<string | null>(null);
+
+  // Live Extension Worker Status
+  const [workerStatus, setWorkerStatus] = useState<ExtensionWorkerStatus>(extensionBridge.getStatus());
+
+  useEffect(() => {
+    const unsubscribe = extensionBridge.subscribe((newStatus) => {
+      setWorkerStatus(newStatus);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const showNotification = (text: string, type: 'success' | 'error' = 'success') => {
     setFeedbackMsg({ type, text });
@@ -305,14 +318,17 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
     return () => clearInterval(interval);
   }, [jobs, onRefreshJobs]);
 
-  const handleStopJob = async (jobId: string) => {
+  const handleStopJob = async (jobId: string, status: 'cancelled' | 'paused' | 'failed' = 'cancelled') => {
     setActionLoadingId(jobId);
     try {
-      await clientStorage.stopJob(jobId);
-      showNotification(`نوبت انتشار (${jobId}) به صورت دستی متوقف شد.`);
+      const reason = status === 'paused'
+        ? 'نوبت انتشار توسط کاربر توقف موقت (Pause) گردید.'
+        : 'نوبت انتشار توسط کاربر لغو و متوقف گردید.';
+      await clientStorage.setJobExplicitStatus(jobId, status, reason);
+      showNotification(`وضعیت نوبت انتشار با موفقیت به «${status === 'paused' ? 'پاز / تعلیق' : 'لغو / متوقف'}» تغییر یافت.`);
       onRefreshJobs();
     } catch (e: any) {
-      showNotification('خطا در توقف دستی نوبت.', 'error');
+      showNotification('خطا در تغییر وضعیت صریح نوبت.', 'error');
     } finally {
       setActionLoadingId(null);
     }
@@ -1573,11 +1589,41 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
                   <div className="space-y-0.5">
-                    <div className="flex items-center space-x-2 space-x-reverse">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-bold text-slate-100">
                         پلتفرم: {job.platformName}
                       </span>
                       <span className="text-[10px] font-mono text-slate-400">({job.id})</span>
+
+                      {/* Live Worker Connection Status for this Platform Job */}
+                      {workerStatus.installed && workerStatus.isWorkerEnabled ? (
+                        <span
+                          className="inline-flex items-center space-x-1 space-x-reverse px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                          title="ورکر افزونه آنلاین و متصل به این پلتفرم است"
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <Puzzle className="w-3 h-3 ml-0.5" />
+                          <span>ورکر متصل و آماده</span>
+                        </span>
+                      ) : workerStatus.installed ? (
+                        <span
+                          className="inline-flex items-center space-x-1 space-x-reverse px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                          title="افزونه شناسایی شده اما ورکر در حالت Pause است"
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                          <Puzzle className="w-3 h-3 ml-0.5" />
+                          <span>ورکر در حالت آماده‌باش</span>
+                        </span>
+                      ) : (
+                        <span
+                          className="inline-flex items-center space-x-1 space-x-reverse px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-800 text-slate-400 border border-slate-700"
+                          title="افزونه متصل نیست - اجرای نوبت توسط کرون‌جاب سی‌پنل پردازش می‌شود"
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                          <Puzzle className="w-3 h-3 ml-0.5" />
+                          <span>ورکر قطع (cPanel Cron)</span>
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs text-slate-400">{job.currentStep}</div>
                   </div>
@@ -1657,6 +1703,26 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
                       </a>
                     )}
 
+                    {/* Direct Execution via Chrome Extension */}
+                    {job.status !== 'published' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          extensionBridge.publishJobViaExtension(
+                            job,
+                            { title: job.campaignTitle, content: job.campaignContent },
+                            { phoneNumber: job.contactPhone, contactPerson: job.contactPerson, email: job.contactEmail }
+                          );
+                          showNotification(`دستور اجرای مستقیم با افزونه برای نوبت ${job.platformName} به مرورگر ارسال شد.`);
+                        }}
+                        title="اجرای مستقیم این جاب در مرورگر با افزونه و IP خانگی شما"
+                        className="px-2.5 py-1 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition-all flex items-center space-x-1 space-x-reverse"
+                      >
+                        <Puzzle className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>اجرا با افزونه مرورگر</span>
+                      </button>
+                    )}
+
                     {/* Fast Forward / Complete Button for processing/pending jobs */}
                     {job.status !== 'published' && job.status !== 'failed' && (
                       <button
@@ -1684,18 +1750,30 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
                       </a>
                     )}
 
-                    {/* Manual Stop Button */}
-                    {job.status !== 'published' && job.status !== 'failed' && (
-                      <button
-                        type="button"
-                        onClick={() => handleStopJob(job.id)}
-                        disabled={actionLoadingId === job.id}
-                        title="متوقف ساختن فوری این نوبت انتشار"
-                        className="px-2.5 py-1 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/40 text-xs font-semibold transition-colors flex items-center space-x-1 space-x-reverse disabled:opacity-50"
-                      >
-                        <StopCircle className="w-3.5 h-3.5 text-rose-400" />
-                        <span>{actionLoadingId === job.id ? 'در حال توقف...' : 'توقف دستی نوبت'}</span>
-                      </button>
+                    {/* Explicit Pause & Cancel Buttons */}
+                    {job.status !== 'published' && job.status !== 'failed' && job.status !== 'cancelled' && (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleStopJob(job.id, 'paused')}
+                          disabled={actionLoadingId === job.id}
+                          title="توقف موقت (پاز) این نوبت انتشار"
+                          className="px-2.5 py-1 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-semibold transition-colors flex items-center space-x-1 space-x-reverse disabled:opacity-50"
+                        >
+                          <Clock className="w-3.5 h-3.5 text-amber-400" />
+                          <span>{actionLoadingId === job.id ? 'در حال پاز...' : 'توقف موقت (Pause)'}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleStopJob(job.id, 'cancelled')}
+                          disabled={actionLoadingId === job.id}
+                          title="لغو کامل و متوقف ساختن این نوبت انتشار"
+                          className="px-2.5 py-1 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/40 text-xs font-semibold transition-colors flex items-center space-x-1 space-x-reverse disabled:opacity-50"
+                        >
+                          <StopCircle className="w-3.5 h-3.5 text-rose-400" />
+                          <span>{actionLoadingId === job.id ? 'در حال لغو...' : 'لغو و توقف'}</span>
+                        </button>
+                      </div>
                     )}
 
                     {/* Retry Button for stopped or failed jobs */}

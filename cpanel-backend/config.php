@@ -31,7 +31,7 @@ function sendCorsHeaders() {
  * Paths
  */
 define('DATA_DIR', __DIR__ . '/data');
-define('DB_FILE', DATA_DIR . '/db.json');
+define('DB_FILE', file_exists(DATA_DIR . '/database.json') ? DATA_DIR . '/database.json' : DATA_DIR . '/db.json');
 define('UPLOADS_DIR', __DIR__ . '/uploads');
 
 /**
@@ -39,7 +39,7 @@ define('UPLOADS_DIR', __DIR__ . '/uploads');
  */
 define('SITE_URL', 'https://secret.ashkghalam.ir');
 define('APP_NAME', 'سامانه هوش مصنوعی اشک ۲۴');
-define('APP_VERSION', '4.5.0-enterprise');
+define('APP_VERSION', '5.3.0-unified');
 
 /**
  * Security Secrets

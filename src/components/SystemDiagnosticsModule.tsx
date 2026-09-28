@@ -17,6 +17,8 @@ import {
   Terminal,
 } from 'lucide-react';
 import { PublicationDiagnosticsInspector } from './PublicationDiagnosticsInspector.js';
+import { SmartHelpButton } from './SmartHelpModal.js';
+import { APP_VERSION } from '../config/version.js';
 
 export interface SystemLogEntry {
   id: string;
@@ -156,7 +158,7 @@ export function SystemDiagnosticsModule() {
 - صف نوبت‌های انتشار (Job Queue): PASS (صف نوبت کرون‌جاب)
 
 [۲] اطلاعات عمومی سیستم:
-- نسخه نرم‌افزار: 3.9.3
+- نسخه نرم‌افزار: ${APP_VERSION}
 - محیط اجرا: cPanel PHP 8.x + MySQL + Static SPA
 - پشتیبانی سی‌پنل و هاست‌های ایران: بله (کامل)`;
   };
@@ -213,6 +215,10 @@ export function SystemDiagnosticsModule() {
           <div>
             <div className="flex items-center space-x-2 space-x-reverse">
               <h2 className="text-xl font-black text-white">مرکز عیب‌یابی و پایش سلامت سیستم (cPanel PHP)</h2>
+              <SmartHelpButton
+                title="راهنمای عیب‌یابی و پایش سلامت سیستم"
+                description="این بخش به شما وضعیت اتصال پایگاه داده، پوشه آپلودها، صف نوبت‌های انتشار و لاگ‌های سرور سی‌پنل را نمایش می‌دهد. همچنین می‌توانید در صورت بروز هرگونه مشکل، گزارش کامل تشخیصی را استخراج و برای پشتیبانی ارسال فرمایید."
+              />
               {errorCount > 0 ? (
                 <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold animate-pulse">
                   {errorCount} خطا ثبت شد

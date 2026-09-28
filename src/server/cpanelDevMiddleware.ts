@@ -1014,6 +1014,25 @@ export function cpanelDevApiPlugin(): Plugin {
           }
 
           switch (route) {
+            case 'system/wipe-data':
+            case 'data/reset': {
+              const freshDb = getInitialDb();
+              db.campaigns = [];
+              db.publicationJobs = [];
+              db.publicationReports = [];
+              db.smsLogs = [];
+              db.emailLogs = [];
+              db.telemetryLogs = [];
+              db.autonomousLogs = [];
+              db.companyProfile = freshDb.companyProfile;
+              db.mediaPlatforms = freshDb.mediaPlatforms;
+              writeDb(db);
+              return sendJson({
+                success: true,
+                message: 'کلیه اطلاعات، آگهی‌ها، نوبت‌های کاری و لاگ‌های پیش‌فرض با موفقیت پاکسازی و سیستم به حالت خام (Raw State) درآمد.'
+              });
+            }
+
             case 'health':
               return sendJson({
                 status: 'ok',

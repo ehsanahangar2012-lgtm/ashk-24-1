@@ -8,13 +8,26 @@ export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss(), cpanelDevApiPlugin()],
     resolve: {
-      dedupe: ['react', 'react-dom', 'react/jsx-runtime'],
+      dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime'],
       alias: {
         '@': path.resolve(__dirname, '.'),
+        'react': path.resolve(__dirname, 'node_modules/react'),
+        'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
       },
     },
     optimizeDeps: {
-      include: ['react', 'react-dom', 'react-dom/client', 'recharts', 'lucide-react', 'motion'],
+      include: [
+        'react',
+        'react-dom',
+        'react-dom/client',
+        'react/jsx-runtime',
+        'react/jsx-dev-runtime',
+        'recharts',
+        'lucide-react',
+        'motion',
+        'jszip'
+      ],
+      force: true,
     },
     build: {
       chunkSizeWarningLimit: 1500,

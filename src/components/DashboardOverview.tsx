@@ -14,10 +14,12 @@ import {
   Smartphone,
   FileCheck2,
   Eye,
+  Puzzle,
 } from 'lucide-react';
 import { Campaign, PublicationJob, ResilienceStatus, SmsWebhookPayload } from '../types/ashk24.js';
 import { toPersianDigits, toTomanFormat } from '../utils/persianUtils.js';
 import { OfflineSyncStatus } from './OfflineSyncStatus';
+import { ExtensionStatusWidget } from './ExtensionStatusWidget';
 import { SmartHelpButton } from './SmartHelpModal';
 
 interface DashboardOverviewProps {
@@ -78,11 +80,17 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
         <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/80">
           <button
-            onClick={() => onNavigateTab('live_visualizer')}
+            onClick={() => onNavigateTab('orchestrator_matrix')}
+            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-extrabold text-xs shadow-lg shadow-amber-500/20 transition-all flex items-center space-x-1.5 space-x-reverse"
+          >
+            <span>🧭 ماتریس هماهنگی خودمختار (افزونه / ورکر / رله)</span>
+          </button>
+          <button
+            onClick={() => onNavigateTab('jobs')}
             className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all flex items-center space-x-1.5 space-x-reverse animate-pulse"
           >
-            <Eye className="w-4 h-4 ml-1" />
-            <span>پایش زنده و تصویری ثبت‌نام</span>
+            <Radio className="w-4 h-4 ml-1" />
+            <span>پایش صف نوبت‌های انتشار</span>
           </button>
           <button
             onClick={() => onNavigateTab('reports')}
@@ -105,8 +113,20 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <Smartphone className="w-4 h-4 text-amber-400" />
             <span>اتصال همراه موبایل (OTP)</span>
           </button>
+          <button
+            onClick={() => onNavigateTab('extension_bridge')}
+            className="px-3.5 py-2 rounded-xl bg-sky-950/80 text-sky-300 border border-sky-800 hover:bg-sky-900 font-bold text-xs transition-all flex items-center space-x-1.5 space-x-reverse"
+          >
+            <Puzzle className="w-4 h-4 text-sky-400" />
+            <span>لوله ارتباطی افزونه (Bridge)</span>
+          </button>
         </div>
       </div>
+
+      {/* Extension Live Worker Status Widget */}
+      <ExtensionStatusWidget
+        onOpenExtensionModal={() => onNavigateTab('discovery')}
+      />
 
       {/* KPI Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

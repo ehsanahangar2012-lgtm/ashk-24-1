@@ -5,6 +5,7 @@ import {
   MediaPlatform,
   Campaign,
   PublicationJob,
+  JobStatus,
   PublicationReportItem,
   ContinuousAutomationProgress,
   PublicationFieldMapping,
@@ -2276,44 +2277,98 @@ ${suggestedHashtags.join(' ')}`;
     return true;
   }
 
-  public async stopJob(jobId: string): Promise<boolean> {
-    try {
-      await callCpanelApi('jobs/stop', {
-        method: 'POST',
-        body: JSON.stringify({ id: jobId }),
-      });
-    } catch (e) {}
+  public async setJobExplicitStatus(
+    jobId: string,
+    targetStatus: JobStatus,
+    reasonMessage?: string
+  ): Promise<PublicationJob | null> {
+    const reason =
+      reasonMessage ||
+      (targetStatus === 'cancelled'
+        ? 'نوبت لغو و متوقف گردید.'
+        : targetStatus === 'paused' || targetStatus === 'paused_user_action'
+        ? 'نوبت به حالت تعلیق/پاز درآمد.'
+        : `وضعیت به صراحت به ${targetStatus} تغییر یافت.`);
 
-    await this.updateJob(jobId, {
-      status: 'failed',
-      currentStep: 'توسط کاربر به صورت دستی متوقف گردید',
+    // 1. Explicitly notify server backend / database
+    try {
+      await callCpanelApi(`jobs/${jobId}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          status: targetStatus,
+          currentStep: reason,
+        }),
+      });
+      if (targetStatus === 'cancelled' || targetStatus === 'failed' || targetStatus === 'paused') {
+        await callCpanelApi('jobs/stop', {
+          method: 'POST',
+          body: JSON.stringify({ id: jobId, status: targetStatus }),
+        });
+      }
+    } catch (e) {
+      console.warn('Server sync error during explicit job status change:', e);
+    }
+
+    // 2. Local storage state update
+    const currentJobs = await this.getPublicationJobs();
+    const index = currentJobs.findIndex((j) => j.id === jobId);
+    if (index === -1) return null;
+
+    const existingLogs = currentJobs[index].logs || [];
+    const updatedJob: PublicationJob = {
+      ...currentJobs[index],
+      status: targetStatus,
+      currentStep: reason,
       logs: [
+        ...existingLogs,
         {
           timestamp: getJalaliCurrentTime(),
-          step: 'ManualStop',
-          status: 'warning',
-          message: 'نوبت انتشار توسط کاربر به صورت دستی متوقف گردید.',
+          step: 'ExplicitStatusUpdate',
+          status:
+            targetStatus === 'failed' || targetStatus === 'cancelled'
+              ? 'warning'
+              : targetStatus === 'published'
+              ? 'success'
+              : 'info',
+          message: reason,
         },
       ],
-    });
-    return true;
+    };
+
+    currentJobs[index] = updatedJob;
+
+    try {
+      localStorage.setItem(JOBS_KEY, JSON.stringify(currentJobs));
+    } catch (e) {}
+
+    return updatedJob;
   }
 
-  public async stopAllJobs(): Promise<number> {
+  public async stopJob(jobId: string, targetStatus: JobStatus = 'cancelled', reason?: string): Promise<boolean> {
+    const res = await this.setJobExplicitStatus(
+      jobId,
+      targetStatus,
+      reason || 'نوبت انتشار توسط کاربر به صورت دستی متوقف/لغو گردید.'
+    );
+    return res !== null;
+  }
+
+  public async stopAllJobs(targetStatus: JobStatus = 'cancelled'): Promise<number> {
     try {
       await callCpanelApi('jobs/stop-all', {
         method: 'POST',
+        body: JSON.stringify({ status: targetStatus }),
       });
     } catch (e) {}
 
     const jobs = await this.getPublicationJobs();
     let stopped = 0;
     const updated = jobs.map((job) => {
-      if (job.status !== 'published' && job.status !== 'failed') {
+      if (job.status !== 'published' && job.status !== 'failed' && job.status !== 'cancelled') {
         stopped++;
         return {
           ...job,
-          status: 'failed' as const,
+          status: targetStatus,
           currentStep: 'توقف دسته‌جمعی توسط کاربر',
           logs: [
             ...(job.logs || []),
@@ -2321,7 +2376,7 @@ ${suggestedHashtags.join(' ')}`;
               timestamp: getJalaliCurrentTime(),
               step: 'StopAll',
               status: 'warning' as const,
-              message: 'نوبت به دستور کاربر متوقف شد.',
+              message: `نوبت به دستور کاربر به وضعیت ${targetStatus} تغییر یافت.`,
             },
           ],
         };
@@ -4661,6 +4716,9 @@ ${suggestedHashtags.join(' ')}`;
     await callCpanelApi('system/wipe-data', { method: 'POST' });
 
     // Clear all localStorage keys
+    localStorage.removeItem('ashk24_companies');
+    localStorage.removeItem(COMPANY_KEY);
+    localStorage.removeItem(PLATFORMS_KEY);
     localStorage.removeItem(CAMPAIGNS_KEY);
     localStorage.removeItem(JOBS_KEY);
     localStorage.removeItem(SMS_LOGS_KEY);
@@ -4673,12 +4731,14 @@ ${suggestedHashtags.join(' ')}`;
     localStorage.removeItem(DOM_EVENTS_KEY);
     localStorage.removeItem(AUTO_PATCHES_KEY);
     localStorage.removeItem(SELF_HEALING_KEY);
+    localStorage.removeItem(DIAGNOSTIC_CONSOLE_KEY);
     localStorage.removeItem('ashk24_test_harness_latest');
 
     // Fresh raw initial state
     try {
       localStorage.setItem(COMPANY_KEY, JSON.stringify(DEFAULT_COMPANY));
       localStorage.setItem(PLATFORMS_KEY, JSON.stringify(DEFAULT_PLATFORMS));
+      localStorage.setItem('ashk24_companies', JSON.stringify([{ ...DEFAULT_COMPANY, isActive: true, isDefault: true }]));
     } catch (e) {}
 
     return {

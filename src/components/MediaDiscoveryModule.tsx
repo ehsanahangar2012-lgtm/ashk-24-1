@@ -32,10 +32,12 @@ import {
   Send,
   FileCode,
   CheckSquare,
+  KeyRound,
 } from 'lucide-react';
 import { BusinessSector, MediaPlatform } from '../types/ashk24.js';
 import { toPersianDigits } from '../utils/persianUtils.js';
 import { clientStorage } from '../services/clientStorageService.js';
+import { AutonomousSessionHarvesterModal } from './AutonomousSessionHarvesterModal.js';
 
 interface MediaDiscoveryModuleProps {
   platforms: MediaPlatform[];
@@ -106,8 +108,19 @@ export const MediaDiscoveryModule: React.FC<MediaDiscoveryModuleProps> = ({
   const [domAnalysisResult, setDomAnalysisResult] = useState<any | null>(null);
   const [domMappingSuccess, setDomMappingSuccess] = useState<string | null>(null);
 
+  // Autonomous Session Harvester Extension State
+  const [showHarvesterModal, setShowHarvesterModal] = useState<boolean>(false);
+
   // Defensive Filter logic
   const safePlatformsList = Array.isArray(platforms) ? platforms : [];
+
+  // Session Statistics
+  const platformsWithoutSession = safePlatformsList.filter(
+    (p) => !p.sessionStatus || p.sessionStatus !== 'authenticated' || !p.sessionCookies || Object.keys(p.sessionCookies).length === 0
+  );
+  const platformsWithSession = safePlatformsList.filter(
+    (p) => p.sessionStatus === 'authenticated' && p.sessionCookies && Object.keys(p.sessionCookies).length > 0
+  );
 
   const filteredPlatforms = safePlatformsList.filter((plat) => {
     if (!plat || typeof plat !== 'object') return false;
@@ -1034,6 +1047,77 @@ switch ($action) {
         </div>
       </div>
 
+      {/* Autonomous Session Harvester & Extension Command Center */}
+      <div className="p-5 rounded-3xl bg-gradient-to-r from-slate-900 via-cyan-950/30 to-slate-900 border border-cyan-500/30 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 relative z-10">
+          <div className="flex items-center space-x-3 space-x-reverse min-w-0">
+            <div className="p-3 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 shrink-0 shadow-inner">
+              <Bot className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2 space-x-reverse flex-wrap gap-y-1">
+                <h3 className="text-sm font-bold text-white">
+                  افزونه مرورگر و شکارچی سشن: ثبت‌نام خودکار سایت‌های بدون سشن
+                </h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                  حل قطعی مسدودیت سرورهای خارجی & دور زدن تحریم
+                </span>
+                {/* Smart Help (?) */}
+                <button
+                  type="button"
+                  onClick={() => setShowHarvesterModal(true)}
+                  className="p-1 rounded-lg bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 transition-all text-xs flex items-center space-x-1 space-x-reverse border border-cyan-500/30"
+                  title="راهنمای هوشمند افزونه مرورگر و ثبت‌نام خودکار"
+                >
+                  <HelpCircle className="w-3.5 h-3.5" />
+                  <span className="font-extrabold text-[11px]">؟</span>
+                </button>
+              </div>
+              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                به دلیل تحریم‌ها و مسدودسازی سرورهای کلود (مانند گیت‌هاب ورکر یا سرورهای خارجی)، ثبت‌نام پلتفرم‌های کشف‌شده مستقیماً از طریق مرورگر محلی کاربر به صورت صف خودمختار انجام شده و سشن‌ها (کوکی‌ها و توکن‌ها) در دیتابیس ذخیره می‌شوند.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0 w-full lg:w-auto justify-end">
+            {/* Session Stats Badges */}
+            <div className="flex items-center gap-2 text-xs">
+              <span className="px-2.5 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                {toPersianDigits(platformsWithSession.length)} دارای سشن فعال
+              </span>
+              <span className="px-2.5 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold flex items-center gap-1">
+                <KeyRound className="w-3.5 h-3.5" />
+                {toPersianDigits(platformsWithoutSession.length)} فاقد سشن
+              </span>
+            </div>
+
+            {/* Launch Autonomous Harvester Modal */}
+            <button
+              type="button"
+              onClick={() => setShowHarvesterModal(true)}
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs shadow-lg shadow-cyan-900/40 flex items-center gap-2 transition-all"
+            >
+              <Bot className="w-4 h-4" />
+              <span>ثبت‌نام خودکار بخش‌های بدون سشن ({toPersianDigits(platformsWithoutSession.length)})</span>
+            </button>
+
+            {/* Direct Extension ZIP Download */}
+            <a
+              href="/downloads/ashk24-session-harvester-extension.zip"
+              download="ashk24-session-harvester-extension.zip"
+              className="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 flex items-center gap-1.5 transition-colors"
+              title="دانلود فایل زیپ افزونه مرورگر جهت نصب دستی در Chrome / Brave / Edge"
+            >
+              <Download className="w-4 h-4 text-cyan-400" />
+              <span>دریافت افزونه (ZIP)</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
       {/* Filter and Control Bar for Registered Platforms */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
         <div className="flex items-center space-x-2 space-x-reverse">
@@ -1178,6 +1262,35 @@ switch ($action) {
                         {String(sec)}
                       </span>
                     ))}
+                  </div>
+
+                  {/* Session Vault Indicator & Harvester Action */}
+                  <div className="pt-2 border-t border-slate-800/80">
+                    {plat.sessionStatus === 'authenticated' && plat.sessionCookies && Object.keys(plat.sessionCookies).length > 0 ? (
+                      <div className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-[11px] text-emerald-300 font-bold">
+                        <span className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                          سشن و کوکی ورود فعال در دیتابیس
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          {plat.accountUsername ? `@${plat.accountUsername}` : 'احراز هویت شده'}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-[11px] text-amber-300">
+                        <span className="flex items-center gap-1.5 font-bold">
+                          <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                          فاقد سشن (نیازمند ثبت‌نام)
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowHarvesterModal(true)}
+                          className="px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 font-bold text-[10px] transition-colors"
+                        >
+                          ثبت‌نام با افزونه
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1633,6 +1746,14 @@ switch ($action) {
           </div>
         </div>
       )}
+
+      {/* Autonomous Session Harvester Modal */}
+      <AutonomousSessionHarvesterModal
+        isOpen={showHarvesterModal}
+        onClose={() => setShowHarvesterModal(false)}
+        platforms={safePlatformsList}
+        onRefreshPlatforms={onRefreshPlatforms || (() => {})}
+      />
     </div>
   );
 };

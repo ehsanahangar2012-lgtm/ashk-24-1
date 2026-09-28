@@ -737,9 +737,44 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 text-slate-950 fill-slate-950" />
-                    <span>🚀 انتشار فوری این کمپین (ارسال همزمان به کلیه رسانه‌ها)</span>
+                    <span>🚀 انتشار فوری به صف سی‌پنل (کلیه رسانه‌ها)</span>
                   </>
                 )}
+              </button>
+
+              {/* Direct Chrome Extension Execution with Real Domestic IP */}
+              <button
+                type="button"
+                onClick={async () => {
+                  const targetPids = camp.selectedPlatformIds && camp.selectedPlatformIds.length > 0
+                    ? camp.selectedPlatformIds
+                    : platforms.slice(0, 3).map((p) => p.id);
+
+                  for (const pid of targetPids) {
+                    const plat = platforms.find((p) => p.id === pid);
+                    const mockJob = {
+                      id: `job_ext_${Date.now()}_${pid}`,
+                      campaignId: camp.id,
+                      platformId: pid,
+                      platformName: plat?.persianName || pid,
+                      platformDomain: plat?.domain || 'niazpardaz.com',
+                      campaignTitle: camp.title,
+                      campaignContent: camp.productDescription || camp.title,
+                      contactPhone: campCompany?.phoneNumber || '09153108763',
+                      contactPerson: campCompany?.contactPerson || 'مهندس احسان آهنگر',
+                      contactEmail: campCompany?.email || 'ashkghalam@gmail.com',
+                      status: 'processing'
+                    };
+                    import('../utils/extensionBridge.js').then(({ extensionBridge }) => {
+                      extensionBridge.publishJobViaExtension(mockJob, camp, campCompany);
+                    });
+                  }
+                  setQuickPublishSuccess(`🌐 دستور انتشار مستقیم برای کمپین «${camp.title}» به افزونه مرورگر ارسال شد.`);
+                  setTimeout(() => setQuickPublishSuccess(null), 6000);
+                }}
+                className="w-full py-2 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-bold text-xs transition-all flex items-center justify-center space-x-2 space-x-reverse"
+              >
+                <span>🌐 اجرای مستقیم در تب مرورگر با افزونه (IP خانگی بدون فیلتر)</span>
               </button>
 
               <span className="text-[11px] text-slate-400 font-semibold block">
