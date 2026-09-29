@@ -20,6 +20,7 @@ import { StepByStepGuideModal } from './components/StepByStepGuideModal';
 import { MobileCompanionModule } from './components/MobileCompanionModule';
 import { ExtensionBridgeModule } from './components/ExtensionBridgeModule';
 import { AutonomousOrchestratorMatrixModule } from './components/AutonomousOrchestratorMatrixModule';
+import { AutonomousAdCrawlerModule } from './components/AutonomousAdCrawlerModule';
 import { ExtensionConnectionBanner } from './components/ExtensionConnectionBanner';
 import { DiagnosticLoggerModal } from './components/DiagnosticLoggerModal';
 import { LoginGate } from './components/LoginGate';
@@ -39,7 +40,7 @@ import {
 } from './types/ashk24';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<TabType>('campaigns');
+  const [activeTab, setActiveTab] = useState<TabType>('ad_crawler');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
   const [showCompanyModal, setShowCompanyModal] = useState<boolean>(false);
   const [showSecurityModal, setShowSecurityModal] = useState<boolean>(false);
@@ -324,6 +325,14 @@ export default function App() {
 
             <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto">
               <ErrorBoundary fallbackTitle="خطا در رندر این بخش" onReset={fetchAllData}>
+                {activeTab === 'ad_crawler' && (
+                  <AutonomousAdCrawlerModule
+                    company={company}
+                    campaigns={campaigns}
+                    onRefreshData={fetchAllData}
+                  />
+                )}
+
                 {activeTab === 'company' && (
                   <CompanyProfileView
                     company={company}

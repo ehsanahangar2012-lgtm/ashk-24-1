@@ -90,6 +90,41 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Autofill current tab
+  const btnAutofillCurrent = document.getElementById('btnAutofillCurrent');
+  if (btnAutofillCurrent) {
+    btnAutofillCurrent.addEventListener('click', () => {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs && tabs[0] && tabs[0].id) {
+          chrome.tabs.sendMessage(tabs[0].id, {
+            type: 'ASHK_EXECUTE_AD_PUBLICATION'
+          }, (resp) => {
+            alert('دستور تکمیل خودکار آگهی در تب فعال اجرا شد.');
+          });
+        }
+      });
+    });
+  }
+
+  // Inject OTP to current tab
+  const btnInjectOtpCurrent = document.getElementById('btnInjectOtpCurrent');
+  if (btnInjectOtpCurrent) {
+    btnInjectOtpCurrent.addEventListener('click', () => {
+      const code = prompt('کد تایید پیامک (OTP) را وارد نمایید:');
+      if (!code) return;
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs && tabs[0] && tabs[0].id) {
+          chrome.tabs.sendMessage(tabs[0].id, {
+            type: 'ASHK_INJECT_OTP_CODE',
+            code: code.trim()
+          }, () => {
+            alert(`کد ${code} به فرم تب جاری ارسال شد.`);
+          });
+        }
+      });
+    });
+  }
+
   // Queue actions
   btnStartQueue.addEventListener('click', () => {
     chrome.runtime.sendMessage({ type: 'ASHK_RESUME_QUEUE' }, () => {

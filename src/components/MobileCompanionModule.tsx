@@ -37,7 +37,7 @@ import { SmartHelpButton } from './SmartHelpModal.js';
 import { SmsRelayMonitorModule } from './SmsRelayMonitorModule.js';
 
 export const MobileCompanionModule: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'host_bridge' | 'sms_relay_monitor' | 'otp_checker' | 'pwa_download' | 'smart_guide' | 'emulator' | 'pairing'>('sms_relay_monitor');
+  const [activeTab, setActiveTab] = useState<'host_bridge' | 'sms_relay_monitor' | 'otp_checker' | 'pwa_download' | 'smart_guide' | 'pairing'>('sms_relay_monitor');
   const [config, setConfig] = useState<MobileDeviceConfig | null>(null);
   const [notifications, setNotifications] = useState<MobileNotificationLog[]>([]);
   const [smsLogs, setSmsLogs] = useState<SmsWebhookPayload[]>([]);
@@ -592,17 +592,6 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
           <span>راهنمای هوشمند گام‌به‌گام اتصال</span>
         </button>
 
-        <button
-          onClick={() => setActiveTab('emulator')}
-          className={`flex items-center space-x-2 space-x-reverse px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === 'emulator'
-              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30 shadow-sm'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-          }`}
-        >
-          <Smartphone className="w-4 h-4" />
-          <span>شبیه‌ساز گوشی و نوتیفیکیشن‌ها</span>
-        </button>
 
         <button
           onClick={() => setActiveTab('pairing')}
@@ -943,29 +932,6 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
             </div>
           </div>
 
-          {/* AI Prompt Box to generate real Native APK */}
-          <div className="p-6 rounded-2xl bg-slate-900/90 border border-amber-500/30 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 space-x-reverse text-amber-400 font-bold text-sm">
-                <Sparkles className="w-5 h-5 shrink-0" />
-                <span>پرامپت مهندسی‌شده برای تولید اپلیکیشن اندروید (APK) توسط هوش مصنوعی دیگر یا Android Studio</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => copyToClipboard(aiStudioPrompt, setCopiedAiPrompt)}
-                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition-all flex items-center gap-1.5 shadow-md"
-              >
-                {copiedAiPrompt ? <Check className="w-4 h-4 text-slate-950" /> : <Copy className="w-4 h-4" />}
-                <span>{copiedAiPrompt ? 'پرامپت کپی شد ✓' : 'کپی پرامپت ساخت APK'}</span>
-              </button>
-            </div>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              اگر می‌خواهید اپلیکیشن کامپایل‌شده اختصاصی در محیط‌هایی مانند Android Studio، Cursor یا سایر ابزارهای هوش مصنوعی تولید و خروجی نهایی <span className="font-mono text-amber-400">.apk</span> بگیرید، متن پرامپت زیر تمام مشخصات فنی، مجوزها و ساختار شبکه cPanel را دربر دارد:
-            </p>
-            <pre dir="ltr" className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-amber-300/90 overflow-x-auto leading-relaxed max-h-48">
-              {aiStudioPrompt}
-            </pre>
-          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Box 1: Instant PWA Install on Android / iOS */}
@@ -1041,26 +1007,6 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
             </div>
           </div>
 
-          {/* Android Kotlin Source Preview */}
-          <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 space-x-reverse text-emerald-400 font-bold text-sm">
-                <Sparkles className="w-5 h-5 shrink-0" />
-                <span>سورس کد بومی سنسور پیامک و جیمیل (SmsOtpBridgeReceiver.kt)</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => copyToClipboard(kotlinBridgeCode, setCopiedKotlin)}
-                className="px-3.5 py-1.5 rounded-xl bg-slate-800 text-slate-200 hover:text-amber-400 text-xs font-medium transition-colors flex items-center gap-1.5"
-              >
-                {copiedKotlin ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                <span>{copiedKotlin ? 'کپی شد' : 'کپی سورس کد'}</span>
-              </button>
-            </div>
-            <pre dir="ltr" className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-emerald-300 overflow-x-auto leading-relaxed">
-              {kotlinBridgeCode}
-            </pre>
-          </div>
         </div>
       )}
 
@@ -1356,167 +1302,6 @@ class SmsOtpBridgeReceiver : BroadcastReceiver() {
         </div>
       )}
 
-      {/* TAB 4: Live Mobile Emulator & Push Notification Stream */}
-      {activeTab === 'emulator' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Mobile Screen Mockup */}
-          <div className="lg:col-span-5 flex flex-col items-center justify-start">
-            <div className="w-full max-w-[340px] bg-slate-950 border-4 border-slate-800 rounded-[40px] p-4 shadow-2xl relative overflow-hidden flex flex-col min-h-[580px]">
-              <div className="w-28 h-4 bg-slate-800 rounded-b-xl mx-auto mb-3 flex items-center justify-center space-x-2 space-x-reverse">
-                <div className="w-2.5 h-2.5 rounded-full bg-slate-900 border border-slate-700"></div>
-                <div className="w-8 h-1 rounded-full bg-slate-900"></div>
-              </div>
-
-              <div className="flex items-center justify-between text-[10px] text-slate-400 px-2 pb-2 border-b border-slate-900">
-                <span className="font-semibold text-slate-200">14:04</span>
-                <div className="flex items-center space-x-1.5 space-x-reverse">
-                  <span>5G IRANCELL</span>
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                </div>
-              </div>
-
-              <div className="flex-1 overflow-y-auto py-3 space-y-3 font-sans">
-                <div className="p-3 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-950 border border-slate-800 text-right">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-amber-400 flex items-center gap-1">
-                      <Sparkles className="w-3.5 h-3.5" /> اشک ۲۴ همراه
-                    </span>
-                    <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">
-                      آنلاین
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1">
-                    {config?.deviceName || 'تلفن همراه اشک قلم (09153108763)'}
-                  </p>
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-[10px] text-emerald-300 flex items-center justify-between">
-                  <div className="flex items-center space-x-1.5 space-x-reverse">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>شناساگر پیامک OTP: فعال و آماده</span>
-                  </div>
-                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-wider flex items-center justify-between">
-                    <span>اعلان‌های نوتیفیکیشن دریافت شده</span>
-                    <span className="text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.2 rounded">
-                      {toPersianDigits((notifications || []).length)} اعلان
-                    </span>
-                  </div>
-
-                  {(!notifications || notifications.length === 0) ? (
-                    <div className="p-6 text-center text-slate-500 text-[11px] rounded-xl border border-dashed border-slate-800">
-                      هنوز اولینی نوتیفیکیشنی دریافت نشده است.
-                    </div>
-                  ) : (
-                    (notifications || []).map((notif) => (
-                      <div
-                        key={notif.id}
-                        className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 shadow-md text-right space-y-1 transform transition-all hover:border-slate-700"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-bold text-slate-100 flex items-center gap-1">
-                            {notif.title}
-                          </span>
-                          <span className="text-[9px] text-slate-500">{notif.timestamp}</span>
-                        </div>
-                        <p className="text-[10px] text-slate-300 leading-relaxed">{notif.message}</p>
-                        {notif.platformName && (
-                          <div className="flex items-center justify-between text-[9px] pt-1 border-t border-slate-800/60 text-amber-400">
-                            <span>پلتفرم: {notif.platformName}</span>
-                            <span className="text-emerald-400">ارسال به گوشی ✓</span>
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              <div className="pt-2 border-t border-slate-900 text-center">
-                <div className="w-24 h-1 bg-slate-700 rounded-full mx-auto"></div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Side: Interactive Push Notification Test Tools */}
-          <div className="lg:col-span-7 space-y-6">
-            <div className="p-5 rounded-2xl bg-slate-900/80 border border-emerald-500/30 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 space-x-reverse text-emerald-400 font-bold text-sm">
-                  <Bell className="w-5 h-5 shrink-0" />
-                  <span>فعال‌سازی نوتیفیکیشن واقعی سیستم‌عامل (Web Push)</span>
-                </div>
-                <span
-                  className={`text-[10px] px-2.5 py-1 rounded-full font-bold ${
-                    notificationPermission === 'granted'
-                      ? 'bg-emerald-500/20 text-emerald-400'
-                      : 'bg-amber-500/20 text-amber-400'
-                  }`}
-                >
-                  {notificationPermission === 'granted' ? 'فعال شد ✓' : 'غیرفعال'}
-                </span>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                با اعطای مجوز مرورگر، اعلان‌ها بدون تاخیر روی سیستم‌عامل یا گوشی شما ظاهر خواهند شد.
-              </p>
-
-              {notificationPermission !== 'granted' && (
-                <button
-                  type="button"
-                  onClick={requestBrowserNotificationPermission}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors flex items-center space-x-2 space-x-reverse"
-                >
-                  <Bell className="w-4 h-4" />
-                  <span>کلیک جهت درخواست مجوز نوتیفیکیشن مرورگر</span>
-                </button>
-              )}
-            </div>
-
-            <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
-              <div className="flex items-center space-x-2 space-x-reverse text-amber-400 font-bold text-sm">
-                <Send className="w-5 h-5 shrink-0" />
-                <span>ارسال دستی نوتیفیکیشن آزمایشی به گوشی</span>
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs text-slate-300 font-medium block mb-1">عنوان اعلان:</label>
-                  <input
-                    type="text"
-                    value={testPushTitle}
-                    onChange={(e) => setTestPushTitle(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:border-amber-500 outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs text-slate-300 font-medium block mb-1">متن اعلان:</label>
-                  <textarea
-                    rows={2}
-                    value={testPushMsg}
-                    onChange={(e) => setTestPushMsg(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:border-amber-500 outline-none"
-                  />
-                </div>
-
-                <div className="flex items-center justify-end space-x-2 space-x-reverse pt-1">
-                  <button
-                    type="button"
-                    onClick={handleSendTestPush}
-                    className="px-4 py-2.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 transition-colors flex items-center space-x-2 space-x-reverse shadow-lg"
-                  >
-                    <Send className="w-4 h-4" />
-                    <span>ارسال نوتیفیکیشن آزمایشی</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* TAB 5: Device Pairing & Configuration */}
       {activeTab === 'pairing' && config && (

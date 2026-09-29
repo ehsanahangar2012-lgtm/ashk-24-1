@@ -24,7 +24,7 @@ export interface ExtensionWorkerStatus {
 
 type ExtensionListener = (status: ExtensionWorkerStatus) => void;
 
-class ExtensionBridgeManager {
+export class ExtensionBridgeManager {
   private static instance: ExtensionBridgeManager;
   private status: ExtensionWorkerStatus = {
     installed: false,
@@ -273,6 +273,34 @@ class ExtensionBridgeManager {
       message: `فرمان انتشار نوبت کاری ${job?.id} به افزونه مرورگر ارسال شد.`,
       details: { platform: job?.platformName || job?.platformDomain }
     });
+  }
+
+  public triggerDirectAdPublication(job: any, campaign: any, company: any) {
+    const payload = {
+      type: 'ASHK_EXECUTE_AD_PUBLICATION',
+      job,
+      campaign,
+      company,
+      timestamp: Date.now()
+    };
+
+    window.postMessage(payload, '*');
+    try {
+      document.dispatchEvent(new CustomEvent('ASHK_EXT_REQUEST', { detail: payload }));
+    } catch (e) {}
+  }
+
+  public injectDirectOtp(code: string) {
+    const payload = {
+      type: 'ASHK_INJECT_OTP_CODE',
+      code,
+      timestamp: Date.now()
+    };
+
+    window.postMessage(payload, '*');
+    try {
+      document.dispatchEvent(new CustomEvent('ASHK_EXT_REQUEST', { detail: payload }));
+    } catch (e) {}
   }
 
   private updateStatus(newPartial: Partial<ExtensionWorkerStatus>) {

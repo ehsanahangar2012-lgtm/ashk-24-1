@@ -1,21 +1,30 @@
 /**
- * سامانه یکپارچه افزونه اشک ۲۴ (ASHK 24 Unified Extension v5.0.0)
- * موتور اجرای انتشار مستقیم و تزریق داده با IP واقعی در تمامی سایت‌های نیازمندی‌های ایرانی
+ * سامانه یکپارچه افزونه اشک ۲۴ (ASHK 24 Unified Extension v5.5.0)
+ * موتور اجرای هوشمند پایش و تحلیل صفحات، کشف فیلدها، تزریق خودکار و ثبت آگهی با کد OTP
  */
 
 (function () {
-  const EXT_VERSION = (typeof chrome !== 'undefined' && chrome.runtime?.getManifest?.()?.version) || '5.2.0';
+  const EXT_VERSION = (typeof chrome !== 'undefined' && chrome.runtime?.getManifest?.()?.version) || '5.5.0';
 
   try {
     document.documentElement.setAttribute('data-ashk24-extension', 'installed');
     document.documentElement.setAttribute('data-ashk24-version', EXT_VERSION);
   } catch (e) {}
 
-  let activeTarget = null;
-  let credentials = null;
   let hudElement = null;
+  let isHudMinimized = false;
+  let activePayload = {
+    title: 'تولید و فروش انواع کارتن و جعبه بسته‌بندی اشک ۲۴',
+    content: 'طراحی، چاپ و تولید انواع کارتن ۳ لایه و ۵ لایه لمینتی، دایکاتی، صادراتی و دارویی با بالاترین کیفیت و ارسال فوری به سراسر کشور از شهرک صنعتی مشهد.',
+    phone: '09153108763',
+    contactName: 'مهندس احسان آهنگر',
+    province: 'خراسان رضوی',
+    city: 'مشهد',
+    category: 'بسته‌بندی و کارتن‌سازی',
+    price: 'توافقی'
+  };
 
-  // بررسی هوشمند حضور در صفحه داشبورد اشک ۲۴
+  // بررسی حضور در صفحه داشبورد اشک ۲۴
   const isAshkWebApp = Boolean(
     document.getElementById('root') ||
     (document.title && document.title.includes('اشک')) ||
@@ -39,7 +48,6 @@
       }));
     } catch (e) {}
 
-    // استعلام وضعیت پس‌زمینه و ثبت فوری آدرس مبدا داشبورد در افزونه
     try {
       if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
         chrome.runtime.sendMessage({
@@ -64,46 +72,52 @@
   setTimeout(broadcastReady, 2000);
 
   // 1. دریافت پیام‌ها از Background Service Worker
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (!message || typeof message !== 'object') return;
+  if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (!message || typeof message !== 'object') return;
 
-    window.postMessage(message, '*');
-    try {
-      document.dispatchEvent(new CustomEvent('ASHK_EXT_EVENT', { detail: message }));
-    } catch (e) {}
+      window.postMessage(message, '*');
+      try {
+        document.dispatchEvent(new CustomEvent('ASHK_EXT_EVENT', { detail: message }));
+      } catch (e) {}
 
-    // اجرای انتشار آگهی واقعی
-    if (message.type === 'ASHK_EXECUTE_AD_PUBLICATION') {
-      executeAdPublicationFlow(message.job, message.campaign, message.company);
-      sendResponse({ status: "ad_publication_initiated" });
+      // اجرای انتشار آگهی کامل
+      if (message.type === 'ASHK_EXECUTE_AD_PUBLICATION') {
+        if (message.campaign?.title || message.job?.campaignTitle) {
+          activePayload.title = message.campaign?.title || message.job?.campaignTitle;
+        }
+        if (message.campaign?.content || message.job?.campaignContent) {
+          activePayload.content = message.campaign?.content || message.job?.campaignContent;
+        }
+        if (message.company?.phoneNumber || message.job?.contactPhone) {
+          activePayload.phone = message.company?.phoneNumber || message.job?.contactPhone;
+        }
+        if (message.company?.contactPerson || message.job?.contactPerson) {
+          activePayload.contactName = message.company?.contactPerson || message.job?.contactPerson;
+        }
+
+        executeAdPublicationFlow(message.job, message.campaign, message.company);
+        sendResponse({ status: 'ad_publication_initiated' });
+        return true;
+      }
+
+      // تزریق کد OTP
+      if (message.type === 'ASHK_INJECT_OTP_CODE') {
+        injectOtpCode(message.code);
+        sendResponse({ status: 'otp_injected' });
+        return true;
+      }
+
+      // اسکن و پایش فیلدها
+      if (message.type === 'ASHK_SCAN_PAGE_FIELDS') {
+        const scanResult = scanPageFormFields();
+        sendResponse({ fields: scanResult });
+        return true;
+      }
+
       return true;
-    }
-
-    // اتوماسیون ثبت‌نام اولیه
-    if (message.type === 'ASHK_EXECUTE_DOM_REGISTRATION' || message.type === 'ASHK_START_FORM_AUTOFILL') {
-      activeTarget = message.target;
-      credentials = message.credentials;
-      initiateAutofillFlow();
-      sendResponse({ status: "autofill_started" });
-      return true;
-    }
-
-    // تزریق کد OTP
-    if (message.type === 'ASHK_INJECT_OTP_CODE') {
-      injectOtpCode(message.code);
-      sendResponse({ status: "otp_injected" });
-      return true;
-    }
-
-    // استخراج توکن‌های نشست
-    if (message.type === 'ASHK_EXTRACT_DOM_TOKENS') {
-      const tokens = extractStorageTokens();
-      sendResponse({ tokens });
-      return true;
-    }
-
-    return true;
-  });
+    });
+  }
 
   // 2. ارتباط دوطرفه با اپلیکیشن وب
   window.addEventListener('message', (event) => {
@@ -119,204 +133,193 @@
   });
 
   function handleWebAppCommand(data) {
-    if (data.type === 'ASHK_APP_DISPATCH_PUBLISH') {
-      chrome.runtime.sendMessage({
-        type: 'ASHK_PUBLISH_JOB_DIRECT',
-        job: data.job,
-        campaign: data.campaign,
-        company: data.company
-      }, (resp) => {
-        if (chrome.runtime.lastError) return;
-        window.postMessage({ type: 'ASHK_PUBLISH_JOB_ACK', response: resp }, '*');
-      });
+    if (data.type === 'ASHK_EXECUTE_AD_PUBLICATION') {
+      executeAdPublicationFlow(data.job, data.campaign, data.company);
     }
-
-    if (data.type === 'ASHK_APP_DISPATCH_QUEUE') {
-      chrome.runtime.sendMessage({
-        type: 'ASHK_START_HARVEST_QUEUE',
-        targets: data.targets,
-        credentials: data.credentials,
-        orchestratorUrl: data.orchestratorUrl || window.location.origin
-      }, (resp) => {
-        if (chrome.runtime.lastError) return;
-        window.postMessage({ type: 'ASHK_QUEUE_STARTED_ACK', response: resp }, '*');
-      });
+    if (data.type === 'ASHK_INJECT_OTP_CODE') {
+      injectOtpCode(data.code || data.otpCode);
     }
-
-    if (data.type === 'ASHK_APP_PAUSE_QUEUE') {
-      chrome.runtime.sendMessage({ type: 'ASHK_PAUSE_QUEUE' });
-    }
-
-    if (data.type === 'ASHK_APP_RESUME_QUEUE') {
-      chrome.runtime.sendMessage({ type: 'ASHK_RESUME_QUEUE' });
-    }
-
-    if (data.type === 'ASHK_APP_STOP_QUEUE') {
-      chrome.runtime.sendMessage({ type: 'ASHK_STOP_QUEUE' });
-    }
-
-    if (data.type === 'ASHK_APP_QUERY_EXTENSION' || data.type === 'ASHK_PING') {
-      try {
-        chrome.runtime.sendMessage({
-          type: 'ASHK_PING',
-          orchestratorUrl: data.orchestratorUrl || window.location.origin
-        }, (resp) => {
-          if (chrome.runtime.lastError) {
-            window.postMessage({
-              type: 'ASHK_EXTENSION_STATUS_REPLY',
-              installed: true,
-              version: EXT_VERSION,
-              response: { isWorkerEnabled: true, status: 'online', orchestratorUrl: window.location.origin }
-            }, '*');
-            return;
-          }
-          const payload = {
-            type: 'ASHK_EXTENSION_STATUS_REPLY',
-            installed: true,
-            version: EXT_VERSION,
-            response: resp
-          };
-          window.postMessage(payload, '*');
-          try {
-            document.dispatchEvent(new CustomEvent('ASHK_EXT_EVENT', { detail: payload }));
-          } catch (e) {}
-        });
-      } catch (err) {
-        window.postMessage({
-          type: 'ASHK_EXTENSION_STATUS_REPLY',
-          installed: true,
-          version: EXT_VERSION,
-          response: { isWorkerEnabled: true, status: 'online', orchestratorUrl: window.location.origin }
-        }, '*');
-      }
-    }
-
-    if (data.type === 'ASHK_APP_CONFIG_SERVER') {
-      try {
-        chrome.runtime.sendMessage({
-          type: 'ASHK_SET_ORCHESTRATOR',
-          orchestratorUrl: data.orchestratorUrl || window.location.origin
-        });
-      } catch (e) {}
-    }
-
-    if (data.type === 'ASHK_APP_HARVEST_NOW') {
-      try {
-        chrome.runtime.sendMessage({ type: 'ASHK_HARVEST_CURRENT_TAB' }, (resp) => {
-          if (chrome.runtime.lastError) return;
-          window.postMessage({ type: 'ASHK_HARVEST_NOW_ACK', response: resp }, '*');
-        });
-      } catch (e) {}
+    if (data.type === 'ASHK_APP_QUERY_EXTENSION') {
+      broadcastReady();
     }
   }
 
-  // --- نمایش اعلان و وضعیت بالای صفحه (HUD) ---
-  function showHud(statusText, isWarning = false) {
+  // =========================================================================
+  // دستیار شناور و تعاملی در صفحه مقصد (Interactive Floating In-Page Assistant)
+  // =========================================================================
+  function renderInPageFloatingHud(statusText = 'آماده پایش و ثبت آگهی', isWarning = false) {
+    if (isAshkWebApp) return; // داخل خود داشبورد نیازی به هد شناور نیست
+
     if (!hudElement) {
       hudElement = document.createElement('div');
-      hudElement.id = 'ashk24-worker-hud';
+      hudElement.id = 'ashk24-floating-hud';
       hudElement.style.cssText = `
         position: fixed;
-        bottom: 24px;
-        right: 24px;
-        z-index: 999999999;
+        bottom: 20px;
+        right: 20px;
+        z-index: 2147483647;
         background: #0f172a;
         color: #f8fafc;
-        font-family: Vazirmatn, Tahoma, sans-serif;
-        font-size: 13px;
-        padding: 14px 20px;
-        border-radius: 12px;
-        box-shadow: 0 12px 35px rgba(0,0,0,0.6);
-        border: 1px solid ${isWarning ? '#f59e0b' : '#38bdf8'};
+        font-family: Vazirmatn, Tahoma, -apple-system, sans-serif;
+        font-size: 12px;
+        padding: 14px 18px;
+        border-radius: 16px;
+        box-shadow: 0 16px 40px rgba(0,0,0,0.7);
+        border: 1px solid #10b981;
         direction: rtl;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        max-width: 420px;
+        max-width: 380px;
         line-height: 1.6;
+        user-select: none;
+        transition: all 0.3s ease;
       `;
       document.body.appendChild(hudElement);
     }
+
+    if (isHudMinimized) {
+      hudElement.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;" id="ashk-hud-expand">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;"></span>
+            <span style="font-weight:bold;color:#38bdf8;">اشک ۲۴ (v${EXT_VERSION})</span>
+          </div>
+          <span style="color:#94a3b8;font-size:11px;">[باز کردن]</span>
+        </div>
+      `;
+      const expandBtn = document.getElementById('ashk-hud-expand');
+      if (expandBtn) {
+        expandBtn.onclick = () => {
+          isHudMinimized = false;
+          renderInPageFloatingHud(statusText, isWarning);
+        };
+      }
+      return;
+    }
+
     hudElement.innerHTML = `
-      <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${isWarning ? '#f59e0b' : '#10b981'};box-shadow:0 0 10px ${isWarning ? '#f59e0b' : '#10b981'};"></span>
-      <div>
-        <div style="font-weight:bold;color:#38bdf8;">سامانه یکپارچه انتشار اشک ۲۴ (نسخه ۵.۲.۰)</div>
-        <div style="font-size:12px;color:#cbd5e1;">${statusText}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #334155;padding-bottom:8px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${isWarning ? '#f59e0b' : '#10b981'};box-shadow:0 0 10px ${isWarning ? '#f59e0b' : '#10b981'};"></span>
+          <span style="font-weight:bold;color:#38bdf8;font-size:13px;">دستیار هوشمند انتشار اشک ۲۴</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button id="ashk-hud-min-btn" style="background:#1e293b;border:none;color:#94a3b8;padding:2px 8px;border-radius:6px;cursor:pointer;font-size:11px;">–</button>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#cbd5e1;margin-bottom:10px;">${statusText}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <button id="ashk-btn-autofill" style="background:#059669;color:#fff;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:11px;display:flex;align-items:center;gap:4px;">
+          <span>🚀</span><span>تکمیل خودکار آگهی</span>
+        </button>
+        <button id="ashk-btn-otp" style="background:#d97706;color:#fff;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:11px;display:flex;align-items:center;gap:4px;">
+          <span>🔑</span><span>درج کد OTP</span>
+        </button>
+        <button id="ashk-btn-submit" style="background:#2563eb;color:#fff;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:11px;display:flex;align-items:center;gap:4px;">
+          <span>✓</span><span>ثبت نهایی</span>
+        </button>
       </div>
     `;
-  }
 
-  function hideHud() {
-    if (hudElement && hudElement.parentNode) {
-      hudElement.parentNode.removeChild(hudElement);
-      hudElement = null;
+    // Bind In-Page HUD Buttons
+    const minBtn = document.getElementById('ashk-hud-min-btn');
+    if (minBtn) {
+      minBtn.onclick = () => {
+        isHudMinimized = true;
+        renderInPageFloatingHud();
+      };
     }
-  }
 
-  // =========================================================================
-  // موتور اجرای ثبت و درج آگهی جامع در تمامی پلتفرم‌ها (Full Ad Automation)
-  // =========================================================================
-  async function executeAdPublicationFlow(job, campaign, company) {
-    const title = campaign?.title || job?.campaignTitle || 'تولید و فروش انواع کارتن و جعبه بسته‌بندی اشک ۲۴';
-    const content = campaign?.content || job?.campaignContent || 'تولید تخصصی کارتن، کارتن لمینتی، دایکاتی، مقوایی صادراتی با بالاترین کیفیت و قیمت رقابتی. ارسال فوری به سراسر کشور.';
-    const phone = company?.phoneNumber || job?.contactPhone || '09153108763';
-    const contactName = company?.contactPerson || job?.contactPerson || 'مهندس احسان آهنگر';
-    const email = company?.email || job?.contactEmail || 'ashkghalam@gmail.com';
-    const province = company?.province || 'خراسان رضوی';
-    const city = company?.city || 'مشهد';
+    const autofillBtn = document.getElementById('ashk-btn-autofill');
+    if (autofillBtn) {
+      autofillBtn.onclick = () => {
+        executeAdPublicationFlow();
+      };
+    }
 
-    showHud(`درحال تحلیل فرم درج آگهی پلتفرم «${job?.platformName || window.location.hostname}»...`);
+    const otpBtn = document.getElementById('ashk-btn-otp');
+    if (otpBtn) {
+      otpBtn.onclick = () => {
+        const code = prompt('کد تایید پیامک (OTP) را وارد نمایید:');
+        if (code) injectOtpCode(code);
+      };
+    }
 
-    // تاخیر هوشمند برای لود کامل اسکریپت‌های پلتفرم
-    await waitMs(1500);
-
-    // ۱. بررسی صفحه ورود / لاگین (در صورت نیاز به لاگین)
-    const isLoginPage = checkAndHandleLoginNeed();
-    if (isLoginPage) {
-      showHud('نیاز به لاگین اولیه در این سایت شناسایی شد. درحال تزریق شماره تماس...', true);
-      const tel = document.querySelector('input[type="tel"], input[name*="mobile"], input[name*="phone"]');
-      if (tel) {
-        setNativeValue(tel, phone);
+    const submitBtn = document.getElementById('ashk-btn-submit');
+    if (submitBtn) {
+      submitBtn.onclick = () => {
         const sub = findSubmitButton();
         if (sub) {
           sub.click();
-          showHud('کد تایید پیامکی ارسال شد. لطفاً کد را در پنل یا فیلد وارد نمایید.', true);
-          return;
+          renderInPageFloatingHud('دکمه ثبت فرم کلیک شد.');
+        } else {
+          renderInPageFloatingHud('دکمه ثبت یافت نشد.', true);
         }
-      }
+      };
     }
+  }
 
-    // ۲. شناسایی فیلدهای اصلی فرم آگهی
+  // بررسی خودکار حضور در صفحات آگهی
+  if (!isAshkWebApp) {
+    setTimeout(() => {
+      const hasInputs = document.querySelector('input, textarea, form');
+      if (hasInputs) {
+        renderInPageFloatingHud('فرم شناسایی شد. آماده تزریق محتوای کارتن اشک ۲۴.');
+      }
+    }, 1500);
+  }
+
+  // =========================================================================
+  // موتور اجرای ثبت و درج آگهی جامع با پروتکل Native Event Setter
+  // =========================================================================
+  async function executeAdPublicationFlow(job, campaign, company) {
+    const title = campaign?.title || job?.campaignTitle || activePayload.title;
+    const content = campaign?.content || job?.campaignContent || activePayload.content;
+    const phone = company?.phoneNumber || job?.contactPhone || activePayload.phone;
+    const contactName = company?.contactPerson || job?.contactPerson || activePayload.contactName;
+    const province = company?.province || activePayload.province;
+    const city = company?.city || activePayload.city;
+
+    renderInPageFloatingHud(`درحال تحلیل فیلدها و تزریق داده‌ها به «${window.location.hostname}»...`);
+
     let filledCount = 0;
 
-    // عنوان آگهی
+    // ۱. فیلد عنوان آگهی
     const titleInputs = Array.from(document.querySelectorAll(
-      'input[name*="title"], input[id*="title"], input[placeholder*="عنوان"], input[name*="subject"], input[id*="subject"], input[name*="name"]'
+      'input[name*="title"], input[id*="title"], input[placeholder*="عنوان"], input[name*="subject"], input[id*="subject"], input[name*="name"], [data-testid*="title"]'
     ));
     if (titleInputs.length > 0) {
       setNativeValue(titleInputs[0], title);
       filledCount++;
     }
 
-    // متن / شرح آگهی
+    // ۲. فیلد توضیحات و شرح آگهی (Textarea یا Contenteditable)
     const contentInputs = Array.from(document.querySelectorAll(
-      'textarea[name*="desc"], textarea[id*="desc"], textarea[name*="content"], textarea[id*="content"], textarea[name*="body"], textarea[placeholder*="توضیح"], textarea[placeholder*="متن"], textarea'
+      'textarea[name*="desc"], textarea[id*="desc"], textarea[name*="content"], textarea[id*="content"], textarea[name*="body"], textarea[placeholder*="توضیح"], textarea[placeholder*="متن"], textarea, div[contenteditable="true"], div.ql-editor, div[role="textbox"]'
     ));
     if (contentInputs.length > 0) {
-      setNativeValue(contentInputs[0], content);
+      const targetContentEl = contentInputs[0];
+      if (targetContentEl.tagName === 'TEXTAREA') {
+        setNativeValue(targetContentEl, content);
+      } else {
+        // Rich Text Editor (div contenteditable)
+        targetContentEl.focus();
+        document.execCommand('selectAll', false, null);
+        document.execCommand('insertText', false, content);
+        targetContentEl.innerText = content;
+        targetContentEl.dispatchEvent(new Event('input', { bubbles: true }));
+      }
       filledCount++;
     }
 
-    // شماره تماس و همراه
+    // ۳. شماره تماس و همراه
     const phoneInputs = Array.from(document.querySelectorAll(
-      'input[type="tel"], input[name*="phone"], input[name*="mobile"], input[id*="phone"], input[id*="mobile"], input[placeholder*="تماس"], input[placeholder*="همراه"], input[placeholder*="موبایل"]'
+      'input[type="tel"], input[name*="phone"], input[name*="mobile"], input[id*="phone"], input[id*="mobile"], input[placeholder*="تماس"], input[placeholder*="همراه"], input[placeholder*="موبایل"], [data-testid*="mobile"]'
     ));
     if (phoneInputs.length > 0) {
       setNativeValue(phoneInputs[0], phone);
       filledCount++;
     }
 
-    // نام رابط / نام آگهی دهنده
+    // ۴. نام رابط / نام آگهی‌دهنده
     const nameInputs = Array.from(document.querySelectorAll(
       'input[name*="contact"], input[name*="author"], input[name*="owner"], input[placeholder*="نام"], input[id*="contact"]'
     ));
@@ -325,16 +328,7 @@
       filledCount++;
     }
 
-    // ایمیل
-    const emailInputs = Array.from(document.querySelectorAll(
-      'input[type="email"], input[name*="email"], input[id*="email"], input[placeholder*="ایمیل"]'
-    ));
-    if (emailInputs.length > 0 && email) {
-      setNativeValue(emailInputs[0], email);
-      filledCount++;
-    }
-
-    // استان و شهر (Select یا Input)
+    // ۵. استان و شهر
     const provinceSelects = Array.from(document.querySelectorAll('select[name*="province"], select[id*="province"], select[name*="ostan"], select[id*="ostan"]'));
     if (provinceSelects.length > 0) {
       selectDropdownOption(provinceSelects[0], province);
@@ -346,60 +340,129 @@
       filledCount++;
     }
 
-    // انتخاب دسته‌بندی موضوعی آگهی
+    // ۶. انتخاب دسته‌بندی موضوعی آگهی
     const categorySelects = Array.from(document.querySelectorAll('select[name*="cat"], select[id*="cat"], select[name*="group"], select[id*="group"]'));
     if (categorySelects.length > 0) {
       selectDropdownOption(categorySelects[0], 'صنعت') || selectDropdownOption(categorySelects[0], 'خدمات');
       filledCount++;
     }
 
-    // پذیرش قوانین (Terms & Conditions)
+    // ۷. پذیرش قوانین (Terms & Conditions)
     const terms = document.querySelector('input[type="checkbox"][name*="rule"], input[type="checkbox"][name*="term"], input[type="checkbox"][id*="agree"], input[type="checkbox"][name*="agree"]');
     if (terms) {
       terms.checked = true;
       terms.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    // حل کپچای عددی ساده اگر وجود داشته باشد
+    // ۸. حل کپچای عددی ساده اگر وجود داشته باشد
     solveSimpleMathCaptcha();
 
-    // ۳. بررسی حضور گیت کپچای پیشرفته
-    const hasAdvancedCaptcha = document.querySelector('iframe[src*="recaptcha"], div[class*="recaptcha"], div[class*="turnstile"], div[id*="rc-imageselect"]');
-    if (hasAdvancedCaptcha) {
-      showHud('کپچای امنیتی فعال است. لطفاً تیک کپچا را بزنید، سامانه بلافاصله فرم را ثبت می‌کند.', true);
-      chrome.runtime.sendMessage({
-        type: 'CONTENT_NEEDS_HUMAN',
-        reason: 'حل کپچای امنیتی در سایت آگهی',
-        jobId: job?.id
-      });
+    // ۹. بررسی حضور فیلد کد تایید OTP
+    const isOtpPresent = checkOtpPresent();
+    if (isOtpPresent) {
+      renderInPageFloatingHud('فیلد کد تایید پیامک شناسایی شد. لطفاً کد را وارد یا روی «درج کد OTP» کلیک کنید.', true);
+      if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+        chrome.runtime.sendMessage({
+          type: 'CONTENT_NEEDS_HUMAN',
+          reason: 'کد تایید پیامکی (OTP) مورد نیاز است',
+          jobId: job?.id
+        });
+      }
       return;
     }
 
     if (filledCount >= 2) {
-      showHud(`فیلدهای آگهی با موفقیت تزریق شد (${filledCount} فیلد). درحال ثبت نهایی آگهی...`);
-      await waitMs(1200);
+      renderInPageFloatingHud(`تعداد ${filledCount} فیلد با موفقیت تزریق شد. درحال کلیک دکمه ثبت...`);
+      await waitMs(1000);
 
       const submitBtn = findSubmitButton();
       if (submitBtn) {
         submitBtn.click();
-        showHud('فرم با موفقیت ارسال شد. در انتظار دریافت تاییدیه انتشار...');
+        renderInPageFloatingHud('دکمه ثبت زده شد. در انتظار تاییدیه انتشار...');
 
-        // استخراج نتیجه و لینک آگهی ثبت شده پس از ۳ ثانیه
         setTimeout(() => {
           verifyAndReportPublication(job);
         }, 3500);
       } else {
-        showHud('دکمه ثبت فرم پیدا نشد؛ در صورت امکان دکمه تایید آگهی را کلیک کنید.', true);
+        renderInPageFloatingHud('فیلدها پر شدند. دکمه ثبت نهایی را کلیک کنید.');
       }
     } else {
-      showHud('فرم ثبت آگهی در این صفحه یافت نشد. ممکن است نیاز به ورود قبلی داشته باشد.', true);
+      renderInPageFloatingHud('فیلدهای فرم هنوز به طور کامل شناسایی نشده‌اند.', true);
     }
   }
 
-  function checkAndHandleLoginNeed() {
-    const url = window.location.href.toLowerCase();
-    const text = document.body.innerText.toLowerCase();
-    return url.includes('login') || url.includes('signin') || (text.includes('برای ثبت آگهی وارد شوید') && !text.includes('عنوان آگهی'));
+  // =========================================================================
+  // تزریق حرفه‌ای کد تایید OTP (تک فیلد یا چند کادر تک رقمی)
+  // =========================================================================
+  function injectOtpCode(code) {
+    if (!code) return;
+    const cleanCode = String(code).replace(/[^0-9]/g, '');
+
+    // ۱. بررسی کادرهای چندتایی جداگانه (Split Multi-Box: مثلا ۴ یا ۵ یا ۶ اینپوت با maxlength=1)
+    const splitBoxes = Array.from(document.querySelectorAll(
+      'input[type="tel"][maxlength="1"], input[type="text"][maxlength="1"], input[inputmode="numeric"][maxlength="1"], input.otp-input, input.digit-input'
+    ));
+
+    if (splitBoxes.length >= cleanCode.length && cleanCode.length >= 4) {
+      for (let i = 0; i < cleanCode.length; i++) {
+        setNativeValue(splitBoxes[i], cleanCode[i]);
+      }
+      renderInPageFloatingHud(`کد OTP چند رقمی (${cleanCode}) در کادرهای جداگانه تزریق شد.`);
+      setTimeout(() => {
+        const confirmBtn = findSubmitButton();
+        if (confirmBtn) confirmBtn.click();
+      }, 500);
+      return;
+    }
+
+    // ۲. فیلد تکی استاندارد OTP
+    const otpInputs = Array.from(document.querySelectorAll(
+      'input[type="tel"], input[name*="otp"], input[name*="code"], input[id*="otp"], input[id*="code"], input[placeholder*="کد"], input[placeholder*="تایید"], input[placeholder*="پیامک"], [data-testid*="otp"]'
+    ));
+
+    if (otpInputs.length > 0) {
+      setNativeValue(otpInputs[0], cleanCode);
+      renderInPageFloatingHud(`کد تایید OTP (${cleanCode}) با موفقیت تزریق شد.`);
+      setTimeout(() => {
+        const confirmBtn = findSubmitButton();
+        if (confirmBtn) confirmBtn.click();
+      }, 500);
+    } else {
+      renderInPageFloatingHud(`کد OTP دریافت شد (${cleanCode}) ولی فیلد آن در این صفحه پیدا نشد.`, true);
+    }
+  }
+
+  function checkOtpPresent() {
+    const otpElem = document.querySelector(
+      'input[name*="otp"], input[name*="code"], input[id*="otp"], input[id*="code"], input[placeholder*="کد تایید"], input[placeholder*="پیامک"], input[maxlength="1"]'
+    );
+    const bodyText = document.body.innerText;
+    return Boolean(otpElem || bodyText.includes('کد تایید پیامک') || bodyText.includes('ارسال کد به'));
+  }
+
+  // =========================================================================
+  // تابع طلایی تنظیم Native Value برای سازگاری کامل با React / Vue / Angular
+  // =========================================================================
+  function setNativeValue(element, value) {
+    if (!element) return;
+    const proto = element.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+    const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
+    
+    element.focus();
+    if (setter) {
+      setter.call(element, value);
+    } else {
+      element.value = value;
+    }
+
+    // React 16+ value tracker bypass
+    if (element._valueTracker) {
+      element._valueTracker.setValue('');
+    }
+
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+    element.dispatchEvent(new Event('change', { bubbles: true }));
+    element.dispatchEvent(new Event('blur', { bubbles: true }));
   }
 
   function selectDropdownOption(selectEl, matchText) {
@@ -412,7 +475,6 @@
         return true;
       }
     }
-    // اگر متن پیدا نشد، دومین گزینه معتبر را انتخاب کن
     if (selectEl.options.length > 1) {
       selectEl.selectedIndex = 1;
       selectEl.dispatchEvent(new Event('change', { bubbles: true }));
@@ -441,6 +503,25 @@
     } catch (e) {}
   }
 
+  function findSubmitButton() {
+    const candidates = Array.from(document.querySelectorAll('button[type="submit"], input[type="submit"], button, .btn-primary, .submit-btn'));
+    for (const b of candidates) {
+      const text = (b.innerText || b.value || '').trim();
+      if (
+        text.includes('ثبت آگهی') ||
+        text.includes('ارسال آگهی') ||
+        text.includes('ذخیره') ||
+        text.includes('ثبت نام') ||
+        text.includes('تایید') ||
+        text.includes('ادامه') ||
+        text.includes('مرحله بعد')
+      ) {
+        return b;
+      }
+    }
+    return document.querySelector('button[type="submit"], input[type="submit"]');
+  }
+
   function verifyAndReportPublication(job) {
     const currentUrl = window.location.href;
     const bodyText = document.body.innerText;
@@ -448,171 +529,45 @@
     let isSuccess = false;
     let trackingCode = null;
 
-    if (bodyText.includes('با موفقیت ثبت') || bodyText.includes('آگهی شما ثبت شد') || bodyText.includes('در انتظار تایید') || bodyText.includes('کد پیگیری') || bodyText.includes('ثبت گردید')) {
+    if (
+      bodyText.includes('با موفقیت ثبت') ||
+      bodyText.includes('آگهی شما ثبت شد') ||
+      bodyText.includes('در انتظار تایید') ||
+      bodyText.includes('کد پیگیری') ||
+      bodyText.includes('ثبت گردید') ||
+      bodyText.includes('منتشر شد')
+    ) {
       isSuccess = true;
       const trackMatch = bodyText.match(/کد پیگیری[:\s]+(\d+)/) || bodyText.match(/شناسه آگهی[:\s]+(\d+)/);
       if (trackMatch) trackingCode = trackMatch[1];
     }
 
     if (isSuccess || currentUrl !== job?.platformDomain) {
-      showHud('آگهی با موفقیت ثبت شد و اطلاعات به سامانه اشک ۲۴ مخابره گردید.');
-      chrome.runtime.sendMessage({
-        type: 'ASHK_AD_PUBLISHED_SUCCESS',
-        jobId: job?.id,
-        adUrl: currentUrl,
-        trackingCode: trackingCode,
-        reportedAt: new Date().toISOString()
-      });
-    }
-  }
-
-  // --- جریان خودکار پر کردن فرم ثبت‌نام اولیه ---
-  async function initiateAutofillFlow() {
-    showHud(`درحال شناسایی فیلدهای ثبت‌نام برای «${activeTarget?.persianName || window.location.hostname}»...`);
-
-    const hasFormInputs = document.querySelector('input[type="text"], input[type="tel"], input[type="password"]');
-    if (!hasFormInputs) {
-      const regLink = findRegistrationLink();
-      if (regLink) {
-        showHud('هدایت هوشمند به صفحه عضویت پورتال...');
-        setTimeout(() => regLink.click(), 800);
-        return;
+      renderInPageFloatingHud('آگهی با موفقیت ثبت شد و اطلاعات به سامانه اشک ۲۴ مخابره گردید.');
+      if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+        chrome.runtime.sendMessage({
+          type: 'ASHK_AD_PUBLISHED_SUCCESS',
+          jobId: job?.id,
+          adUrl: currentUrl,
+          trackingCode: trackingCode,
+          reportedAt: new Date().toISOString()
+        });
       }
     }
-
-    setTimeout(() => {
-      executeFormFilling();
-    }, 1200);
   }
 
-  function findRegistrationLink() {
-    const candidates = Array.from(document.querySelectorAll('a, button'));
-    for (const el of candidates) {
-      const text = (el.innerText || el.textContent || '').trim().toLowerCase();
-      const href = (el.getAttribute('href') || '').toLowerCase();
-      
-      if (text.includes('ثبت نام') || text.includes('عضویت') || text.includes('حساب جدید') ||
-          text.includes('sign up') || text.includes('register') || href.includes('reg') || href.includes('signup')) {
-        return el;
-      }
-    }
-    return null;
-  }
-
-  function executeFormFilling() {
-    if (!credentials) return;
-
-    const phoneInput = document.querySelector('input[type="tel"], input[name*="phone"], input[name*="mobile"], input[id*="phone"], input[id*="mobile"], input[placeholder*="موبایل"], input[placeholder*="همراه"]');
-    const userInput = document.querySelector('input[name*="user"], input[name*="username"], input[id*="user"], input[placeholder*="نام کاربری"]');
-    const emailInput = document.querySelector('input[type="email"], input[name*="email"], input[id*="email"], input[placeholder*="ایمیل"], input[placeholder*="پست"]');
-    const passwordInputs = Array.from(document.querySelectorAll('input[type="password"]'));
-    const termsCheckbox = document.querySelector('input[type="checkbox"][name*="rule"], input[type="checkbox"][name*="term"], input[type="checkbox"][id*="agree"]');
-
-    let filledCount = 0;
-
-    if (phoneInput && credentials.phone) {
-      setNativeValue(phoneInput, credentials.phone);
-      filledCount++;
-    }
-
-    if (userInput && credentials.username) {
-      setNativeValue(userInput, credentials.username);
-      filledCount++;
-    }
-
-    if (emailInput && credentials.email) {
-      setNativeValue(emailInput, credentials.email);
-      filledCount++;
-    }
-
-    if (passwordInputs.length > 0 && credentials.password) {
-      setNativeValue(passwordInputs[0], credentials.password);
-      filledCount++;
-      if (passwordInputs.length > 1) {
-        setNativeValue(passwordInputs[1], credentials.password);
-      }
-    }
-
-    if (termsCheckbox) {
-      termsCheckbox.checked = true;
-      termsCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-
-    const captchaElem = document.querySelector('iframe[src*="captcha"], iframe[src*="recaptcha"], div[class*="captcha"], div[class*="turnstile"]');
-    const otpElem = document.querySelector('input[name*="otp"], input[placeholder*="کد تایید"], input[placeholder*="پیامک"]');
-
-    if (captchaElem || otpElem) {
-      showHud('گیت امنیتی (کپچا / کد پیامکی) شناسایی شد. سامانه منتظر تایید است.', true);
-      chrome.runtime.sendMessage({
-        type: 'CONTENT_NEEDS_HUMAN',
-        reason: captchaElem ? 'حل کپچا مورد نیاز است' : 'کد پیامکی OTP مورد نیاز است'
-      });
-      return;
-    }
-
-    if (filledCount > 0) {
-      showHud('اطلاعات تزریق شد. در حال ارسال فرم ثبت‌نام...');
-      setTimeout(() => {
-        const submitBtn = findSubmitButton();
-        if (submitBtn) {
-          submitBtn.click();
-          chrome.runtime.sendMessage({ type: 'CONTENT_FORM_SUBMITTED' });
-        }
-      }, 1000);
-    }
-  }
-
-  function injectOtpCode(code) {
-    if (!code) return;
-    const otpInputs = Array.from(document.querySelectorAll('input[type="tel"], input[name*="otp"], input[name*="code"], input[placeholder*="کد"], input[placeholder*="تایید"]'));
-    if (otpInputs.length > 0) {
-      setNativeValue(otpInputs[0], code);
-      showHud(`کد OTP (${code}) با موفقیت تزریق شد.`);
-      setTimeout(() => {
-        const confirmBtn = findSubmitButton();
-        if (confirmBtn) confirmBtn.click();
-      }, 500);
-    }
-  }
-
-  function findSubmitButton() {
-    const candidates = Array.from(document.querySelectorAll('button[type="submit"], input[type="submit"], button, .btn-primary, .submit-btn'));
-    for (const b of candidates) {
-      const text = (b.innerText || b.value || '').trim();
-      if (text.includes('ثبت آگهی') || text.includes('ارسال آگهی') || text.includes('ذخیره') || text.includes('ثبت نام') || text.includes('تایید') || text.includes('ادامه')) {
-        return b;
-      }
-    }
-    return document.querySelector('button[type="submit"], input[type="submit"]');
-  }
-
-  function setNativeValue(element, value) {
-    const proto = element.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
-    const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
-    if (setter) {
-      setter.call(element, value);
-    } else {
-      element.value = value;
-    }
-    element.dispatchEvent(new Event('input', { bubbles: true }));
-    element.dispatchEvent(new Event('change', { bubbles: true }));
-    element.dispatchEvent(new Event('blur', { bubbles: true }));
-  }
-
-  function extractStorageTokens() {
-    const tokens = {};
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && (key.includes('token') || key.includes('auth') || key.includes('user') || key.includes('jwt') || key.includes('session'))) {
-          tokens[key] = localStorage.getItem(key);
-        }
-      }
-    } catch (e) {}
-    return tokens;
+  function scanPageFormFields() {
+    const inputs = Array.from(document.querySelectorAll('input, textarea, select'));
+    return inputs.map((el) => ({
+      tagName: el.tagName.toLowerCase(),
+      type: el.getAttribute('type') || 'text',
+      name: el.getAttribute('name') || '',
+      id: el.getAttribute('id') || '',
+      placeholder: el.getAttribute('placeholder') || ''
+    }));
   }
 
   function waitMs(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 })();

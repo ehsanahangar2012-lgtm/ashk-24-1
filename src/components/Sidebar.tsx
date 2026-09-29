@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 
 export type TabType =
+  | 'ad_crawler'
   | 'company'
   | 'assets_config'
   | 'platforms'
@@ -50,6 +51,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenStepByStepGuide,
 }) => {
   const menuItems = [
+    {
+      id: 'ad_crawler' as TabType,
+      label: '★ پایش و ثبت مستقیم با OTP',
+      icon: Sparkles,
+      badge: 'موتور جدید v5.5',
+      badgeColor: 'bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30',
+    },
     {
       id: 'company' as TabType,
       label: '۱. پروفایل و مدیریت مشتریان',

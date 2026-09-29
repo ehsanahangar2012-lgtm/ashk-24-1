@@ -1,6 +1,6 @@
 /**
  * ASHK 24 Autonomous Worker & Session Synchronizer - Background Service Worker
- * Version: 5.2.0
+ * Version: 5.5.0
  *
  * Capabilities:
  * 1. Persistent Autonomous Background Worker Node (Always connected to cPanel API).
@@ -10,7 +10,7 @@
  * 5. Instant Bidirectional Bridge with ASHK 24 Web App and cPanel Server.
  */
 
-const EXT_VERSION = (typeof chrome !== 'undefined' && chrome.runtime?.getManifest?.()?.version) || '5.2.0';
+const EXT_VERSION = (typeof chrome !== 'undefined' && chrome.runtime?.getManifest?.()?.version) || '5.5.0';
 const DEFAULT_ORCHESTRATOR = "http://localhost:3000";
 
 const TARGET_DOMAINS = [
@@ -372,8 +372,22 @@ async function handleIncomingMessage(message, sender, sendResponse) {
       break;
 
     case 'ASHK_PUBLISH_JOB_DIRECT':
+    case 'ASHK_EXECUTE_AD_PUBLICATION':
       executeDirectPublicationJob(message.job, message.campaign, message.company);
-      sendResponse({ success: true, message: 'دستور انتشار مستقیم آگهی توسط افزونه در تب جدید دریافت و فعال گردید.' });
+      sendResponse({ success: true, message: 'دستور انتشار مستقیم آگهی توسط افزونه دریافت و فعال گردید.' });
+      break;
+
+    case 'ASHK_INJECT_OTP_CODE':
+      // Forward to active tab content script
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs && tabs[0] && tabs[0].id) {
+          chrome.tabs.sendMessage(tabs[0].id, {
+            type: 'ASHK_INJECT_OTP_CODE',
+            code: message.code || message.otpCode
+          });
+        }
+      });
+      sendResponse({ success: true, message: 'کد OTP به تب فعال ارسال گردید.' });
       break;
 
     case 'ASHK_AD_PUBLISHED_SUCCESS':
