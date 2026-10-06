@@ -57,7 +57,8 @@ export const AutonomousOrchestratorMatrixModule: React.FC = () => {
 
   const fetchState = async () => {
     try {
-      const res = await fetch('/cpanel-backend/api/index.php?route=orchestrator/state');
+      let res = await fetch('/cpanel-backend/api/index.php?route=orchestrator/state');
+      if (!res.ok) res = await fetch('/api/index.php?route=orchestrator/state');
       if (res.ok) {
         const data = await res.json();
         if (data.orchestrator) {
@@ -86,7 +87,8 @@ export const AutonomousOrchestratorMatrixModule: React.FC = () => {
         extensionBridge.sendPing();
         setActionNotice('پالس ارتباطی به افزونه ارسال شد.');
       } else if (channel === 'sms') {
-        const res = await fetch('/cpanel-backend/api/index.php?route=sms-relay/probe', { method: 'POST' });
+        let res = await fetch('/cpanel-backend/api/index.php?route=sms-relay/probe', { method: 'POST' });
+        if (!res.ok) res = await fetch('/api/index.php?route=sms-relay/probe', { method: 'POST' });
         if (res.ok) {
           setActionNotice('پیامک آزمایشی به وب‌هوک ارسال و با موفقیت دریافت شد.');
         }

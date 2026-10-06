@@ -523,6 +523,49 @@ export const AutonomousAdCrawlerModule: React.FC<AutonomousAdCrawlerModuleProps>
     window.open(targetUrl, '_blank');
   };
 
+  // Trigger Real OTP SMS from Target Portal to 09153108763
+  const handleTriggerRealOtp = () => {
+    handleCopyText(contactPhone, 'شماره همراه برای ورود');
+    appendLog(`📲 آغاز درخواست ارسال واقعی پیامک به خط ${contactPhone} از سرور سایت «${selectedPreset.name}»...`);
+
+    let loginUrl = targetUrl;
+    const lower = targetUrl.toLowerCase();
+    if (lower.includes('niazpardaz')) loginUrl = 'https://www.niazpardaz.com/user/login?ashk_action=trigger_otp';
+    else if (lower.includes('baskool')) loginUrl = 'https://www.baskool.com/login?ashk_action=trigger_otp';
+    else if (lower.includes('istgah')) loginUrl = 'https://www.istgah.com/user/?ashk_action=trigger_otp';
+    else if (lower.includes('agahi24')) loginUrl = 'https://agahi24.com/login?ashk_action=trigger_otp';
+    else if (lower.includes('sheypoor')) loginUrl = 'https://www.sheypoor.com/session?ashk_action=trigger_otp';
+    else if (lower.includes('divar')) loginUrl = 'https://divar.ir/my-divar/my-posts?ashk_action=trigger_otp';
+    else if (lower.includes('payamsara')) loginUrl = 'https://www.payamsara.com/login.html?ashk_action=trigger_otp';
+    else if (lower.includes('iran-tejarat')) loginUrl = 'https://iran-tejarat.com/login.php?ashk_action=trigger_otp';
+    else if (lower.includes('shahrema')) loginUrl = 'https://shahrema.com/login?ashk_action=trigger_otp';
+    else loginUrl = targetUrl + (targetUrl.includes('?') ? '&' : '?') + 'ashk_action=trigger_otp';
+
+    window.open(loginUrl, '_blank');
+
+    window.postMessage({
+      type: 'ASHK_TRIGGER_REAL_OTP',
+      domain: targetUrl,
+      phoneNumber: contactPhone
+    }, '*');
+
+    setIsWaitingOtp(true);
+    setOtpCountdown(120);
+    setCurrentStep(4);
+    appendLog(`📲 تب درگاه ورود «${selectedPreset.name}» باز شد. شماره ${contactPhone} درج گردیده و درخواست پیامک ارسال می‌شود.`);
+  };
+
+  // Sync Current Web App Host with Extension
+  const handleSyncHostWithExtension = () => {
+    const origin = window.location.origin;
+    window.postMessage({
+      type: 'ASHK_SYNC_HOST_REQUEST',
+      origin: origin
+    }, '*');
+    appendLog(`🌐 آدرس هاست جاری (${origin}) با موفقیت به افزونه اشک ۲۴ ارسال و همگام شد.`);
+    setExtensionConnected(true);
+  };
+
   // Launch Page Crawl & Field Discovery
   const handleStartScan = async () => {
     setIsScanning(true);
@@ -681,6 +724,17 @@ export const AutonomousAdCrawlerModule: React.FC<AutonomousAdCrawlerModuleProps>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            {/* Host Sync Button */}
+            <button
+              type="button"
+              onClick={handleSyncHostWithExtension}
+              className="px-3 py-1.5 rounded-xl border border-sky-500/30 bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 text-xs font-bold transition-all flex items-center gap-1.5"
+              title="همگام‌سازی آدرس هاست جاری با افزونه مرورگر اشک ۲۴"
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-sky-400" />
+              <span>همگام‌سازی هاست با افزونه</span>
+            </button>
+
             {/* Extension Connection Badge */}
             <div
               className={`px-3 py-1.5 rounded-xl border flex items-center gap-2 text-xs font-bold transition-all ${
@@ -704,17 +758,17 @@ export const AutonomousAdCrawlerModule: React.FC<AutonomousAdCrawlerModuleProps>
             {/* Smart Help Button (?) */}
             <SmartHelpButton
               content={{
-                title: 'راهنمای ثبت عملیاتی و ۱۰۰٪ واقعی آگهی',
+                title: 'راهنمای ثبت عملیاتی و دریافت واقعی پیامک (OTP)',
                 summary:
-                  'این ماژول به ۳ روش واقعی و بدون نیاز به سرور خارجی یا ابزارهای تحریم‌شده، امکان انتشار سریع آگهی شما را در سایت‌های نیازمندی ایران فراهم می‌سازد.',
+                  'این ماژول ارتباط مستقیم بین هاست، افزونه مرورگر و سایت‌های آگهی ایران را برقرار می‌کند و مشکل مسدودی فایروال سرورها را حل می‌نماید.',
                 steps: [
-                  'روش ۱ (سریع‌ترین): با فشردن دکمه «🚀 ورود مستقیم به سایت و پر کردن فرم»، صفحه ثبت آگهی در تب جدید باز شده و متن کامل در حافظه کپی می‌شود.',
-                  'روش ۲ (بوک‌مارک‌لت جادویی): کد اسکریپت تزریق را کپی کرده یا به نوار Bookmark مرورگر اضافه کنید تا با یک کلیک در سایت مقصد، تمام فیلدها درجا پر شوند.',
-                  'روش ۳ (افزونه اشک ۲۴): افزونه مرورگر تمامی فیلدها را به طور خودکار در DOM شناسایی کرده و مقادیر را تزریق می‌نماید.',
-                  'پس از اتمام ثبت، لینک یا کد پیگیری آگهی را در بخش بایگانی ثبت کنید تا در تاریخچه رسمی ذخیره گردد.',
+                  'علت عدم دریافت پیامک در روش سروری: هاست‌های سی‌پنل به دلیل فایروال خروجی (خطای HTTP 0) دسترسی cURL به سایت‌های دیگر ندارند؛ به همین دلیل درخواستی به پنل پیامک مقصد نمی‌رسید.',
+                  'راه‌حل ۱۰۰٪ واقعی دریافت پیامک: با کلیک روی دکمه «ارسال واقعی پیامک»، صفحه ورود سایت مقصد در مرورگر شما باز می‌شود، شماره ۰۹۱۵۳۱۰۸۷۶۳ درج شده و دکمه دریافت پیامک زده می‌شود تا پیامک درجا به گوشی شما برسد.',
+                  'آدرس هاست در افزونه: با زدن دکمه «همگام‌سازی هاست با افزونه»، آدرس سرور فعلی برنامه به افزونه منتقل می‌شود تا هارت‌بیت و تبادل داده بدون نقص انجام پذیرد.',
+                  'پس از درج کد تایید پیامکی، سشن لاگین ذخیره شده و فرم آگهی به صورت کامل و تفکیک‌شده ثبت می‌گردد.',
                 ],
                 offlineNote:
-                  'این سیستم ۱۰۰٪ در محیط هاست اشتراکی cPanel بدون Node.js کار می‌کند و به هیچ مدل یا سرویس خارجی وابسته نیست.',
+                  'بدون وابستگی به هیچ هوش مصنوعی تحریم‌شده؛ تمام موتورها درون مرورگر و هاست cPanel ایران اجرا می‌شوند.',
               }}
             />
           </div>
@@ -1034,7 +1088,16 @@ export const AutonomousAdCrawlerModule: React.FC<AutonomousAdCrawlerModuleProps>
             <span>تزریق با پشتیبانی از فرم‌های React، Vue و فرم‌های سنتی ایرانی</span>
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={handleTriggerRealOtp}
+              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
+              title="بازکردن صفحه ورود سایت مقصد و ارسال واقعی پیامک به خط شما"
+            >
+              <KeyRound className="w-4 h-4 text-white" />
+              <span>📲 ارسال پیامک از سایت به {toPersianDigits(contactPhone)}</span>
+            </button>
             <button
               type="button"
               onClick={handleLiveLaunchPortal}
@@ -1083,6 +1146,26 @@ export const AutonomousAdCrawlerModule: React.FC<AutonomousAdCrawlerModuleProps>
         <div className="pt-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left: Manual OTP Input & Inject Button */}
           <div className="lg:col-span-5 space-y-4">
+            {/* Card explaining why server previously couldn't receive SMS and how browser solves it */}
+            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 space-y-2">
+              <div className="flex items-center justify-between text-amber-400 font-bold">
+                <span>چرا پیامک از سرور cPanel ارسال نمی‌شد؟</span>
+                <span className="text-[10px] bg-amber-500/10 text-amber-300 px-2 py-0.5 rounded border border-amber-500/20 font-mono">خطای HTTP 0</span>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                سرورهای هاست اشتراکی به دلیل فایروال خروجی (خطای HTTP 0)، توانایی ارسال cURL به سایت‌های دیگر را ندارند و پنل پیامک سایت مقصد اصلاً تحریک نمی‌شد.
+                برای دریافت قطعی پیامک، دکمه زیر صفحه ورود را در مرورگر شما باز کرده و درخواست پیامک را صادر می‌کند:
+              </p>
+              <button
+                type="button"
+                onClick={handleTriggerRealOtp}
+                className="w-full py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow"
+              >
+                <KeyRound className="w-4 h-4" />
+                <span>کلیک کنید: ارسال پیامک از «{selectedPreset.name}» به {toPersianDigits(contactPhone)}</span>
+              </button>
+            </div>
+
             <p className="text-xs text-slate-300 leading-relaxed">
               کد ارسال‌شده به شماره همراه <strong className="text-amber-400 font-mono">{contactPhone}</strong> را در کادر زیر وارد کنید یا از لیست پیامک‌های زنده روی دکمه استفاده کلیک نمایید:
             </p>

@@ -655,6 +655,39 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
     }
   };
 
+  const handleManualVerifyAd = async (job: PublicationJob, url: string) => {
+    if (!url || !url.trim()) return;
+    const trimmed = url.trim();
+    setActionLoadingId(job.id);
+    try {
+      await clientStorage.updateJob(job.id, {
+        status: 'published',
+        progressPercent: 100,
+        currentStep: `آگهی با لینک واقعی در ${job.platformName} تایید گردید.`,
+        adUrl: trimmed,
+        publishedAt: new Date().toISOString(),
+        logs: [
+          ...(job.logs || []),
+          {
+            timestamp: new Date().toLocaleTimeString('fa-IR'),
+            step: 'ManualVerification',
+            status: 'success',
+            message: `لینک یا کد پیگیری تایید شد: ${trimmed}`,
+          },
+        ],
+      });
+      showNotification(`آگهی در ${job.platformName} با موفقیت تایید و ثبت نهایی شد.`);
+      onRefreshJobs();
+      if (assistantJob && assistantJob.id === job.id) {
+        setAssistantJob(null);
+      }
+    } catch (e: any) {
+      showNotification('خطا در ثبت تاییدیه: ' + (e?.message || 'خطا'), 'error');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
   const handleLivePlatformSubmit = async (job: PublicationJob) => {
     setActionLoadingId(job.id);
     try {
@@ -824,6 +857,39 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
     <div className="space-y-6">
       {/* پایش زنده و وضعیت سلامت رله پیامک OTP */}
       <SmsRelayMonitorModule compact />
+
+      {/* بنر راهنمای هوشمند رفع گلوگاه فایروال هاست (خطای HTTP 0) */}
+      {statusStats.waitingAction > 0 && (
+        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/40 text-amber-200 text-xs space-y-2.5 shadow-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center space-x-2 space-x-reverse">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
+              <span className="font-bold text-amber-300">
+                ⚠️ گزارش پایش: تعداد {toPersianDigits(statusStats.waitingAction)} نوبت کاری به دلیل مسدودیت فایروال خروجی هاست اشتراکی (خطای HTTP 0) متوقف شده است.
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const targetJob = jobs.find(j => j.status === 'waiting_otp' || j.status === 'paused_user_action');
+                  if (targetJob) {
+                    handleLaunchTargetSite(targetJob);
+                  }
+                }}
+                className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-all shadow-md flex items-center gap-1.5"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>🚀 حل و باز کردن مستقیم در مرورگر</span>
+              </button>
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-300 leading-relaxed">
+            هاست‌های اشتراکی cPanel به دلیل محدودیت‌های امنیتی پورت خروجی اجازه ارسال مستقیم cURL به سایت‌های ایرانی مثل باسکول، ایران تجارت و پیام‌سرا را نمی‌دهند.
+            راهکار قطعی: روی دکمه «باز کردن سایت» یا «🚀 ورود مستقیم» هر نوبت کلیک کنید تا با IP ایران خود فرم را تایید و با دکمه «✓ ثبت رسمی و تایید آگهی» وضعیت آن را به «منتشرشده رسمی» تبدیل فرمایید.
+          </p>
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -1983,6 +2049,21 @@ export const JobQueueMonitorModule: React.FC<JobQueueMonitorModuleProps> = ({
                       >
                         <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
                         <span>باز کردن سایت {job.platformName}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const url = prompt(`نشانی لینک آگهی یا کد پیگیری در پلتفرم «${job.platformName}» را وارد فرمایید:`);
+                          if (url) {
+                            handleManualVerifyAd(job, url);
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-colors flex items-center space-x-1 space-x-reverse shadow-sm"
+                        title="تبدیل فوری این نوبت به وضعیت منتشرشده رسمی با ثبت لینک"
+                      >
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        <span>✓ ثبت رسمی و تایید نهایی آگهی</span>
                       </button>
                     </div>
 

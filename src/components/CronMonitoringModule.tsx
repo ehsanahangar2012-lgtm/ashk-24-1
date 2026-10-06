@@ -100,6 +100,8 @@ export const CronMonitoringModule: React.FC<CronMonitoringModuleProps> = ({ onRe
     return item.status === filterStatus;
   });
 
+  const hostOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://YOUR_DOMAIN';
+  const curlCronCommand = `*/10 * * * * curl -s -L "${hostOrigin}/cpanel-backend/cron_worker.php?key=ashk24_cron_secret" > /dev/null 2>&1`;
   const cliCronCommand = `*/10 * * * * /usr/local/bin/php /home/USERNAME/public_html/cpanel-backend/cron_worker.php >> /dev/null 2>&1`;
 
   return (
@@ -275,23 +277,45 @@ export const CronMonitoringModule: React.FC<CronMonitoringModuleProps> = ({ onRe
           </div>
 
           {/* Quick cPanel Crontab command helper */}
-          <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-slate-300 flex items-center space-x-1.5 space-x-reverse">
-                <Terminal className="w-4 h-4 text-amber-400" />
-                <span>دستور فعال‌سازی در بخش Cron Jobs سی‌پنل (هر ۱۰ دقیقه):</span>
-              </span>
-              <button
-                onClick={() => handleCopyCli(cliCronCommand)}
-                className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold flex items-center space-x-1 space-x-reverse"
-              >
-                {copiedCli ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-amber-400" />}
-                <span>{copiedCli ? 'کپی شد' : 'کپی دستور'}</span>
-              </button>
+          <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 text-xs">
+            {/* Recommended Method: Direct cURL URL */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-emerald-400 flex items-center space-x-1.5 space-x-reverse">
+                  <Terminal className="w-4 h-4 text-emerald-400" />
+                  <span>روش توصیه شده (cURL مبتنی بر آدرس دامنه - بدون نیاز به دانستن نام کاربری لینوکس):</span>
+                </span>
+                <button
+                  onClick={() => handleCopyCli(curlCronCommand)}
+                  className="px-2 py-1 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/50 text-emerald-200 text-[10px] font-bold flex items-center space-x-1 space-x-reverse"
+                >
+                  {copiedCli ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-emerald-400" />}
+                  <span>{copiedCli ? 'کپی شد' : 'کپی دستور cURL'}</span>
+                </button>
+              </div>
+              <pre className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-[10px] text-emerald-300 font-mono overflow-x-auto text-left" dir="ltr">
+                {curlCronCommand}
+              </pre>
             </div>
-            <pre className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-[10px] text-amber-300 font-mono overflow-x-auto text-left" dir="ltr">
-              {cliCronCommand}
-            </pre>
+
+            {/* Alternative Method: CLI path */}
+            <div className="space-y-1.5 pt-2 border-t border-slate-900">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-slate-400 text-[11px] flex items-center space-x-1.5 space-x-reverse">
+                  <span>روش دوم: خط فرمان PHP مستقیم در ترمینال هاست:</span>
+                </span>
+                <button
+                  onClick={() => handleCopyCli(cliCronCommand)}
+                  className="px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center space-x-1 space-x-reverse"
+                >
+                  <Copy className="w-3 h-3 text-slate-400" />
+                  <span>کپی CLI</span>
+                </button>
+              </div>
+              <pre className="p-2 rounded-xl bg-slate-900/60 border border-slate-800 text-[10px] text-amber-300/80 font-mono overflow-x-auto text-left" dir="ltr">
+                {cliCronCommand}
+              </pre>
+            </div>
           </div>
         </div>
 

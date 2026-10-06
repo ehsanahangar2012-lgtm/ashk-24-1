@@ -307,12 +307,15 @@
       <label style="font-size:11px; color:#94a3b8;">آدرس سرور سی‌پنل (Orchestrator):</label>
       <span id="pingStatus" style="font-size:10px; color:#10b981;">متصل</span>
     </div>
-    <input type="text" id="orchestratorInput" class="config-input" placeholder="http://localhost:3000">
-    <button id="btnSaveConfig" class="btn btn-outline" style="margin-bottom:0; padding:6px;">ذخیره و تست اتصال</button>
+    <input type="text" id="orchestratorInput" class="config-input" placeholder="https://your-domain.com">
+    <div style="display:flex; gap:6px;">
+      <button id="btnDetectTabHost" class="btn btn-outline" style="margin-bottom:0; padding:6px; flex:1; font-size:10px; background:#0f2744; border-color:#0284c7; color:#38bdf8;" title="آدرس دامنه تب فعال را به عنوان سرور قرار می‌دهد">🌐 تشخیص از تب جاری</button>
+      <button id="btnSaveConfig" class="btn btn-outline" style="margin-bottom:0; padding:6px; flex:1; font-size:10px;">ذخیره و تست اتصال</button>
+    </div>
   </div>
 
   <div id="versionNote" class="footer-note">
-    نسخه ۵.۲.۰ - بدون وابستگی، مقاوم در برابر فیلترینگ و تحریم‌ها
+    نسخه ۵.۸.۲ - بدون وابستگی، مقاوم در برابر فیلترینگ و تحریم‌ها
   </div>
 
   <script src="popup.js"></script>

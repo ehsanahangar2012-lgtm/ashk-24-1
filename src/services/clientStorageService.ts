@@ -69,36 +69,40 @@ const AUTO_PATCHES_KEY = 'ashk24_auto_patches';
 const SELF_HEALING_KEY = 'ashk24_self_healing';
 const DIAGNOSTIC_CONSOLE_KEY = 'ashk24_diagnostic_console_logs';
 
-const CPANEL_API_BASE = '/cpanel-backend/api/index.php';
+let activeCpanelApiBase = '/cpanel-backend/api/index.php';
 
-// Helper for unified cPanel REST API calls
+// Helper for unified cPanel REST API calls with dynamic path resilience
 async function callCpanelApi<T>(route: string, options?: RequestInit): Promise<T | null> {
-  try {
-    const url = `${CPANEL_API_BASE}?route=${encodeURIComponent(route)}`;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+  const candidateBases = [activeCpanelApiBase, '/cpanel-backend/api/index.php', '/api/index.php'];
+  const uniqueBases = Array.from(new Set(candidateBases));
 
-    const res = await fetch(url, {
-      ...options,
-      signal: controller.signal,
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': 'Bearer secret_9153108763',
-        ...(options?.body && !(options.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}),
-        ...(options?.headers || {}),
-      },
-    });
+  for (const base of uniqueBases) {
+    try {
+      const url = `${base}?route=${encodeURIComponent(route)}`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
 
-    clearTimeout(timeoutId);
+      const res = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer secret_9153108763',
+          ...(options?.body && !(options.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}),
+          ...(options?.headers || {}),
+        },
+      });
 
-    if (res.ok) {
-      const contentType = res.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        return (await res.json()) as T;
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        activeCpanelApiBase = base;
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          return (await res.json()) as T;
+        }
       }
-    }
-  } catch (err) {
-    // Network or server unreachable - use cached state
+    } catch (err) {}
   }
   return null;
 }

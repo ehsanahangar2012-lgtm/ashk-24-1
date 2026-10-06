@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       cpanel_url:
-        description: 'cPanel API URL (optional override)'
+        description: 'cPanel API URL (e.g. https://your-domain.com/cpanel-backend/api/index.php)'
         required: false
-        default: 'https://secret.ashkghalam.ir/cpanel-backend/api/index.php'
+        default: ''
       headless:
         description: 'Run headless'
         required: true

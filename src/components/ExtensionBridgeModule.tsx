@@ -150,7 +150,8 @@ export const ExtensionBridgeModule: React.FC<ExtensionBridgeModuleProps> = ({
               title: 'لوله ارتباطی و کنترل ورکر افزونه',
               summary: 'این ماژول ارتباط زنده مرورگر با افزونه اشک ۲۴ را از طریق کانال‌های PostMessage، CustomEvent و BroadcastChannel پایش می‌کند.',
               steps: [
-                'اگر وضعیت افزونه «قطع ارتباط» است، پکیج v4.8.3 را دانلود و در مرورگر بارگذاری کنید.',
+                `اگر وضعیت افزونه «قطع ارتباط» است، آخرین نسخه v${APP_VERSION} را دانلود و در مرورگر بارگذاری کنید.`,
+                'با فشردن دکمه «همگام‌سازی آدرس سرور با افزونه»، آدرس سرور برنامه به صورت خودکار در افزونه ذخیره می‌شود.',
                 'برای تست ارسال خودکار کدهای تایید، از بخش «ارسال دستی کد OTP» استفاده کنید.',
                 'وضعیت لاگ‌های زنده پایین صفحه تمام کنش‌های ورکر را ثبت می‌کند.'
               ],
@@ -228,21 +229,40 @@ export const ExtensionBridgeModule: React.FC<ExtensionBridgeModuleProps> = ({
                 </button>
               )}
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-2">
                 <button
-                  onClick={handlePing}
-                  className="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs border border-slate-700 transition-all flex items-center justify-center space-x-1 space-x-reverse"
+                  type="button"
+                  onClick={() => {
+                    const origin = window.location.origin;
+                    window.postMessage({
+                      type: 'ASHK_SYNC_HOST_REQUEST',
+                      origin: origin
+                    }, '*');
+                    addLog(`آدرس هاست (${origin}) به افزونه ارسال گردید.`, 'success');
+                  }}
+                  className="w-full py-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 font-bold text-xs border border-sky-500/30 transition-all flex items-center justify-center space-x-1.5 space-x-reverse"
+                  title="همگام‌سازی نشانی سرور برنامه جاری با افزونه"
                 >
-                  <RefreshCw className="w-3.5 h-3.5 ml-1" />
-                  <span>تست پالس</span>
+                  <Globe className="w-3.5 h-3.5 ml-1 text-sky-400" />
+                  <span>همگام‌سازی آدرس سرور با افزونه</span>
                 </button>
-                <button
-                  onClick={handleHarvestActiveTab}
-                  className="py-2 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 font-medium text-xs border border-sky-500/30 transition-all flex items-center justify-center space-x-1 space-x-reverse"
-                >
-                  <Zap className="w-3.5 h-3.5 ml-1" />
-                  <span>شکار تب فعال</span>
-                </button>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={handlePing}
+                    className="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs border border-slate-700 transition-all flex items-center justify-center space-x-1 space-x-reverse"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 ml-1" />
+                    <span>تست پالس</span>
+                  </button>
+                  <button
+                    onClick={handleHarvestActiveTab}
+                    className="py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-medium text-xs border border-emerald-500/30 transition-all flex items-center justify-center space-x-1 space-x-reverse"
+                  >
+                    <Zap className="w-3.5 h-3.5 ml-1" />
+                    <span>شکار تب فعال</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>

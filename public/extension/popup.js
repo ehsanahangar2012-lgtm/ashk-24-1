@@ -146,12 +146,34 @@ document.addEventListener('DOMContentLoaded', () => {
     versionNote.innerText = `نسخه ${extVersion} - بدون وابستگی، مقاوم در برابر فیلترینگ و تحریم‌ها`;
   }
 
+  // Detect Orchestrator Host from Current Active Tab
+  const btnDetectTabHost = document.getElementById('btnDetectTabHost');
+  if (btnDetectTabHost) {
+    btnDetectTabHost.addEventListener('click', () => {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs && tabs[0] && tabs[0].url) {
+          try {
+            const urlObj = new URL(tabs[0].url);
+            if (urlObj.protocol.startsWith('http')) {
+              orchestratorInput.value = urlObj.origin;
+              btnSaveConfig.click();
+            } else {
+              alert('تب جاری یک صفحه وب معتبر (HTTP/HTTPS) نیست.');
+            }
+          } catch (e) {
+            alert('خطا در خواندن آدرس تب جاری.');
+          }
+        }
+      });
+    });
+  }
+
   // Save Orchestrator URL
   btnSaveConfig.addEventListener('click', () => {
     const url = orchestratorInput.value.trim();
     if (!url) return;
 
-    btnSaveConfig.innerText = 'در حال بررسی اتصال...';
+    btnSaveConfig.innerText = 'در حال بررسی...';
     pingStatus.innerText = '...';
 
     chrome.runtime.sendMessage({
@@ -161,31 +183,42 @@ document.addEventListener('DOMContentLoaded', () => {
       if (chrome.runtime.lastError) return;
       
       const baseUrl = url.replace(/\/$/, '');
-      const testUrl = `${baseUrl}/cpanel-backend/api/index.php?route=orchestrator/heartbeat`;
+      const testCandidates = [
+        `${baseUrl}/cpanel-backend/api/index.php?route=orchestrator/heartbeat`,
+        `${baseUrl}/api/index.php?route=orchestrator/heartbeat`
+      ];
 
-      fetch(testUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          agentId: 'popup_test_probe',
-          channelType: 'extension',
-          ping: true,
-          test: true
-        })
-      }).then(r => {
-        btnSaveConfig.innerText = 'ذخیره و تست اتصال';
-        if (r.ok) {
-          pingStatus.innerText = 'اتصال موفق';
-          pingStatus.style.color = '#10b981';
-        } else {
-          pingStatus.innerText = 'پاسخ ناموفق (' + r.status + ')';
-          pingStatus.style.color = '#f59e0b';
+      const checkUrl = (idx) => {
+        if (idx >= testCandidates.length) {
+          btnSaveConfig.innerText = 'ذخیره و تست اتصال';
+          pingStatus.innerText = 'خطای اتصال';
+          pingStatus.style.color = '#ef4444';
+          return;
         }
-      }).catch(() => {
-        btnSaveConfig.innerText = 'ذخیره و تست اتصال';
-        pingStatus.innerText = 'خطای اتصال';
-        pingStatus.style.color = '#ef4444';
-      });
+
+        fetch(testCandidates[idx], {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            agentId: 'popup_test_probe',
+            channelType: 'extension',
+            ping: true,
+            test: true
+          })
+        }).then(r => {
+          if (r.ok) {
+            btnSaveConfig.innerText = 'ذخیره و تست اتصال';
+            pingStatus.innerText = 'اتصال موفق ✓';
+            pingStatus.style.color = '#10b981';
+          } else {
+            checkUrl(idx + 1);
+          }
+        }).catch(() => {
+          checkUrl(idx + 1);
+        });
+      };
+
+      checkUrl(0);
     });
   });
 

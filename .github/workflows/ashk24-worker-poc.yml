@@ -12,9 +12,9 @@ on:
         required: false
         default: 'payamsara'
       cpanel_url:
-        description: 'cPanel API URL override (optional)'
+        description: 'cPanel API URL (e.g. https://your-domain.com/cpanel-backend/api/index.php)'
         required: false
-        default: 'https://secret.ashkghalam.ir/cpanel-backend/api/index.php'
+        default: ''
   # Autonomous periodic run: uncomment after cPanel deployment
   # schedule:
   #   - cron: '0 */4 * * *'

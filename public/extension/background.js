@@ -1,6 +1,6 @@
 /**
  * ASHK 24 Autonomous Worker & Session Synchronizer - Background Service Worker
- * Version: 5.6.0
+ * Version: 5.8.3
  *
  * Capabilities:
  * 1. Persistent Autonomous Background Worker Node (Always connected to cPanel API).
@@ -10,7 +10,7 @@
  * 5. Instant Bidirectional Bridge with ASHK 24 Web App and cPanel Server.
  */
 
-const EXT_VERSION = (typeof chrome !== 'undefined' && chrome.runtime?.getManifest?.()?.version) || '5.6.0';
+const EXT_VERSION = (typeof chrome !== 'undefined' && chrome.runtime?.getManifest?.()?.version) || '5.8.3';
 const DEFAULT_ORCHESTRATOR = "http://localhost:3000";
 
 const TARGET_DOMAINS = [
@@ -130,7 +130,12 @@ async function executeHeartbeat() {
   if (!workerState.isWorkerEnabled) return;
 
   const base = (workerState.orchestratorUrl || DEFAULT_ORCHESTRATOR).replace(/\/$/, '');
-  const heartbeatUrl = `${base}/cpanel-backend/api/index.php/orchestrator/heartbeat`;
+  const candidateUrls = [
+    `${base}/cpanel-backend/api/index.php/orchestrator/heartbeat`,
+    `${base}/api/index.php/orchestrator/heartbeat`,
+    `${base}/cpanel-backend/api/index.php?route=orchestrator/heartbeat`,
+    `${base}/api/index.php?route=orchestrator/heartbeat`
+  ];
 
   try {
     const payload = {
@@ -143,26 +148,61 @@ async function executeHeartbeat() {
       timestamp: new Date().toISOString()
     };
 
-    const res = await fetch(heartbeatUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    }).catch(() => null);
+    for (const url of candidateUrls) {
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(() => null);
 
-    if (res && res.ok) {
-      workerState.lastHeartbeatTime = new Date().toLocaleTimeString('fa-IR');
-      saveWorkerState();
+        if (res && res.ok) {
+          workerState.lastHeartbeatTime = new Date().toLocaleTimeString('fa-IR');
+          saveWorkerState();
 
-      if (workerState.offlineQueue.length > 0) {
-        flushOfflineQueue();
-      }
-
-      // بلافاصله چک کردن کارهای ناتمام در زمان آنلاین بودن کاربر
-      pollOrchestratorTasks();
+          if (workerState.offlineQueue.length > 0) {
+            flushOfflineQueue();
+          }
+          break;
+        }
+      } catch (err) {}
     }
+
+    // بلافاصله چک کردن کارهای ناتمام در زمان آنلاین بودن کاربر
+    pollOrchestratorTasks();
   } catch (err) {
     // Quietly handle network isolation
   }
+}
+
+let detectedApiPrefix = null;
+
+async function fetchCpanelApi(route, options = {}) {
+  const base = (workerState.orchestratorUrl || DEFAULT_ORCHESTRATOR).replace(/\/$/, '');
+  const cleanRoute = route.replace(/^\//, '');
+
+  const prefixes = detectedApiPrefix
+    ? [detectedApiPrefix, '/cpanel-backend/api/index.php', '/api/index.php']
+    : ['/cpanel-backend/api/index.php', '/api/index.php'];
+
+  for (const prefix of prefixes) {
+    const urlsToTry = [
+      `${base}${prefix}/${cleanRoute}`,
+      `${base}${prefix}?route=${cleanRoute}`
+    ];
+
+    for (const url of urlsToTry) {
+      try {
+        const res = await fetch(url, options);
+        if (res && res.status !== 404) {
+          detectedApiPrefix = prefix;
+          return res;
+        }
+      } catch (e) {}
+    }
+  }
+
+  return null;
 }
 
 let isAutoJobRunning = false;
@@ -170,18 +210,15 @@ let isAutoJobRunning = false;
 async function pollOrchestratorTasks() {
   if (!workerState.isWorkerEnabled || isAutoJobRunning) return;
 
-  const base = (workerState.orchestratorUrl || DEFAULT_ORCHESTRATOR).replace(/\/$/, '');
-  const claimUrl = `${base}/cpanel-backend/api/index.php/orchestrator/claim-balanced`;
-
   try {
-    const res = await fetch(claimUrl, {
+    const res = await fetchCpanelApi('orchestrator/claim-balanced', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         channel: 'extension',
         agentId: workerState.workerId
       })
-    }).catch(() => null);
+    });
 
     if (res && res.ok) {
       const data = await res.json();
@@ -210,12 +247,9 @@ async function pollOrchestratorTasks() {
 async function flushOfflineQueue() {
   if (workerState.offlineQueue.length === 0) return;
 
-  const base = (workerState.orchestratorUrl || DEFAULT_ORCHESTRATOR).replace(/\/$/, '');
-  const batchUrl = `${base}/cpanel-backend/api/index.php/sessions/sync-batch`;
-
   try {
     const toFlush = [...workerState.offlineQueue];
-    const res = await fetch(batchUrl, {
+    const res = await fetchCpanelApi('sessions/sync-batch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessions: toFlush })
@@ -478,9 +512,57 @@ async function handleIncomingMessage(message, sender, sendResponse) {
       sendResponse({ success: true });
       break;
 
+    case 'UPDATE_ORCHESTRATOR_URL':
+      if (message.orchestratorUrl || message.url) {
+        workerState.orchestratorUrl = message.orchestratorUrl || message.url;
+        saveWorkerState();
+        executeHeartbeat();
+      }
+      sendResponse({ success: true, orchestratorUrl: workerState.orchestratorUrl });
+      break;
+
+    case 'ASHK_TRIGGER_REAL_OTP':
+      triggerRealOtpForPlatform(message.domain, message.phone || '09153108763');
+      sendResponse({ success: true, message: 'تب اختصاصی ارسال پیامک در پلتفرم باز شد.' });
+      break;
+
     default:
       sendResponse({ success: true, received: true });
       break;
+  }
+}
+
+// -------------------------------------------------------------
+// Real In-Browser OTP Request Trigger (ارسال پیامک واقعی از سایت مقصد)
+// -------------------------------------------------------------
+async function triggerRealOtpForPlatform(rawDomain, phone) {
+  const domain = (rawDomain || 'niazpardaz.com').toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  let loginUrl = `https://${domain}`;
+  if (domain.includes('niazpardaz')) loginUrl = 'https://www.niazpardaz.com/user/login?ashk_action=trigger_otp';
+  else if (domain.includes('istgah')) loginUrl = 'https://www.istgah.com/user/?ashk_action=trigger_otp';
+  else if (domain.includes('agahi24')) loginUrl = 'https://agahi24.com/login?ashk_action=trigger_otp';
+  else if (domain.includes('baskool')) loginUrl = 'https://www.baskool.com/login?ashk_action=trigger_otp';
+  else if (domain.includes('sheypoor')) loginUrl = 'https://www.sheypoor.com/session?ashk_action=trigger_otp';
+  else if (domain.includes('divar')) loginUrl = 'https://divar.ir/my-divar/my-posts?ashk_action=trigger_otp';
+  else if (domain.includes('payamsara')) loginUrl = 'https://www.payamsara.com/login.html?ashk_action=trigger_otp';
+  else if (domain.includes('iran-tejarat')) loginUrl = 'https://iran-tejarat.com/login.php?ashk_action=trigger_otp';
+  else if (domain.includes('shahrema')) loginUrl = 'https://shahrema.com/login?ashk_action=trigger_otp';
+  else loginUrl = `https://${domain}?ashk_action=trigger_otp`;
+
+  try {
+    const tab = await chrome.tabs.create({ url: loginUrl, active: true });
+    const triggerMsg = () => {
+      chrome.tabs.sendMessage(tab.id, {
+        type: 'ASHK_TRIGGER_REAL_OTP',
+        phoneNumber: phone
+      }, () => {
+        if (chrome.runtime.lastError) {}
+      });
+    };
+    setTimeout(triggerMsg, 2000);
+    setTimeout(triggerMsg, 4000);
+  } catch (e) {
+    console.error('[ASHK OTP Trigger Tab Error]', e);
   }
 }
 
@@ -566,9 +648,6 @@ async function executeDirectPublicationJob(job, campaign, company) {
 }
 
 async function handleAdPublishedSuccess(data) {
-  const base = (workerState.orchestratorUrl || DEFAULT_ORCHESTRATOR).replace(/\/$/, '');
-  const updateUrl = `${base}/cpanel-backend/api/index.php/jobs/update`;
-  
   const payload = {
     jobId: data.jobId,
     status: 'published',
@@ -582,7 +661,7 @@ async function handleAdPublishedSuccess(data) {
   };
 
   try {
-    await fetch(updateUrl, {
+    await fetchCpanelApi('jobs/update', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

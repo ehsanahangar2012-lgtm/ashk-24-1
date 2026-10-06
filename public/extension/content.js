@@ -1,10 +1,10 @@
 /**
- * سامانه یکپارچه افزونه اشک ۲۴ (ASHK 24 Deep Adaptive Autonomous Extension v5.7.0)
+ * سامانه یکپارچه افزونه اشک ۲۴ (ASHK 24 Deep Adaptive Autonomous Extension v5.8.3)
  * موتور پایش عمیق، بستن خودکار پاپ‌آپ‌ها، کشف هوشمند دکمه‌ها، تفکیک معنایی فیلدها و یادگیری تطبیقی
  */
 
 (function () {
-  const EXT_VERSION = (typeof chrome !== 'undefined' && chrome.runtime?.getManifest?.()?.version) || '5.7.0';
+  const EXT_VERSION = (typeof chrome !== 'undefined' && chrome.runtime?.getManifest?.()?.version) || '5.8.3';
 
   try {
     document.documentElement.setAttribute('data-ashk24-extension', 'installed');
@@ -420,11 +420,14 @@
         <button id="ashk-btn-autofill" style="background:#059669;color:#fff;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:11px;display:flex;align-items:center;gap:4px;">
           <span>🚀</span><span>پر کردن هوشمند فیلدها</span>
         </button>
+        <button id="ashk-btn-trigger-otp" style="background:#0284c7;color:#fff;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:11px;display:flex;align-items:center;gap:4px;" title="درج شماره موبایل 09153108763 و درخواست واقعی پیامک">
+          <span>📲</span><span>درخواست پیامک OTP</span>
+        </button>
         <button id="ashk-btn-dismiss-popups" style="background:#475569;color:#fff;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:11px;display:flex;align-items:center;gap:4px;">
           <span>✕</span><span>بستن پاپ‌آپ‌ها</span>
         </button>
         <button id="ashk-btn-otp" style="background:#d97706;color:#fff;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:11px;display:flex;align-items:center;gap:4px;">
-          <span>🔑</span><span>کد OTP</span>
+          <span>🔑</span><span>درج کد OTP</span>
         </button>
       </div>
     `;
@@ -442,6 +445,13 @@
     if (autofillBtn) {
       autofillBtn.onclick = () => {
         executeAdPublicationFlow();
+      };
+    }
+
+    const triggerOtpBtn = document.getElementById('ashk-btn-trigger-otp');
+    if (triggerOtpBtn) {
+      triggerOtpBtn.onclick = () => {
+        requestRealOtpOnCurrentPage(activePayload.phone || '09153108763');
       };
     }
 
@@ -463,19 +473,123 @@
     const otpBtn = document.getElementById('ashk-btn-otp');
     if (otpBtn) {
       otpBtn.onclick = () => {
-        const code = prompt('کد تایید پیامک (OTP) را وارد نمایید:');
+        const code = prompt('کد تایید پیامک (OTP) دریافتی را وارد نمایید:');
         if (code) {
-          const otpInput = document.querySelector('input[name*="otp"], input[name*="code"], input[type="tel"]');
+          const otpInput = document.querySelector('input[name*="otp" i], input[name*="code" i], input[type="tel"]:not([placeholder*="09"]), input[id*="otp" i], input[id*="code" i]');
           if (otpInput) {
             setNativeValue(otpInput, code.trim());
             renderInPageFloatingHud('کد OTP در فیلد مربوطه تزریق شد.');
+          } else {
+            renderInPageFloatingHud(`کد ${code} در حافظه موقت کپی شد.`);
+            try { navigator.clipboard.writeText(code.trim()); } catch (e) {}
           }
         }
       };
     }
   }
 
-  // ارتباط با پیام‌های داشبورد
+  // =========================================================================
+  // ماژول درخواست واقعی پیامک ورود در صفحه فعال (Real In-Browser OTP Requester)
+  // =========================================================================
+  function requestRealOtpOnCurrentPage(phoneNumber = '09153108763') {
+    const phoneSelectors = [
+      'input[type="tel"]',
+      'input[name*="mobile" i]',
+      'input[name*="phone" i]',
+      'input[name*="cell" i]',
+      'input[id*="mobile" i]',
+      'input[id*="phone" i]',
+      'input[placeholder*="موبایل"]',
+      'input[placeholder*="همراه"]',
+      'input[placeholder*="09"]',
+      'input[aria-label*="موبایل"]'
+    ];
+
+    let phoneInput = null;
+    for (const sel of phoneSelectors) {
+      const el = document.querySelector(sel);
+      if (el && el.offsetParent !== null) {
+        phoneInput = el;
+        break;
+      }
+    }
+
+    if (phoneInput) {
+      setNativeValue(phoneInput, phoneNumber);
+      phoneInput.style.border = '2px solid #10b981';
+      phoneInput.style.backgroundColor = '#ecfdf5';
+    }
+
+    // جستجوی دکمه ارسال پیامک یا ورود
+    const btnTexts = ['ارسال کد', 'دریافت کد', 'ارسال پیامک', 'ادامه', 'تایید و ادامه', 'ورود', 'ثبت نام', 'send code', 'get otp'];
+    let submitBtn = null;
+    const candidates = document.querySelectorAll('button, input[type="submit"], a[role="button"], div[role="button"], [class*="btn"]');
+    for (const c of candidates) {
+      if (c.offsetParent === null) continue;
+      const txt = (c.textContent || c.value || '').trim().toLowerCase();
+      if (btnTexts.some(bt => txt === bt || txt.includes(bt))) {
+        submitBtn = c;
+        break;
+      }
+    }
+
+    if (submitBtn) {
+      submitBtn.style.outline = '3px solid #38bdf8';
+      setTimeout(() => {
+        submitBtn.click();
+      }, 300);
+      renderInPageFloatingHud(`شماره ${phoneNumber} در فیلد درج شد و درخواست ارسال پیامک کلیک گردید. پیامک به موبایل شما ارسال خواهد شد.`);
+      return true;
+    } else {
+      renderInPageFloatingHud(`شماره ${phoneNumber} در فیلد شماره موبایل درج شد. لطفاً دکمه دریافت کد پیامک را کلیک نمایید.`);
+      return false;
+    }
+  }
+
+  // =========================================================================
+  // همگام‌سازی خودکار آدرس سرور هاست با افزونه (Host Auto-Discovery & Sync)
+  // =========================================================================
+  if (isAshkWebApp) {
+    const currentOrigin = window.location.origin;
+    try {
+      if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+        chrome.runtime.sendMessage({
+          type: 'ASHK_SET_ORCHESTRATOR',
+          orchestratorUrl: currentOrigin
+        }, (res) => {
+          if (chrome.runtime.lastError) {}
+          window.postMessage({
+            type: 'ASHK_EXTENSION_HOST_ACK',
+            host: currentOrigin,
+            version: EXT_VERSION,
+            success: true
+          }, '*');
+        });
+      }
+    } catch (e) {}
+
+    window.addEventListener('message', (event) => {
+      if (!event.data || typeof event.data !== 'object') return;
+      if (event.data.type === 'ASHK_SYNC_HOST_REQUEST') {
+        const originToSync = event.data.origin || window.location.origin;
+        if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+          chrome.runtime.sendMessage({
+            type: 'ASHK_SET_ORCHESTRATOR',
+            orchestratorUrl: originToSync
+          }, () => {
+            window.postMessage({
+              type: 'ASHK_EXTENSION_HOST_ACK',
+              host: originToSync,
+              version: EXT_VERSION,
+              success: true
+            }, '*');
+          });
+        }
+      }
+    });
+  }
+
+  // ارتباط با پیام‌های داشبورد و سایر تب‌ها
   window.addEventListener('message', (event) => {
     if (!event.data || typeof event.data !== 'object') return;
     if (event.data.type === 'ASHK_EXECUTE_AD_PUBLICATION') {
@@ -484,9 +598,20 @@
     if (event.data.type === 'ASHK_DISMISS_POPUPS') {
       autoDismissPopups();
     }
+    if (event.data.type === 'ASHK_TRIGGER_REAL_OTP') {
+      requestRealOtpOnCurrentPage(event.data.phoneNumber || activePayload.phone || '09153108763');
+    }
   });
 
+  // چک کردن پارامترهای خودکار در URL (مثلاً باز شدن با هدف درخواست پیامک)
   if (!isAshkWebApp) {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('ashk_action') === 'trigger_otp') {
+      setTimeout(() => {
+        requestRealOtpOnCurrentPage('09153108763');
+      }, 1000);
+    }
+
     setTimeout(() => {
       renderInPageFloatingHud('آماده پایش هوشمند صفحه و بستن بنرهای مزاحم.');
     }, 1500);

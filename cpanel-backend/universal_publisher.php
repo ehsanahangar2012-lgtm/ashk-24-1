@@ -367,30 +367,27 @@ class UniversalPlatformPublisher {
         $status = 'failed';
         $currentStep = '';
 
-        // بررسی آیا سرور کاربر را به صفحه لاگین یا احراز پیامکی هدایت کرده است
-        $isRedirectedToAuth = (
-            strpos(strtolower($effectiveUrl), 'login') !== false ||
-            strpos(strtolower($effectiveUrl), 'signin') !== false ||
-            strpos(strtolower($effectiveUrl), 'register') !== false ||
-            strpos(strtolower($effectiveUrl), 'insertad.html') !== false
-        );
-
-        if ($isRedirectedToAuth || $httpCode === 401 || $httpCode === 403 || $httpCode === 429) {
-            // سایت نیازمند احراز شماره موبایل با پیامک یا اتصال نشست کاربری است
-            $status = 'waiting_otp';
-            $progressPercent = 50;
-            $currentStep = "پلتفرم {$config['name']} برای ثبت آگهی نیازمند تایید هویت شماره تماس 09153108763 (کد پیامکی OTP) یا نشست تاییدشده است.";
+        if ($httpCode === 0) {
+            // سرور هاست سی‌پنل دسترسی خروجی به این دامنه ندارد یا فایروال هاست درخواست cURL را مسدود کرده است
+            $status = 'paused_user_action';
+            $progressPercent = 40;
+            $currentStep = "محدودیت فایروال خروجی سرور هاست (HTTP 0): سرور cPanel به پلتفرم {$config['name']} دسترسی مستقیم ندارد. هیچ پیامکی از سمت سرور ارسال نخواهد شد. لطفاً از دکمه «دریافت پیامک در مرورگر / افزونه» استفاده فرمایید.";
         } elseif ($httpCode >= 200 && $httpCode < 300) {
             // فرم با موفقیت دریافت گردید و در صف تایید ناظر وب‌سایت قرار گرفت
             $isSuccessfulSubmission = true;
             $status = 'under_review';
             $progressPercent = 90;
             $currentStep = "فرم آگهی با موفقیت به {$config['name']} تحویل داده شد و در صف بررسی و تایید ناظر پلتفرم قرار گرفت. (پیگیری: {$config['trackingUrl']})";
+        } elseif ($isRedirectedToAuth || $httpCode === 401 || $httpCode === 403 || $httpCode === 429) {
+            // سایت نیازمند احراز شماره موبایل با پیامک یا اتصال نشست کاربری است
+            $status = 'waiting_otp';
+            $progressPercent = 50;
+            $currentStep = "پلتفرم {$config['name']} برای ثبت آگهی نیازمند تایید هویت شماره تماس 09153108763 (کد پیامکی OTP) یا نشست تاییدشده است.";
         } elseif ($httpCode === 404 || $httpCode === 410 || $httpCode === 500) {
             // درگاه‌های مستقیم نیازمند کوکی یا همیار مرورگر هستند
-            $status = 'waiting_otp';
+            $status = 'paused_user_action';
             $progressPercent = 45;
-            $currentStep = "درگاه مستقیم {$config['name']} به محافظت ضدربات لایه نشست متصل است. وظیفه در وضعیت waiting_otp جهت همگام‌سازی از طریق همیار اشک ۲۴ قرار گرفت.";
+            $currentStep = "پاسخ سرور {$config['name']} با خطای HTTP {$httpCode} مواجه گردید. این پلتفرم نیازمند ارسال مستقیم از طریق مرورگر کاربر با IP ایران است.";
         } else {
             $status = 'waiting_otp';
             $progressPercent = 40;
