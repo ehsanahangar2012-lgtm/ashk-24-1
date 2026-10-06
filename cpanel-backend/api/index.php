@@ -238,6 +238,24 @@ try {
             ], JSON_UNESCAPED_UNICODE);
             break;
 
+        case ($route === 'adaptive/sync' || $route === 'adaptive/learn'):
+            $dataDir = defined('DATA_DIR') ? DATA_DIR : __DIR__ . '/../data';
+            if (!file_exists($dataDir)) @mkdir($dataDir, 0775, true);
+            $knowledgeFile = $dataDir . '/adaptive_knowledge.json';
+            $incomingPatterns = $body['patterns'] ?? [];
+            if (!empty($incomingPatterns) && is_array($incomingPatterns)) {
+                file_put_contents($knowledgeFile, json_encode($incomingPatterns, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            }
+            echo json_encode(['success' => true, 'count' => count($incomingPatterns), 'message' => 'الگوهای یادگیری تطبیقی در سرور سی‌پنل ذخیره شدند.'], JSON_UNESCAPED_UNICODE);
+            break;
+
+        case ($route === 'adaptive/patterns'):
+            $dataDir = defined('DATA_DIR') ? DATA_DIR : __DIR__ . '/../data';
+            $knowledgeFile = $dataDir . '/adaptive_knowledge.json';
+            $patterns = file_exists($knowledgeFile) ? (json_decode(file_get_contents($knowledgeFile), true) ?: []) : [];
+            echo json_encode($patterns, JSON_UNESCAPED_UNICODE);
+            break;
+
         case ($route === 'health'):
             echo json_encode([
                 'status' => 'ok',

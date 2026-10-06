@@ -1,6 +1,6 @@
 /**
  * ASHK 24 Autonomous Worker & Session Synchronizer - Background Service Worker
- * Version: 5.5.0
+ * Version: 5.6.0
  *
  * Capabilities:
  * 1. Persistent Autonomous Background Worker Node (Always connected to cPanel API).
@@ -10,7 +10,7 @@
  * 5. Instant Bidirectional Bridge with ASHK 24 Web App and cPanel Server.
  */
 
-const EXT_VERSION = (typeof chrome !== 'undefined' && chrome.runtime?.getManifest?.()?.version) || '5.5.0';
+const EXT_VERSION = (typeof chrome !== 'undefined' && chrome.runtime?.getManifest?.()?.version) || '5.6.0';
 const DEFAULT_ORCHESTRATOR = "http://localhost:3000";
 
 const TARGET_DOMAINS = [
