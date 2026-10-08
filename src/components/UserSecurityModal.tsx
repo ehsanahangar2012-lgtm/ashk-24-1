@@ -38,47 +38,32 @@ export function UserSecurityModal({ currentUser, onClose, onLogout }: UserSecuri
   const [newUserPass, setNewUserPass] = useState<string>('');
   const [userActionMsg, setUserActionMsg] = useState<string>('');
 
-  const fetchUsers = async () => {
-    let combined: UserAccount[] = [
-      {
-        id: 'usr_admin',
-        username: 'admin',
-        fullName: 'مدیر ارشد سیستم',
-        role: 'admin',
-        createdAt: new Date().toISOString(),
-        isActive: true,
-      },
-    ];
+  const getAuthHeaders = (): Record<string, string> => {
+    const token = (typeof window !== 'undefined' && window.sessionStorage?.getItem('ashk24_auth_token')) ||
+      (typeof window !== 'undefined' && window.localStorage?.getItem('ashk24_auth_token')) || '';
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
+  };
 
-    // Merge with server users if available
+  const fetchUsers = async () => {
     try {
-      const res = await fetch('/cpanel-backend/api/index.php?route=auth/users');
+      const res = await fetch('/cpanel-backend/api/index.php?route=auth/users', {
+        headers: getAuthHeaders()
+      });
       if (res.ok) {
-        const serverUsers = await res.json();
-        if (Array.isArray(serverUsers) && serverUsers.length > 0) {
-          combined = serverUsers;
+        const data = await res.json();
+        const users = Array.isArray(data) ? data : (data?.users || []);
+        if (users.length > 0) {
+          setUsersList(users);
+          return;
         }
       }
     } catch (e) {}
 
-    // Merge with local storage users
-    try {
-      const localUsers: any[] = JSON.parse(localStorage.getItem('ashk24_local_users') || '[]');
-      localUsers.forEach((lu) => {
-        if (!combined.some((u) => u.username?.toLowerCase() === lu.username?.toLowerCase())) {
-          combined.push({
-            id: lu.id || `usr_local_${Date.now()}`,
-            username: lu.username,
-            fullName: lu.fullName || lu.username,
-            role: lu.role || 'operator',
-            createdAt: lu.createdAt || new Date().toISOString(),
-            isActive: true,
-          });
-        }
-      });
-    } catch (e) {}
-
-    setUsersList(combined);
+    // Fallback display active user if list endpoint is restricted
+    setUsersList([currentUser]);
   };
 
   useEffect(() => {
@@ -94,47 +79,44 @@ export function UserSecurityModal({ currentUser, onClose, onLogout }: UserSecuri
       return;
     }
 
-    // Always update local vault password
-    try {
-      const localUsers: any[] = JSON.parse(localStorage.getItem('ashk24_local_users') || '[]');
-      const idx = localUsers.findIndex((u) => u.username?.toLowerCase() === currentUser.username.toLowerCase());
+    if (newPassword.length < 6) {
+      setPassStatusMsg({ type: 'error', text: 'رمز عبور جدید باید حداقل ۶ کاراکتر باشد.' });
+      return;
+    }
 
-      if (idx !== -1) {
-        localUsers[idx].password = newPassword;
-        localStorage.setItem('ashk24_local_users', JSON.stringify(localUsers));
-      } else {
-        localUsers.push({
-          id: currentUser.id,
-          username: currentUser.username,
-          fullName: currentUser.fullName,
-          role: currentUser.role,
-          password: newPassword,
-          createdAt: new Date().toISOString(),
-        });
-        localStorage.setItem('ashk24_local_users', JSON.stringify(localUsers));
-      }
-    } catch (e) {}
-
-    // Attempt server password update
     try {
-      await fetch('/cpanel-backend/api/index.php?route=auth/change-password', {
+      const res = await fetch('/cpanel-backend/api/index.php?route=auth/change-password', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           username: currentUser.username,
           oldPassword,
           newPassword,
         }),
-      }).catch(() => {});
-    } catch (e) {}
+      });
 
-    setPassStatusMsg({
-      type: 'success',
-      text: 'رمز عبور شما با موفقیت تغییر یافت و در حافظه امن ذخیره شد.',
-    });
-    setOldPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
+      const data = await res.json().catch(() => null);
+
+      if (res.ok && data?.success) {
+        setPassStatusMsg({
+          type: 'success',
+          text: 'رمز عبور شما با موفقیت در سرور بروزرسانی و هش گردید.',
+        });
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      } else {
+        setPassStatusMsg({
+          type: 'error',
+          text: data?.error?.message || data?.error || 'رمز عبور فعلی نادرست است یا سرور درخواست را نپذیرفت.',
+        });
+      }
+    } catch (e) {
+      setPassStatusMsg({
+        type: 'error',
+        text: 'خطا در برقراری ارتباط با سرور جهت تغییر رمز عبور.',
+      });
+    }
   };
 
   const handleCreateUserSubmit = async (e: React.FormEvent) => {
@@ -146,53 +128,56 @@ export function UserSecurityModal({ currentUser, onClose, onLogout }: UserSecuri
       return;
     }
 
-    const newUserObj = {
-      id: `usr_${Date.now()}`,
-      username: newUsername.trim().toLowerCase(),
-      fullName: newFullName.trim() || newUsername.trim(),
-      role: newRole,
-      password: newUserPass,
-      createdAt: new Date().toISOString(),
-      isActive: true,
-    };
+    if (newUserPass.trim().length < 6) {
+      setUserActionMsg('رمز عبور کاربر جدید باید حداقل ۶ کاراکتر باشد.');
+      return;
+    }
 
-    // Save to local vault
     try {
-      const localUsers: any[] = JSON.parse(localStorage.getItem('ashk24_local_users') || '[]');
-      localUsers.push(newUserObj);
-      localStorage.setItem('ashk24_local_users', JSON.stringify(localUsers));
-    } catch (e) {}
-
-    // Attempt server user creation
-    try {
-      await fetch('/cpanel-backend/api/index.php?route=auth/users', {
+      const res = await fetch('/cpanel-backend/api/index.php?route=auth/users', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newUserObj),
-      }).catch(() => {});
-    } catch (e) {}
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          username: newUsername.trim().toLowerCase(),
+          fullName: newFullName.trim() || newUsername.trim(),
+          role: newRole,
+          password: newUserPass.trim(),
+        }),
+      });
 
-    setUserActionMsg(`کاربر «${newUsername}» با موفقیت افزوده شد.`);
-    setNewUsername('');
-    setNewFullName('');
-    setNewUserPass('');
-    fetchUsers();
+      const data = await res.json().catch(() => null);
+
+      if (res.ok && data?.success) {
+        setUserActionMsg(`کاربر «${newUsername}» با موفقیت در سرور ایجاد شد.`);
+        setNewUsername('');
+        setNewFullName('');
+        setNewUserPass('');
+        fetchUsers();
+      } else {
+        setUserActionMsg(data?.error?.message || data?.error || 'خطا در ثبت کاربر در سرور.');
+      }
+    } catch (e) {
+      setUserActionMsg('خطا در ارتباط با سرور جهت ایجاد کاربر.');
+    }
   };
 
   const handleDeleteUser = async (usernameToDelete: string) => {
     if (!confirm(`آیا از حذف دسترسی کاربر ${usernameToDelete} اطمینان دارید؟`)) return;
 
     try {
-      const localUsers: any[] = JSON.parse(localStorage.getItem('ashk24_local_users') || '[]');
-      const filtered = localUsers.filter((u) => u.username?.toLowerCase() !== usernameToDelete.toLowerCase());
-      localStorage.setItem('ashk24_local_users', JSON.stringify(filtered));
-    } catch (e) {}
-
-    try {
-      await fetch(`/cpanel-backend/api/index.php?route=auth/users&user=${encodeURIComponent(usernameToDelete)}`, { method: 'DELETE' }).catch(() => {});
-    } catch (e) {}
-
-    fetchUsers();
+      const res = await fetch(`/cpanel-backend/api/index.php?route=auth/users/${encodeURIComponent(usernameToDelete)}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.success) {
+        fetchUsers();
+      } else {
+        alert(data?.error?.message || data?.error || 'امکان حذف کاربر وجود ندارد.');
+      }
+    } catch (e) {
+      alert('خطا در ارتباط با سرور.');
+    }
   };
 
   return (

@@ -100,6 +100,28 @@ export function getPersianJalaliDate(jalaliString?: string): string {
 }
 
 /**
+ * Converts any ISO string, date timestamp or Date object into Shamsi (Jalali) format
+ */
+export function formatToPersianJalaliDateTime(input?: string | number | Date | null): string {
+  if (!input) return '';
+  try {
+    const date = new Date(input);
+    if (isNaN(date.getTime())) return String(input);
+    const formatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    return formatter.format(date);
+  } catch {
+    return String(input);
+  }
+}
+
+/**
  * Validates an Iranian mobile number (e.g. 09123456789 or 09351234567)
  */
 export function isValidIranianPhone(phone: string): boolean {

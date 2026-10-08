@@ -71,46 +71,36 @@ async function packageExtensionAndAgent() {
     compressionOptions: { level: 9 }
   });
 
-  // 4. Purge older archives
+  // 4. Purge older and non-versioned archives
   const syncDirs = [outDir, distOutDir];
   syncDirs.forEach(dir => {
     if (fs.existsSync(dir)) {
       fs.readdirSync(dir).forEach(file => {
-        const isOldVersioned = (file.endsWith('.zip') || file.endsWith('.bat') || file.endsWith('.sh')) &&
-          !file.includes(`v${version}`) &&
-          !file.includes('latest') &&
-          file !== 'start_agent.bat' &&
-          file !== 'start_agent.sh' &&
-          file !== 'Ashk24_MacroDroid_Relay.json' &&
-          !file.startsWith('ashk24-cpanel-');
-
-        if (isOldVersioned) {
+        if (file === '.gitkeep' || file === 'Ashk24_MacroDroid_Relay.json') return;
+        const isArtifact = file.endsWith('.zip') || file.endsWith('.bat') || file.endsWith('.sh') || file.endsWith('.tar.gz');
+        if (isArtifact && !file.includes(`v${version}`)) {
           try {
             fs.unlinkSync(path.join(dir, file));
-            console.log(`  🗑️ Purged old version file: ${file}`);
+            console.log(`  🗑️ Purged old/unversioned file: ${file}`);
           } catch (e) {}
         }
       });
     }
   });
 
-  // 5. Save versioned & alias files to public/downloads and dist/downloads
+  // 5. Save strictly version-named packages to public/downloads and dist/downloads
   syncDirs.forEach(dir => {
     // Extension
     fs.writeFileSync(path.join(dir, `ashk24-extension-v${version}.zip`), extZipBuffer);
-    fs.writeFileSync(path.join(dir, `ashk24-extension-latest.zip`), extZipBuffer);
 
     // Local Agent
     fs.writeFileSync(path.join(dir, `ashk24-local-agent-v${version}.zip`), agentZipBuffer);
-    fs.writeFileSync(path.join(dir, `ashk24-local-agent-latest.zip`), agentZipBuffer);
 
-    // Standalone Runner Scripts
+    // Standalone Runner Scripts (Strictly version-named)
     const batContent = fs.readFileSync(path.join(agentDir, 'start_agent.bat'));
     const shContent = fs.readFileSync(path.join(agentDir, 'start_agent.sh'));
     fs.writeFileSync(path.join(dir, `start_agent_v${version}.bat`), batContent);
-    fs.writeFileSync(path.join(dir, 'start_agent.bat'), batContent);
     fs.writeFileSync(path.join(dir, `start_agent_v${version}.sh`), shContent);
-    fs.writeFileSync(path.join(dir, 'start_agent.sh'), shContent);
   });
 
   console.log(`📦 [Extension Package] Successfully packaged extension v${version} (${(extZipBuffer.length / 1024).toFixed(1)} KB)`);

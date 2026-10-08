@@ -125,20 +125,17 @@ async function generateFinalPackages() {
     compressionOptions: { level: 9 }
   });
 
-  // Clean up any old zip files in root directory
+  // Clean up any zip files in root directory unconditionally
   fs.readdirSync(rootDir).forEach(file => {
-    if (file.startsWith('ashk24-cpanel') && file.endsWith('.zip')) {
-      fs.unlinkSync(path.join(rootDir, file));
+    if (file.endsWith('.zip') || file.endsWith('.tar.gz') || file.endsWith('.apk')) {
+      try { fs.unlinkSync(path.join(rootDir, file)); } catch (e) {}
     }
   });
 
-  const prodVersionedPath = path.join(rootDir, `ashk24-cpanel-v${version}.zip`);
   const prodDistVersionedPath = path.join(distDir, `ashk24-cpanel-v${version}.zip`);
-
-  fs.writeFileSync(prodVersionedPath, prodZipBuffer);
   fs.writeFileSync(prodDistVersionedPath, prodZipBuffer);
 
-  // Keep single official zip in public/downloads and dist/downloads
+  // Sync official versioned zip to public/downloads and dist/downloads
   const targetSyncDirs = [
     path.join(rootDir, 'public', 'downloads'),
     path.join(distDir, 'downloads'),
@@ -149,7 +146,7 @@ async function generateFinalPackages() {
     if (fs.existsSync(dir)) {
       fs.readdirSync(dir).forEach(file => {
         if ((file.endsWith('.zip') || file.endsWith('.apk')) && file.startsWith('ashk24-cpanel-')) {
-          if (!file.includes(`v${version}`) && !file.includes('latest')) {
+          if (!file.includes(`v${version}`)) {
             try { fs.unlinkSync(path.join(dir, file)); } catch (e) {}
           }
         }
@@ -160,11 +157,10 @@ async function generateFinalPackages() {
   targetSyncDirs.forEach(dir => {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, `ashk24-cpanel-v${version}.zip`), prodZipBuffer);
-    fs.writeFileSync(path.join(dir, `ashk24-cpanel-latest.zip`), prodZipBuffer);
   });
 
-  console.log(`📦 [Production cPanel] Created single production package: ${prodVersionedPath} (${(prodZipBuffer.length / 1024).toFixed(1)} KB / ${(prodZipBuffer.length / 1024 / 1024).toFixed(2)} MB)`);
-  console.log('✨ Optimized Pure cPanel Production Package generated and synced to downloads!');
+  console.log(`📦 [Production cPanel] Created production package: ${prodDistVersionedPath} (${(prodZipBuffer.length / 1024).toFixed(1)} KB / ${(prodZipBuffer.length / 1024 / 1024).toFixed(2)} MB)`);
+  console.log(`✨ Versioned cPanel Production Package v${version} generated and synced!`);
 }
 
 generateFinalPackages().catch(console.error);

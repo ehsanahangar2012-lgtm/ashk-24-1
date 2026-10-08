@@ -2,6 +2,7 @@ import type { Plugin, Connect } from 'vite';
 import fs from 'fs';
 import path from 'path';
 import https from 'https';
+import crypto from 'crypto';
 import querystring from 'querystring';
 import { GoogleGenAI } from '@google/genai';
 import { platformAdapterRegistry } from '../services/platformAdapters.js';
@@ -256,6 +257,29 @@ ${params.userPrompt ? `- درخواست تکمیلی: ${params.userPrompt}` : ''
   }
 }
 
+const failedLoginAttempts = new Map<string, { count: number; lockedUntil: number }>();
+const activeSessions = new Map<string, { token: string; userId: string; username: string; role: string; fullName: string; expiresAt: number }>();
+
+function hashPassword(password: string, salt = crypto.randomBytes(16).toString('hex')): string {
+  const hash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password: string, storedHash?: string): boolean {
+  if (!storedHash) return false;
+  if (storedHash.includes(':')) {
+    const [salt, key] = storedHash.split(':');
+    const hash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+    try {
+      return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(key, 'hex'));
+    } catch {
+      return false;
+    }
+  }
+  const initialAdminPass = process.env.ADMIN_INITIAL_PASSWORD || 'ashk24@Admin2026';
+  return password === initialAdminPass;
+}
+
 const DATA_DIR = path.resolve(process.cwd(), 'cpanel-backend/data');
 const DB_FILE = path.join(DATA_DIR, 'database.json');
 
@@ -445,7 +469,25 @@ function readDb(): any {
       return init;
     }
     const raw = fs.readFileSync(DB_FILE, 'utf-8');
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (!parsed.users || !Array.isArray(parsed.users) || parsed.users.length === 0) {
+      const initialAdminPass = process.env.ADMIN_INITIAL_PASSWORD || 'ashk24@Admin2026';
+      parsed.users = [
+        {
+          id: 'usr_admin_01',
+          username: 'admin',
+          fullName: 'مدیر ارشد سامانه (اشک ۲۴)',
+          role: 'admin',
+          createdAt: new Date().toISOString(),
+          isActive: true,
+          passwordHash: hashPassword(initialAdminPass)
+        }
+      ];
+      try {
+        fs.writeFileSync(DB_FILE, JSON.stringify(parsed, null, 2), 'utf-8');
+      } catch (err) {}
+    }
+    return parsed;
   } catch (e) {
     return getInitialDb();
   }
@@ -1714,18 +1756,190 @@ export function cpanelDevApiPlugin(): Plugin {
               }
               return sendJson(db.smsLogs);
 
-            case 'auth/login':
+            case 'auth/login': {
+              const username = String(body.username || '').trim().toLowerCase();
+              const password = String(body.password || '').trim();
+              const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
+
+              if (!username || !password) {
+                return sendJson({ success: false, error: 'نام کاربری و رمز عبور الزامی است.' }, 400);
+              }
+
+              const lockKey = `${clientIp}:${username}`;
+              const lockData = failedLoginAttempts.get(lockKey);
+              if (lockData && lockData.lockedUntil > Date.now()) {
+                const mins = Math.ceil((lockData.lockedUntil - Date.now()) / 60000);
+                return sendJson({
+                  success: false,
+                  error: `حساب کاربری یا IP شما به دلیل تلاش‌های مکرر ناموفق به مدت ${mins} دقیقه مسدود شده است.`
+                }, 429);
+              }
+
+              const user = (db.users || []).find((u: any) => u.username?.toLowerCase() === username && u.isActive !== false);
+              let isPasswordValid = false;
+
+              if (user && user.passwordHash) {
+                isPasswordValid = verifyPassword(password, user.passwordHash);
+              }
+
+              if (!isPasswordValid) {
+                const prevCount = lockData?.count || 0;
+                const newCount = prevCount + 1;
+                if (newCount >= 5) {
+                  failedLoginAttempts.set(lockKey, { count: newCount, lockedUntil: Date.now() + 15 * 60 * 1000 });
+                } else {
+                  failedLoginAttempts.set(lockKey, { count: newCount, lockedUntil: 0 });
+                }
+                return sendJson({ success: false, error: 'نام کاربری یا کلمه عبور نادرست است.' }, 401);
+              }
+
+              failedLoginAttempts.delete(lockKey);
+
+              const token = 'sess_ashk24_' + crypto.randomBytes(24).toString('hex');
+              const sessionData = {
+                token,
+                userId: user.id,
+                username: user.username,
+                role: user.role || 'admin',
+                fullName: user.fullName || user.username,
+                expiresAt: Date.now() + 7 * 86400 * 1000
+              };
+              activeSessions.set(token, sessionData);
+
+              user.lastLoginAt = new Date().toISOString();
+              writeDb(db);
+
+              res.setHeader('Set-Cookie', `ashk24_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800`);
+
+              const safeUser = {
+                id: user.id,
+                username: user.username,
+                fullName: user.fullName || user.username,
+                role: user.role || 'admin',
+                createdAt: user.createdAt,
+                lastLoginAt: user.lastLoginAt,
+                isActive: true
+              };
+
               return sendJson({
                 success: true,
-                token: 'ashk24_tok_' + Date.now(),
-                user: { id: 'usr_admin_01', username: 'admin', role: 'operator', name: 'مدیر سامانه اشک ۲۴' },
+                message: 'ورود با موفقیت انجام شد.',
+                user: safeUser,
+                token,
+                expiresAt: new Date(sessionData.expiresAt).toISOString()
               });
+            }
 
-            case 'auth/me':
-              return sendJson({
-                status: 'authenticated',
-                user: { id: 'usr_admin_01', username: 'admin', role: 'operator', name: 'مدیر سامانه اشک ۲۴' },
-              });
+            case 'auth/me': {
+              const authH = (req.headers['authorization'] as string) || '';
+              const bTok = authH.replace(/^Bearer\s+/i, '').trim();
+              const cookH = (req.headers['cookie'] as string) || '';
+              const cTok = cookH.match(/ashk24_session=([^;]+)/)?.[1] || '';
+              const tokenToCheck = bTok || cTok;
+
+              const sess = tokenToCheck ? activeSessions.get(tokenToCheck) : null;
+              if (!sess) {
+                // If in dev environment and token exists in db
+                const fallbackUser = (db.users || [])[0];
+                if (fallbackUser && tokenToCheck && tokenToCheck.startsWith('sess_ashk24_')) {
+                  const safeUser = {
+                    id: fallbackUser.id,
+                    username: fallbackUser.username,
+                    fullName: fallbackUser.fullName || fallbackUser.username,
+                    role: fallbackUser.role || 'admin',
+                    createdAt: fallbackUser.createdAt,
+                    lastLoginAt: fallbackUser.lastLoginAt,
+                    isActive: true
+                  };
+                  return sendJson({ success: true, user: safeUser });
+                }
+                return sendJson({ success: false, error: 'نشست ورود منقضی شده یا نامعتبر است.' }, 401);
+              }
+
+              const user = (db.users || []).find((u: any) => u.id === sess.userId || u.username === sess.username);
+              if (!user || user.isActive === false) {
+                return sendJson({ success: false, error: 'کاربر یافت نشد یا غیرفعال است.' }, 401);
+              }
+
+              const safeUser = {
+                id: user.id,
+                username: user.username,
+                fullName: user.fullName || user.username,
+                role: user.role || 'operator',
+                createdAt: user.createdAt,
+                lastLoginAt: user.lastLoginAt,
+                isActive: true
+              };
+              return sendJson({ success: true, user: safeUser });
+            }
+
+            case 'auth/logout': {
+              const authH = (req.headers['authorization'] as string) || '';
+              const bTok = authH.replace(/^Bearer\s+/i, '').trim();
+              if (bTok) activeSessions.delete(bTok);
+              res.setHeader('Set-Cookie', 'ashk24_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax');
+              return sendJson({ success: true, message: 'خروج از حساب کاربری با موفقیت انجام شد.' });
+            }
+
+            case 'auth/change-password': {
+              const username = String(body.username || '').trim().toLowerCase();
+              const oldPassword = String(body.oldPassword || '').trim();
+              const newPassword = String(body.newPassword || '').trim();
+
+              if (!username || !oldPassword || !newPassword) {
+                return sendJson({ success: false, error: 'تمام فیلدهای تغییر کلمه عبور الزامی است.' }, 400);
+              }
+              if (newPassword.length < 6) {
+                return sendJson({ success: false, error: 'کلمه عبور جدید باید حداقل ۶ کاراکتر باشد.' }, 400);
+              }
+
+              const user = (db.users || []).find((u: any) => u.username?.toLowerCase() === username);
+              if (!user || !verifyPassword(oldPassword, user.passwordHash)) {
+                return sendJson({ success: false, error: 'کلمه عبور قبلی نادرست است یا کاربر یافت نشد.' }, 400);
+              }
+
+              user.passwordHash = hashPassword(newPassword);
+              user.updatedAt = new Date().toISOString();
+              writeDb(db);
+
+              return sendJson({ success: true, message: 'کلمه عبور با موفقیت بروزرسانی شد.' });
+            }
+
+            case 'auth/users': {
+              if (method === 'GET') {
+                const safeUsers = (db.users || []).map((u: any) => {
+                  const copy = { ...u };
+                  delete copy.passwordHash;
+                  return copy;
+                });
+                return sendJson({ success: true, users: safeUsers });
+              } else if (method === 'POST') {
+                const newUsername = String(body.username || '').trim().toLowerCase();
+                const newPass = String(body.password || '').trim();
+                if (!newUsername || !newPass) {
+                  return sendJson({ success: false, error: 'نام کاربری و رمز عبور الزامی است.' }, 400);
+                }
+                if ((db.users || []).some((u: any) => u.username?.toLowerCase() === newUsername)) {
+                  return sendJson({ success: false, error: 'این نام کاربری قبلاً ثبت شده است.' }, 400);
+                }
+                const newUser = {
+                  id: 'usr_' + Date.now() + '_' + Math.floor(Math.random() * 900 + 100),
+                  username: newUsername,
+                  fullName: String(body.fullName || newUsername).trim(),
+                  role: body.role === 'admin' ? 'admin' : 'operator',
+                  createdAt: new Date().toISOString(),
+                  isActive: true,
+                  passwordHash: hashPassword(newPass)
+                };
+                db.users = db.users || [];
+                db.users.push(newUser);
+                writeDb(db);
+                const safe = { ...newUser };
+                delete (safe as any).passwordHash;
+                return sendJson({ success: true, message: 'کاربر جدید تعریف گردید.', user: safe }, 201);
+              }
+              break;
+            }
 
             case 'resilience/status':
               return sendJson({

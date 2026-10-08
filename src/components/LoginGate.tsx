@@ -11,7 +11,6 @@ import {
   EyeOff,
   RefreshCw,
   HardDrive,
-  RotateCcw,
 } from 'lucide-react';
 import { APP_VERSION_TAG } from '../config/version.js';
 
@@ -32,7 +31,6 @@ export const LoginGate: React.FC<LoginGateProps> = ({ currentUser, onLoginSucces
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [infoMsg, setInfoMsg] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const [resetting, setResetting] = useState<boolean>(false);
   const [serverStatus, setServerStatus] = useState<ServerStatusType>('checking');
   const [serverLatency, setServerLatency] = useState<number | null>(null);
 
@@ -68,32 +66,6 @@ export const LoginGate: React.FC<LoginGateProps> = ({ currentUser, onLoginSucces
     probeServer();
   }, [probeServer]);
 
-  // Helper to get locally stored users
-  const getLocalStoredUsers = (): any[] => {
-    try {
-      const stored = localStorage.getItem('ashk24_local_users');
-      if (stored) {
-        return JSON.parse(stored);
-      }
-      // Initial default admin user with password 123
-      const initialUsers = [
-        {
-          id: 'usr_admin',
-          username: 'admin',
-          fullName: 'مدیر ارشد سامانه',
-          role: 'admin',
-          password: '123',
-          createdAt: new Date().toISOString(),
-          isActive: true,
-        },
-      ];
-      localStorage.setItem('ashk24_local_users', JSON.stringify(initialUsers));
-      return initialUsers;
-    } catch (e) {
-      return [];
-    }
-  };
-
   const executeLogin = async (uname: string, pass: string) => {
     setErrorMsg('');
     setInfoMsg('');
@@ -109,80 +81,75 @@ export const LoginGate: React.FC<LoginGateProps> = ({ currentUser, onLoginSucces
     }
 
     try {
-      let authenticatedUser: UserAccount | null = null;
-      let authToken: string | null = null;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
 
-      // Tier 1: Try Server Login (Node.js API or cPanel PHP Router)
-      let serverAuthFailed = false;
-      let serverAuthError = '';
+      const candidateUrls = [
+        '/cpanel-backend/api/index.php?route=auth/login',
+        '/api/index.php?route=auth/login'
+      ];
+      let res: Response | null = null;
 
-      if (serverStatus !== 'offline_vault') {
+      for (const endpoint of candidateUrls) {
         try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-          const res = await fetch('/cpanel-backend/api/index.php?route=auth/login', {
+          const attempt = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: cleanU, password: cleanP }),
             signal: controller.signal,
           });
-          clearTimeout(timeoutId);
-
-          if (res.ok) {
-            const data = await res.json();
-            if (data && data.user) {
-              authenticatedUser = data.user;
-              authToken = data.token || `token_ashk24_srv_${Date.now()}`;
-            }
-          } else if (res.status === 401) {
-            const errData = await res.json().catch(() => null);
-            serverAuthFailed = true;
-            serverAuthError = errData?.error || 'نام کاربری یا کلمه عبور اشتباه است.';
+          if (attempt.status !== 404) {
+            res = attempt;
+            break;
           }
-        } catch (e) {
-          // Endpoint timed out or network error
-        }
+        } catch (e) {}
       }
+      clearTimeout(timeoutId);
 
-      if (serverAuthFailed) {
-        setErrorMsg(serverAuthError || 'نام کاربری یا کلمه عبور در احراز هویت سرور اشتباه است.');
+      if (!res) {
+        setErrorMsg('ارتباط با سرور برقرار نشد. لطفاً از اتصال هاست یا وب‌سرور اطمینان حاصل فرمایید.');
         setLoading(false);
         return;
       }
 
-      // Tier 2: Check Local Browser Vault (localStorage) ONLY in offline mode
-      if (!authenticatedUser && serverStatus === 'offline_vault') {
-        const localUsers = getLocalStoredUsers();
-        const matchedLocal = localUsers.find(
-          (u) => u.username?.toLowerCase() === cleanU && u.password === cleanP
-        );
+      const data = await res.json().catch(() => null);
 
-        if (matchedLocal) {
-          authenticatedUser = {
-            id: matchedLocal.id || `usr_local_${Date.now()}`,
-            username: matchedLocal.username,
-            fullName: matchedLocal.fullName || matchedLocal.username,
-            role: matchedLocal.role || 'operator',
-            createdAt: matchedLocal.createdAt || new Date().toISOString(),
-            isActive: true,
-          };
-          authToken = `token_ashk24_vault_${Date.now()}_${cleanU}`;
-        }
-      }
+      if (res.ok && data && (data.user || data.token)) {
+        const authenticatedUser: UserAccount = data.user || {
+          id: 'usr_admin_01',
+          username: cleanU,
+          fullName: 'مدیر سامانه اشک ۲۴',
+          role: 'admin',
+          createdAt: new Date().toISOString(),
+          isActive: true
+        };
+        const authToken: string = data.token || `token_ashk24_${Date.now()}`;
 
-      if (authenticatedUser && authToken) {
-        if (rememberMe) {
-          localStorage.setItem('ashk24_remember_user', JSON.stringify({ username: cleanU }));
+        if (typeof window !== 'undefined') {
+          window.sessionStorage?.setItem('ashk24_auth_token', authToken);
+          if (rememberMe) {
+            window.localStorage?.setItem('ashk24_auth_token', authToken);
+            window.localStorage?.setItem('ashk24_remember_user', JSON.stringify({ username: cleanU }));
+          }
         }
+
         onLoginSuccess(authenticatedUser, authToken);
-        setLoading(false);
         return;
-      } else {
-        setErrorMsg('نام کاربری یا کلمه عبور وارد شده نادرست است. لطفاً مشخصات کاربری معتبر سامانه را وارد نمایید.');
       }
+
+      if (res.status === 429) {
+        setErrorMsg(data?.error?.message || data?.error || 'تعداد تلاش‌های ناموفق بیش از حد مجاز است. حساب کاربری موقتاً مسدود گردیده است.');
+        return;
+      }
+
+      if (res.status === 401 || res.status === 400) {
+        setErrorMsg(data?.error?.message || data?.error || 'نام کاربری یا کلمه عبور نادرست است.');
+        return;
+      }
+
+      setErrorMsg(data?.error?.message || data?.error || 'خطایی در تایید مشخصات کاربری رخ داد.');
     } catch (err: any) {
-      setErrorMsg('خطایی در فرآیند احراز هویت رخ داد. لطفاً مجدداً تلاش نمایید.');
+      setErrorMsg('خطا در برقراری ارتباط با درگاه احراز هویت سرور.');
     } finally {
       setLoading(false);
     }
@@ -191,39 +158,6 @@ export const LoginGate: React.FC<LoginGateProps> = ({ currentUser, onLoginSucces
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     executeLogin(username, password);
-  };
-
-  const handleResetDefaultPasswords = async () => {
-    setResetting(true);
-    setErrorMsg('');
-    setInfoMsg('');
-
-    try {
-      // 1. Reset on cPanel server
-      await fetch('/cpanel-backend/api/index.php?route=auth/reset-passwords', { method: 'POST' }).catch(() => {});
-
-      // 2. Reset in local storage to admin: 123
-      const defaultLocal = [
-        {
-          id: 'usr_admin',
-          username: 'admin',
-          fullName: 'مدیر ارشد سامانه',
-          role: 'admin',
-          password: '123',
-          createdAt: new Date().toISOString(),
-          isActive: true,
-        },
-      ];
-      localStorage.setItem('ashk24_local_users', JSON.stringify(defaultLocal));
-
-      setInfoMsg('حساب مدیر ارشد با نام کاربری admin و رمز عبور پیش‌فرض 123 با موفقیت فعال و بازنشانی شد.');
-      setUsername('admin');
-      setPassword('123');
-    } catch (e) {
-      setErrorMsg('خطا در بازنشانی حساب کاربری.');
-    } finally {
-      setResetting(false);
-    }
   };
 
   // If user is already authenticated, render app
@@ -356,16 +290,13 @@ export const LoginGate: React.FC<LoginGateProps> = ({ currentUser, onLoginSucces
               <span>مرا به خاطر بسپار</span>
             </label>
 
-            <button
-              type="button"
-              disabled={resetting}
-              onClick={handleResetDefaultPasswords}
-              className="text-amber-400/80 hover:text-amber-300 text-[11px] underline flex items-center space-x-1 space-x-reverse cursor-pointer disabled:opacity-50"
-              title="در صورت فراموشی رمز، حساب مدیر اصلی به حالت پیش‌فرض بازنشانی می‌شود"
+            <span
+              className="text-slate-400 text-[11px] flex items-center space-x-1 space-x-reverse"
+              title="نشست‌های ورود با توکن رمزنگاری‌شده سرور محافظت می‌شوند"
             >
-              <RotateCcw className="w-3 h-3 ml-1" />
-              <span>{resetting ? 'در حال بازنشانی...' : 'بازیابی دسترسی اولیه مدیر'}</span>
-            </button>
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 ml-1 inline" />
+              <span>احراز هویت امن سرور</span>
+            </span>
           </div>
 
           <button

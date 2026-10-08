@@ -39,30 +39,48 @@ define('UPLOADS_DIR', __DIR__ . '/uploads');
  */
 define('SITE_URL', 'https://secret.ashkghalam.ir');
 define('APP_NAME', 'سامانه هوش مصنوعی اشک ۲۴');
-define('APP_VERSION', '5.8.2');
+define('APP_VERSION', '5.9.4');
 
 /**
  * Security Secrets
- *
- * این مقدار باید دقیقاً با CPANEL_AGENT_TOKEN
- * در Local Agent یکسان باشد.
- *
- * در صورت تنظیم Environment Variable همان مقدار استفاده می‌شود.
+ * مقادیر امنیتی مستقیماً از متغیرهای محیطی یا مخزن ایزوله سرور خوانده می‌شوند.
+ * هیچ سکرت استاتیک یا هاردکدشده‌ای در سورس‌کد پروداکشن وجود ندارد.
  */
-define(
-    'CPANEL_AGENT_TOKEN',
-    getenv('CPANEL_AGENT_TOKEN') ?: 'secret_9153108763'
-);
+function resolveBackendSecret(string $envKey, string $fileKey): string {
+    $envVal = getenv($envKey);
+    if (!empty($envVal)) {
+        return (string)$envVal;
+    }
+    
+    $secretsFile = DATA_DIR . '/.server_secrets.php';
+    $stored = [];
+    if (file_exists($secretsFile)) {
+        $stored = (include $secretsFile) ?: [];
+    }
+    
+    if (!empty($stored[$fileKey])) {
+        return (string)$stored[$fileKey];
+    }
+    
+    // تولید امن توکن تصادفی در اولین راه‌اندازی و ذخیره در فایل حفاظت‌شده
+    $generated = bin2hex(random_bytes(24));
+    $stored[$fileKey] = $generated;
+    
+    @file_put_contents(
+        $secretsFile,
+        "<?php\n// فایل امنیتی پیکربندی داخلی اشک ۲۴ - دسترسی وب مسدود است\nreturn " . var_export($stored, true) . ";\n",
+        LOCK_EX
+    );
+    @chmod($secretsFile, 0600);
+    
+    return $generated;
+}
 
-define(
-    'CRON_SECRET_KEY',
-    getenv('CRON_SECRET_KEY') ?: 'ashk24_cron_secret'
-);
+define('CPANEL_AGENT_TOKEN', resolveBackendSecret('CPANEL_AGENT_TOKEN', 'agent_token'));
+define('CRON_SECRET_KEY', resolveBackendSecret('CRON_SECRET_KEY', 'cron_secret'));
+define('SMS_GATEWAY_SECRET', resolveBackendSecret('SMS_GATEWAY_SECRET', 'sms_gateway_secret'));
+define('SESSION_SECRET', resolveBackendSecret('SESSION_SECRET', 'session_secret'));
 
-define(
-    'SMS_GATEWAY_SECRET',
-    getenv('SMS_GATEWAY_SECRET') ?: 'ashk24_sms_gateway_secret'
-);
 
 /**
  * Database

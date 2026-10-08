@@ -114,9 +114,9 @@ class Ashk24Db {
                     'supportsImage' => true,
                     'formType' => 'classified',
                     'trustScore' => 94,
-                    'sessionStatus' => 'authenticated',
+                    'sessionStatus' => 'none',
                     'sessionExpiresAt' => null,
-                    'sessionToken' => 'sess_payamsara_active'
+                    'sessionToken' => null
                 ],
                 [
                     'id' => 'plat_agahi24',
@@ -132,9 +132,9 @@ class Ashk24Db {
                     'supportsImage' => true,
                     'formType' => 'classified',
                     'trustScore' => 92,
-                    'sessionStatus' => 'authenticated',
+                    'sessionStatus' => 'none',
                     'sessionExpiresAt' => null,
-                    'sessionToken' => 'sess_agahi24_active'
+                    'sessionToken' => null
                 ],
                 [
                     'id' => 'plat_baskool',
@@ -150,9 +150,9 @@ class Ashk24Db {
                     'supportsImage' => true,
                     'formType' => 'directory_entry',
                     'trustScore' => 96,
-                    'sessionStatus' => 'authenticated',
+                    'sessionStatus' => 'none',
                     'sessionExpiresAt' => null,
-                    'sessionToken' => 'sess_baskool_active'
+                    'sessionToken' => null
                 ],
                 [
                     'id' => 'plat_istgah',
@@ -168,9 +168,9 @@ class Ashk24Db {
                     'supportsImage' => true,
                     'formType' => 'classified',
                     'trustScore' => 95,
-                    'sessionStatus' => 'authenticated',
+                    'sessionStatus' => 'none',
                     'sessionExpiresAt' => null,
-                    'sessionToken' => 'sess_istgah_active'
+                    'sessionToken' => null
                 ],
                 [
                     'id' => 'plat_irantejarat',
@@ -308,22 +308,13 @@ class Ashk24Db {
                 [
                     'id' => 'usr_admin_01',
                     'username' => 'admin',
-                    'fullName' => 'مدیر کل سامانه (اشک ۲۴)',
+                    'fullName' => 'مدیر ارشد سامانه (اشک ۲۴)',
                     'role' => 'admin',
                     'createdAt' => date('c'),
-                    'lastLoginAt' => date('c'),
+                    'lastLoginAt' => null,
                     'isActive' => true,
-                    'passwordHash' => password_hash('123', PASSWORD_DEFAULT)
-                ],
-                [
-                    'id' => 'usr_op_02',
-                    'username' => 'operator',
-                    'fullName' => 'اپراتور بازاریابی و آگهی‌گذاری',
-                    'role' => 'operator',
-                    'createdAt' => date('c'),
-                    'lastLoginAt' => date('c'),
-                    'isActive' => true,
-                    'passwordHash' => password_hash('123', PASSWORD_DEFAULT)
+                    'mustChangePassword' => false,
+                    'passwordHash' => password_hash(getenv('ADMIN_INITIAL_PASSWORD') ?: (defined('SESSION_SECRET') ? substr(SESSION_SECRET, 0, 16) : bin2hex(random_bytes(8))), PASSWORD_DEFAULT)
                 ]
             ]
         ];
@@ -535,13 +526,30 @@ class Ashk24Db {
         return $updated;
     }
 
-    public function getMediaPlatforms() {
+    public function getMediaPlatforms($includeSensitive = false) {
         $db = $this->readDb();
-        return $db['mediaPlatforms'] ?? [];
+        $platforms = $db['mediaPlatforms'] ?? [];
+        if ($includeSensitive) {
+            return $platforms;
+        }
+        // ایمن‌سازی اطلاعات رسانه‌ها در برابر نشت کوکی‌ها و توکن‌های ورود به فرانت‌اند
+        return array_map(function($p) {
+            $pCopy = $p;
+            unset(
+                $pCopy['sessionCookies'],
+                $pCopy['sessionToken'],
+                $pCopy['storageState'],
+                $pCopy['sessionCookies_enc'],
+                $pCopy['sessionToken_enc'],
+                $pCopy['storageState_enc']
+            );
+            $pCopy['hasActiveSession'] = ($p['sessionStatus'] ?? '') === 'authenticated';
+            return $pCopy;
+        }, $platforms);
     }
 
-    public function getPlatformById($id) {
-        $platforms = $this->getMediaPlatforms();
+    public function getPlatformById($id, $includeSensitive = false) {
+        $platforms = $this->getMediaPlatforms($includeSensitive);
         foreach ($platforms as $p) {
             if ($p['id'] === $id) return $p;
         }
@@ -595,7 +603,13 @@ class Ashk24Db {
         foreach ($db['mediaPlatforms'] as &$p) {
             if ($p['id'] === $platformId) {
                 foreach ($data as $k => $v) {
-                    $p[$k] = $v;
+                    if ($k === 'sessionCookies' || $k === 'sessionToken' || $k === 'storageState') {
+                        // رمزنگاری در حالت سکون (Encryption at Rest)
+                        $p[$k . '_enc'] = self::encryptSensitiveData($v);
+                        $p[$k] = null; // جلوگیری از ذخیره plaintext
+                    } else {
+                        $p[$k] = $v;
+                    }
                 }
                 $updated = true;
                 break;
@@ -611,6 +625,9 @@ class Ashk24Db {
             if ($p['id'] === $platformId) {
                 $p['sessionStatus'] = 'none';
                 $p['sessionToken'] = null;
+                $p['sessionToken_enc'] = null;
+                $p['sessionCookies'] = null;
+                $p['sessionCookies_enc'] = null;
                 $p['sessionExpiresAt'] = 'منقضی شده';
                 $updated = $p;
                 break;
@@ -937,11 +954,207 @@ class Ashk24Db {
         return $db['autonomousLogs'] ?? [];
     }
 
+    // --- Security & Cryptography Utilities ---
+    public static function encryptSensitiveData($data) {
+        if ($data === null || $data === '') return null;
+        $key = hash('sha256', defined('SESSION_SECRET') ? SESSION_SECRET : 'ashk24_default_secret_key', true);
+        $iv = random_bytes(16);
+        $raw = is_string($data) ? $data : json_encode($data, JSON_UNESCAPED_UNICODE);
+        $encrypted = openssl_encrypt($raw, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
+        if ($encrypted === false) return null;
+        return base64_encode($iv . $encrypted);
+    }
+
+    public static function decryptSensitiveData($encoded) {
+        if (empty($encoded) || !is_string($encoded)) return null;
+        $raw = base64_decode($encoded);
+        if (strlen($raw) < 17) return null;
+        $iv = substr($raw, 0, 16);
+        $ciphertext = substr($raw, 16);
+        $key = hash('sha256', defined('SESSION_SECRET') ? SESSION_SECRET : 'ashk24_default_secret_key', true);
+        $decrypted = openssl_decrypt($ciphertext, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
+        if ($decrypted === false) return null;
+        $decoded = json_decode($decrypted, true);
+        return $decoded !== null ? $decoded : $decrypted;
+    }
+
+    // --- Login Rate Limiting & Brute-Force Shield ---
+    public function recordFailedLogin($ip, $username) {
+        $db = $this->readDb();
+        if (!isset($db['failedLogins'])) $db['failedLogins'] = [];
+        $key = md5(($ip ?: '0.0.0.0') . '_' . strtolower(trim($username)));
+        $now = time();
+        $record = $db['failedLogins'][$key] ?? ['count' => 0, 'firstFailed' => $now, 'lockedUntil' => 0];
+
+        // ریست پس از ۱۵ دقیقه
+        if ($now - $record['firstFailed'] > 900) {
+            $record['count'] = 0;
+            $record['firstFailed'] = $now;
+        }
+
+        $record['count']++;
+        if ($record['count'] >= 5) {
+            $record['lockedUntil'] = $now + 900; // مسدودسازی ۱۵ دقیقه‌ای
+        }
+        $db['failedLogins'][$key] = $record;
+        $this->writeDb($db);
+        return $record;
+    }
+
+    public function isLoginLocked($ip, $username) {
+        $db = $this->readDb();
+        $key = md5(($ip ?: '0.0.0.0') . '_' . strtolower(trim($username)));
+        if (isset($db['failedLogins'][$key])) {
+            $rec = $db['failedLogins'][$key];
+            if ($rec['lockedUntil'] > time()) {
+                return $rec['lockedUntil'] - time();
+            }
+        }
+        return false;
+    }
+
+    public function clearFailedLogins($ip, $username) {
+        $db = $this->readDb();
+        $key = md5(($ip ?: '0.0.0.0') . '_' . strtolower(trim($username)));
+        if (isset($db['failedLogins'][$key])) {
+            unset($db['failedLogins'][$key]);
+            $this->writeDb($db);
+        }
+    }
+
+    // --- Server-Side Session Management ---
+    public function createSession($user) {
+        $db = $this->readDb();
+        if (!isset($db['activeSessions'])) $db['activeSessions'] = [];
+        $token = 'sess_ashk24_' . bin2hex(random_bytes(24));
+        $now = time();
+        $expires = $now + (7 * 86400); // ۷ روز اعتبار
+
+        $db['activeSessions'][$token] = [
+            'userId' => $user['id'],
+            'username' => $user['username'],
+            'role' => $user['role'] ?? 'operator',
+            'createdAt' => $now,
+            'expiresAt' => $expires,
+            'ip' => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'
+        ];
+
+        // پاکسازی نشست‌های منقضی
+        foreach ($db['activeSessions'] as $t => $s) {
+            if ($s['expiresAt'] < $now) {
+                unset($db['activeSessions'][$t]);
+            }
+        }
+        $this->writeDb($db);
+        return ['token' => $token, 'expiresAt' => date('c', $expires)];
+    }
+
+    public function validateSession($token) {
+        if (empty($token) || !is_string($token)) return null;
+        $db = $this->readDb();
+        if (!isset($db['activeSessions'][$token])) return null;
+        $sess = $db['activeSessions'][$token];
+        if ($sess['expiresAt'] < time()) {
+            unset($db['activeSessions'][$token]);
+            $this->writeDb($db);
+            return null;
+        }
+        // یافتن مشخصات کامل کاربر
+        foreach (($db['users'] ?? []) as $u) {
+            if ($u['id'] === $sess['userId'] || strtolower($u['username']) === strtolower($sess['username'])) {
+                if (isset($u['isActive']) && !$u['isActive']) return null;
+                $userCopy = $u;
+                unset($userCopy['passwordHash'], $userCopy['password']);
+                return $userCopy;
+            }
+        }
+        return ['id' => $sess['userId'], 'username' => $sess['username'], 'role' => $sess['role']];
+    }
+
+    public function revokeSession($token) {
+        $db = $this->readDb();
+        if (isset($db['activeSessions'][$token])) {
+            unset($db['activeSessions'][$token]);
+            $this->writeDb($db);
+            return true;
+        }
+        return false;
+    }
+
+    // --- Hardened OTP Storage with Hashing & Single-Use ---
+    public function storeSecureOtp($recipientKey, $code, $ttlSeconds = 180) {
+        $db = $this->readDb();
+        if (!isset($db['secureOtps'])) $db['secureOtps'] = [];
+        $secret = defined('SESSION_SECRET') ? SESSION_SECRET : 'ashk_otp_secret';
+        $hashedCode = hash_hmac('sha256', (string)$code, $secret);
+        $now = time();
+
+        $cleanRecipient = preg_replace('/[^0-9]/', '', (string)$recipientKey) ?: 'default_recipient';
+
+        $db['secureOtps'][$cleanRecipient] = [
+            'hash' => $hashedCode,
+            'createdAt' => $now,
+            'expiresAt' => $now + $ttlSeconds,
+            'attempts' => 0,
+            'maxAttempts' => 3,
+            'consumed' => false
+        ];
+
+        // پاکسازی کدهای منقضی
+        foreach ($db['secureOtps'] as $k => $item) {
+            if ($item['expiresAt'] < $now || !empty($item['consumed'])) {
+                unset($db['secureOtps'][$k]);
+            }
+        }
+        $this->writeDb($db);
+        return true;
+    }
+
+    public function verifyAndConsumeOtp($recipientKey, $inputCode) {
+        $db = $this->readDb();
+        $cleanRecipient = preg_replace('/[^0-9]/', '', (string)$recipientKey) ?: 'default_recipient';
+
+        if (empty($db['secureOtps'][$cleanRecipient])) {
+            return ['valid' => false, 'error' => 'کد تایید منقضی شده یا وجود ندارد.'];
+        }
+        $record = &$db['secureOtps'][$cleanRecipient];
+        $now = time();
+
+        if ($now > $record['expiresAt']) {
+            unset($db['secureOtps'][$cleanRecipient]);
+            $this->writeDb($db);
+            return ['valid' => false, 'error' => 'کد تایید منقضی شده است.'];
+        }
+        if (!empty($record['consumed'])) {
+            return ['valid' => false, 'error' => 'این کد قبلاً استفاده و باطل گردیده است.'];
+        }
+        if ($record['attempts'] >= $record['maxAttempts']) {
+            unset($db['secureOtps'][$cleanRecipient]);
+            $this->writeDb($db);
+            return ['valid' => false, 'error' => 'تعداد تلاش‌های ناموفق بیش از حد مجاز بوده و کد باطل شد.'];
+        }
+
+        $secret = defined('SESSION_SECRET') ? SESSION_SECRET : 'ashk_otp_secret';
+        $inputHash = hash_hmac('sha256', (string)$inputCode, $secret);
+
+        if (hash_equals($record['hash'], $inputHash)) {
+            $record['consumed'] = true;
+            unset($db['secureOtps'][$cleanRecipient]); // حذف فوری پس از مصرف
+            $this->writeDb($db);
+            return ['valid' => true];
+        } else {
+            $record['attempts']++;
+            $remaining = $record['maxAttempts'] - $record['attempts'];
+            $this->writeDb($db);
+            return ['valid' => false, 'error' => "کد تایید نادرست است. ({$remaining} فرصت باقیمانده)"];
+        }
+    }
+
     public function getUsers() {
         $db = $this->readDb();
         $users = $db['users'] ?? [];
         return array_map(function($u) {
-            unset($u['passwordHash']);
+            unset($u['passwordHash'], $u['password']);
             return $u;
         }, $users);
     }
@@ -952,14 +1165,14 @@ class Ashk24Db {
             return null;
         }
         foreach ($db['users'] as &$u) {
-            if (strtolower($u['username']) === strtolower($username)) {
+            if (strtolower(trim($u['username'])) === strtolower(trim($username))) {
                 $stored = $u['passwordHash'] ?? $u['password'] ?? '';
                 $valid = false;
                 if (!empty($stored)) {
                     if (password_verify($password, $stored)) {
                         $valid = true;
                     } elseif ($stored === $password) {
-                        // Legacy plaintext migration path: upgrade to standard password_hash
+                        // ارتقای خودکار رمزهای قدیمی به password_hash استاندارد
                         $u['passwordHash'] = password_hash($password, PASSWORD_DEFAULT);
                         unset($u['password']);
                         $this->writeDb($db);
@@ -980,10 +1193,13 @@ class Ashk24Db {
     }
 
     public function changeUserPassword($username, $oldPassword, $newPassword) {
+        if (strlen($newPassword) < 6) {
+            throw new Exception('کلمه عبور جدید باید حداقل ۶ کاراکتر باشد.');
+        }
         $db = $this->readDb();
         $changed = false;
         foreach ($db['users'] as &$u) {
-            if (strtolower($u['username']) === strtolower($username)) {
+            if (strtolower(trim($u['username'])) === strtolower(trim($username))) {
                 $stored = $u['passwordHash'] ?? $u['password'] ?? '';
                 $valid = false;
                 if (!empty($stored)) {
@@ -994,6 +1210,7 @@ class Ashk24Db {
                 if ($valid) {
                     $u['passwordHash'] = password_hash($newPassword, PASSWORD_DEFAULT);
                     unset($u['password']);
+                    $u['mustChangePassword'] = false;
                     $changed = true;
                     break;
                 }
@@ -1007,21 +1224,30 @@ class Ashk24Db {
 
     public function createUser($data) {
         $db = $this->readDb();
-        foreach ($db['users'] as $u) {
-            if (strtolower($u['username']) === strtolower($data['username'])) {
+        $rawUsername = trim($data['username'] ?? '');
+        if (empty($rawUsername)) {
+            throw new Exception('نام کاربری الزامی است.');
+        }
+        foreach (($db['users'] ?? []) as $u) {
+            if (strtolower(trim($u['username'])) === strtolower($rawUsername)) {
                 throw new Exception('نام کاربری قبلاً ثبت شده است.');
             }
         }
 
-        $rawPass = !empty($data['password']) ? $data['password'] : 'ashk24';
+        $rawPass = !empty($data['password']) ? $data['password'] : bin2hex(random_bytes(6));
+        if (strlen($rawPass) < 6) {
+            throw new Exception('کلمه عبور باید حداقل ۶ کاراکتر باشد.');
+        }
+
         $user = [
             'id' => 'usr_' . time() . '_' . rand(10, 99),
-            'username' => trim($data['username']),
-            'fullName' => trim($data['fullName']),
-            'role' => $data['role'] ?? 'operator',
+            'username' => $rawUsername,
+            'fullName' => trim($data['fullName'] ?? $rawUsername),
+            'role' => in_array($data['role'] ?? '', ['admin', 'operator', 'viewer']) ? $data['role'] : 'operator',
             'createdAt' => date('c'),
-            'lastLoginAt' => date('c'),
+            'lastLoginAt' => null,
             'isActive' => true,
+            'mustChangePassword' => false,
             'passwordHash' => password_hash($rawPass, PASSWORD_DEFAULT)
         ];
 
@@ -1031,54 +1257,21 @@ class Ashk24Db {
         return $user;
     }
 
-    public function getRawData() {
-        return $this->readDb();
-    }
-
-    public function saveData($data) {
-        return $this->writeDb($data);
-    }
-
-    public function resetDefaultUsers() {
-        $db = $this->readDb();
-        $defaultUsers = [
-            [
-                'id' => 'usr_admin',
-                'username' => 'admin',
-                'fullName' => 'مدیر ارشد سیستم',
-                'role' => 'admin',
-                'passwordHash' => password_hash('123', PASSWORD_DEFAULT),
-                'createdAt' => date('c'),
-                'isActive' => true
-            ],
-            [
-                'id' => 'usr_operator',
-                'username' => 'operator',
-                'fullName' => 'اپراتور اتوماسیون',
-                'role' => 'operator',
-                'passwordHash' => password_hash('123', PASSWORD_DEFAULT),
-                'createdAt' => date('c'),
-                'isActive' => true
-            ]
-        ];
-        $db['users'] = $defaultUsers;
-        $this->writeDb($db);
-        return array_map(function($u) {
-            unset($u['passwordHash'], $u['password']);
-            return $u;
-        }, $defaultUsers);
-    }
-
     public function deleteUser($username) {
         $db = $this->readDb();
+        if (count($db['users'] ?? []) <= 1) {
+            throw new Exception('امکان حذف تنها کاربر باقیمانده سیستم وجود ندارد.');
+        }
         $initial = count($db['users']);
         $db['users'] = array_values(array_filter($db['users'], function($u) use ($username) {
-            return strtolower($u['username']) !== strtolower($username);
+            return strtolower(trim($u['username'])) !== strtolower(trim($username));
         }));
         if (count($db['users']) !== $initial) {
             $this->writeDb($db);
             return true;
         }
+        return false;
+    }
         return false;
     }
 
@@ -1270,7 +1463,7 @@ class Ashk24Db {
         }
         $db['platformStorageStates'][$platformId] = [
             'platformId' => $platformId,
-            'storageState' => $storageState,
+            'storageState_enc' => self::encryptSensitiveData($storageState),
             'savedAt' => date('c'),
             'isValid' => true
         ];
@@ -1288,9 +1481,15 @@ class Ashk24Db {
         return true;
     }
 
-    public function getPlatformStorageState($platformId) {
+    public function getPlatformStorageState($platformId, $decrypt = true) {
         $db = $this->readDb();
-        return $db['platformStorageStates'][$platformId] ?? null;
+        $record = $db['platformStorageStates'][$platformId] ?? null;
+        if (!$record) return null;
+        if ($decrypt && !empty($record['storageState_enc'])) {
+            $record['storageState'] = self::decryptSensitiveData($record['storageState_enc']);
+            unset($record['storageState_enc']);
+        }
+        return $record;
     }
 
     public function deleteJob($id) {

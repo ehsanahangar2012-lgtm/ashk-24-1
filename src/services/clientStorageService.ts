@@ -120,16 +120,17 @@ async function callCpanelApi<T>(route: string, options?: RequestInit): Promise<T
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 6000);
 
-      const res = await fetch(url, {
-        ...options,
-        signal: controller.signal,
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': 'Bearer secret_9153108763',
-          ...(options?.body && !(options.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}),
-          ...(options?.headers || {}),
-        },
-      });
+        const sessionToken = (typeof window !== 'undefined' && window.sessionStorage?.getItem('ashk24_auth_token')) || (typeof window !== 'undefined' && window.localStorage?.getItem('ashk24_auth_token')) || '';
+        const res = await fetch(url, {
+          ...options,
+          signal: controller.signal,
+          headers: {
+            'Accept': 'application/json',
+            ...(sessionToken ? { 'Authorization': `Bearer ${sessionToken}` } : {}),
+            ...(options?.body && !(options.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}),
+            ...(options?.headers || {}),
+          },
+        });
 
       clearTimeout(timeoutId);
 

@@ -385,6 +385,13 @@ export interface PublicationJob {
   authMethodUsed?: 'session_vault_active' | 'auto_registration' | 'sms_otp_login' | 'direct_portal';
   categoryPublished?: string;
   usedEngine: 'online-ai' | 'offline-fallback' | 'cpanel-native';
+  independentVerification?: {
+    isAccessible: boolean;
+    verified: boolean;
+    verificationStatus: 'VERIFIED' | 'UNKNOWN' | 'FAILED';
+    evidenceSnippet?: string | null;
+    httpStatus: number;
+  };
   startedAt: string;
   completedAt?: string;
   publishedAt?: string;
@@ -461,6 +468,8 @@ export interface ResilienceStatus {
   lastHealthCheck: string;
   totalRequestsCount: number;
   fallbackCount: number;
+  isOnlineAvailable?: boolean;
+  nativeEngineLatencyMs?: number;
 }
 
 export interface UploadedFileAsset {
@@ -603,7 +612,7 @@ export interface DiagnosticConsoleEntry {
   httpStatus: number;
   httpStatusText: string;
   targetSelectorPath?: string;
-  errorType?: 'HTTP_404_NOT_FOUND' | 'HTTP_403_FORBIDDEN' | 'CONNECTION_TIMEOUT' | 'SELECTOR_MISSING' | 'OTP_CHALLENGE' | 'UNKNOWN';
+  errorType?: 'HTTP_404_NOT_FOUND' | 'HTTP_403_FORBIDDEN' | 'CONNECTION_TIMEOUT' | 'SELECTOR_MISSING' | 'OTP_CHALLENGE' | 'CONNECTION_ERROR' | 'UNKNOWN';
   rawResponseSnippet?: string;
   resolutionHint: string;
 }

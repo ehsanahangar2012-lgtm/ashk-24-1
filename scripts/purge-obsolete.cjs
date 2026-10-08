@@ -18,10 +18,18 @@ if (fs.existsSync(distDir)) {
   }
 }
 
-// 2. Target directories to scan for old/outdated archives
+// 2. Strict purge of ANY zip archives or build files in the workspace root
+fs.readdirSync(rootDir).forEach(file => {
+  if (file.endsWith('.zip') || file.endsWith('.tar.gz') || file.endsWith('.apk')) {
+    try {
+      fs.unlinkSync(path.join(rootDir, file));
+      console.log(`  🗑️ Purged root build archive: ${file}`);
+    } catch (e) {}
+  }
+});
+
+// 3. Target directories to scan for old/outdated archives
 const targetDirs = [
-  rootDir,
-  path.join(rootDir, 'public'),
   path.join(rootDir, 'public', 'downloads'),
   path.join(rootDir, 'cpanel-backend', 'uploads'),
   path.join(rootDir, 'uploads')
@@ -32,7 +40,7 @@ let purgedCount = 0;
 targetDirs.forEach(dir => {
   if (fs.existsSync(dir)) {
     fs.readdirSync(dir).forEach(file => {
-      if (file === '.gitkeep' || file === '.htaccess' || file === 'index.html' || file === 'package.json') return;
+      if (file === '.gitkeep' || file === '.htaccess' || file === 'Ashk24_MacroDroid_Relay.json') return;
 
       const fullPath = path.join(dir, file);
       try {
@@ -40,8 +48,9 @@ targetDirs.forEach(dir => {
         if (!stat.isFile()) return;
 
         const isArchive = file.endsWith('.zip') || file.endsWith('.apk') || file.endsWith('.tar.gz');
+        const isScript = file.endsWith('.bat') || file.endsWith('.sh');
 
-        // Purge if zero bytes or APK/Android project files
+        // Purge if zero bytes or Android temporary files
         if ((isArchive && stat.size === 0) || file.endsWith('.apk') || file.includes('Android_Project') || file.includes('OTP_Companion')) {
           fs.unlinkSync(fullPath);
           console.log(`  🗑️ Removed obsolete file in ${path.relative(rootDir, dir)}: ${file}`);
@@ -49,21 +58,23 @@ targetDirs.forEach(dir => {
           return;
         }
 
-        // Purge outdated start_agent script files
-        if ((file.startsWith('start_agent_v') || file.includes('start_agent_v')) && !file.includes(`v${currentVersion}`)) {
-          fs.unlinkSync(fullPath);
-          console.log(`  🗑️ Purged old version script in ${path.relative(rootDir, dir)}: ${file}`);
-          purgedCount++;
-          return;
+        // Purge any script that is not the exact active version
+        if (isScript) {
+          if (!file.includes(`v${currentVersion}`)) {
+            fs.unlinkSync(fullPath);
+            console.log(`  🗑️ Purged old/unversioned script in ${path.relative(rootDir, dir)}: ${file}`);
+            purgedCount++;
+            return;
+          }
         }
 
-        // Purge any zip archive that does not match current version
+        // Purge any zip archive that is not the exact active version
         if (isArchive) {
-          const isCurrentVersionZip = file.includes(`v${currentVersion}`) || file.includes('latest');
-          if (!isCurrentVersionZip) {
+          if (!file.includes(`v${currentVersion}`)) {
             fs.unlinkSync(fullPath);
-            console.log(`  🗑️ Purged old version archive in ${path.relative(rootDir, dir)}: ${file}`);
+            console.log(`  🗑️ Purged old/unversioned archive in ${path.relative(rootDir, dir)}: ${file}`);
             purgedCount++;
+            return;
           }
         }
       } catch (e) {}
@@ -71,6 +82,6 @@ targetDirs.forEach(dir => {
   }
 });
 
-console.log(`✨ [Purge Engine] Cleanup complete! Purged ${purgedCount} old files and prepared fresh build space for v${currentVersion}.`);
+console.log(`✨ [Purge Engine] Cleanup complete! Purged all previous builds and prepared fresh build space for v${currentVersion}.`);
 
 

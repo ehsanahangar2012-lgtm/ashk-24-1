@@ -105,7 +105,7 @@ export const KeywordCampaignGeneratorSection: React.FC<KeywordCampaignGeneratorS
         'ارسال کاتالوگ'
       ];
     }
-    if (sec === 'food') {
+    if (sec === 'food_beverage') {
       return [
         `محصولات غذایی ${brand}`,
         'بسته‌بندی بهداشتی استاندارد',

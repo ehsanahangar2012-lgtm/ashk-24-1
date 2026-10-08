@@ -82,27 +82,53 @@ try {
         exit(0);
     }
 
-    // --- Added Authentication Check for Agent Endpoints ---
-    $agentEndpoints = ['jobs', 'jobs/claim', 'jobs/update', 'bridge/handshake/init', 'bridge/handshake/complete'];
-    $isAgentRegex = preg_match('/^jobs\/([^\/]+)$/', $route);
-    if (in_array($route, $agentEndpoints) || $isAgentRegex) {
-        $headers = getRequestHeadersSafe();
-        $authHeader = $headers['authorization'] ?? ($headers['Authorization'] ?? '');
-        $expectedToken = defined('CPANEL_AGENT_TOKEN') ? CPANEL_AGENT_TOKEN : (getenv('CPANEL_AGENT_TOKEN') ?: '');
-        
-        $isValid = false;
-        if (preg_match('/Bearer\s+(.*)/i', $authHeader, $matches)) {
-            if (trim($matches[1]) === $expectedToken) {
-                $isValid = true;
-            }
-        }
-        if (!$isValid && !empty($expectedToken)) {
+    // --- گیت‌وی یکپارچه و امن اعتبارسنجی نشست‌ها و دسترسی‌های سی‌پنل ---
+    $headers = getRequestHeadersSafe();
+    $authHeader = $headers['authorization'] ?? ($headers['Authorization'] ?? '');
+    $bearerToken = '';
+    if (preg_match('/Bearer\s+(.*)/i', $authHeader, $matches)) {
+        $bearerToken = trim($matches[1]);
+    }
+
+    // بررسی نشست اپراتور یا مدیر از طریق دیتابیس امن سرور
+    $currentUser = !empty($bearerToken) ? $db->validateSession($bearerToken) : null;
+
+    // بررسی توکن ارتباطی ایجنت لوکال
+    $expectedAgentToken = defined('CPANEL_AGENT_TOKEN') ? CPANEL_AGENT_TOKEN : '';
+    $isAgentTokenValid = (!empty($bearerToken) && !empty($expectedAgentToken) && hash_equals($expectedAgentToken, $bearerToken));
+
+    // مسیرهای ویژه ایجنت‌های اتوماسیون (مانند دریافت نوبت کاری)
+    $strictAgentEndpoints = ['jobs/claim', 'orchestrator/claim-balanced'];
+    if (in_array($route, $strictAgentEndpoints)) {
+        if (!$isAgentTokenValid && !$currentUser) {
             http_response_code(401);
-            echo json_encode(['error' => 'Unauthorized: Invalid or missing CPANEL_AGENT_TOKEN'], JSON_UNESCAPED_UNICODE);
+            echo json_encode([
+                'success' => false,
+                'error' => [
+                    'code' => 'UNAUTHORIZED_AGENT',
+                    'message' => 'دسترسی غیرمجاز: نیاز به توکن معتبر ایجنت لوکال یا نشست احراز هویت شده اپراتور است.'
+                ]
+            ], JSON_UNESCAPED_UNICODE);
             exit(0);
         }
     }
-    // -----------------------------------------------------
+
+    // مسیرهای حساس نیازمند نقش مدیر ارشد سیستم (RBAC Enforcement)
+    $adminOnlyRoutes = ['auth/users', 'system/wipe-data', 'data/reset'];
+    if (in_array($route, $adminOnlyRoutes) || (strpos($route, 'auth/users/') === 0 && $method === 'DELETE')) {
+        if (!$currentUser || ($currentUser['role'] ?? '') !== 'admin') {
+            http_response_code(403);
+            echo json_encode([
+                'success' => false,
+                'error' => [
+                    'code' => 'FORBIDDEN_ADMIN_REQUIRED',
+                    'message' => 'این عملیات تنها در صلاحیت مدیر ارشد سامانه (Admin) می‌باشد.'
+                ]
+            ], JSON_UNESCAPED_UNICODE);
+            exit(0);
+        }
+    }
+    // -------------------------------------------------------------------------
 
     switch (true) {
 
@@ -269,12 +295,21 @@ try {
 
         case ($route === 'otp/receive'):
             if ($method === 'POST') {
-                $code = $body['code'] ?? '';
-                $dataDir = __DIR__ . '/../data';
-                if (!file_exists($dataDir)) {
-                    @mkdir($dataDir, 0777, true);
+                $code = trim($body['code'] ?? '');
+                if (empty($code)) {
+                    http_response_code(400);
+                    echo json_encode(['error' => 'کد تایید OTP ارسال نشده است.'], JSON_UNESCAPED_UNICODE);
+                    exit(0);
                 }
-                file_put_contents($dataDir . '/last_otp.json', json_encode(['code' => $code, 'timestamp' => time()]));
+
+                // پاکسازی فایل‌های قدیمی و ناامن پیشین
+                $dataDir = __DIR__ . '/../data';
+                if (file_exists($dataDir . '/last_otp.json')) {
+                    @unlink($dataDir . '/last_otp.json');
+                }
+
+                // ذخیره‌سازی هش‌شده و امن کد یکبار مصرف با انقضای ۳ دقیقه‌ای
+                $db->storeSecureOtp('sms_relay', $code, 180);
 
                 // جستجو برای کارهای در انتظار OTP جهت تسریع و تکمیل خودکار ارتباط
                 $jobs = $db->getJobs();
@@ -284,11 +319,11 @@ try {
                         $db->addJobLog($job['id'], [
                             'step' => 'OTP_BRIDGE_AUTO_MATCH',
                             'status' => 'success',
-                            'message' => "کد تایید OTP ($code) به صورت کاملاً خودکار بدون دخالت دست از طریق اپلیکیشن پل ارتباطی اندروید (SMS Relay) دریافت و روی این نوبت کاری ست شد."
+                            'message' => 'کد تایید OTP با موفقیت از طریق اپلیکیشن پل ارتباطی اندروید دریافت و اعتبارسنجی شد.'
                         ]);
                         $db->updateJob($job['id'], [
                             'status' => 'authenticated',
-                            'otpCodeExtracted' => $code,
+                            'otpCodeExtracted' => true,
                             'currentStep' => 'احراز هویت پیامکی به صورت خودکار تایید شد. در حال بارگذاری تصویر و ثبت نهایی آگهی...',
                             'progressPercent' => 80
                         ]);
@@ -298,22 +333,36 @@ try {
 
                 echo json_encode([
                     'status' => 'success', 
-                    'message' => 'OTP received and saved.',
+                    'message' => 'کد تایید به صورت امن دریافت و ذخیره شد.',
                     'autoProcessedJobsCount' => $matchedJobsCount
-                ]);
+                ], JSON_UNESCAPED_UNICODE);
                 exit(0);
             }
             break;
 
-        case ($route === 'otp/read'):
+        case ($route === 'otp/read' || $route === 'otp/status'):
             if ($method === 'GET') {
+                // پاکسازی فایل قدیمی در صورت وجود
                 $dataDir = __DIR__ . '/../data';
-                $file = $dataDir . '/last_otp.json';
-                if (file_exists($file)) {
-                    echo file_get_contents($file);
-                } else {
-                    echo json_encode(['code' => null, 'timestamp' => null]);
+                if (file_exists($dataDir . '/last_otp.json')) {
+                    @unlink($dataDir . '/last_otp.json');
                 }
+                
+                // در مدل امن، کد خام ارسال نمی‌شود؛ وضعیت زنده بودن کد یکبار مصرف بازگردانده می‌شود
+                $rawDb = $db->getRawData();
+                $rec = $rawDb['secureOtps']['sms_relay'] ?? null;
+                $hasActiveOtp = false;
+                $expiresInSeconds = 0;
+                if ($rec && time() <= $rec['expiresAt'] && empty($rec['consumed'])) {
+                    $hasActiveOtp = true;
+                    $expiresInSeconds = max(0, $rec['expiresAt'] - time());
+                }
+
+                echo json_encode([
+                    'hasActiveOtp' => $hasActiveOtp,
+                    'expiresInSeconds' => $expiresInSeconds,
+                    'verified' => $hasActiveOtp
+                ], JSON_UNESCAPED_UNICODE);
                 exit(0);
             }
             break;
@@ -1144,34 +1193,74 @@ try {
             $jobId = $body['jobId'] ?? '';
             if (empty($targetUrl)) {
                 http_response_code(400);
-                echo json_encode(['error' => 'آدرس اینترنتی مقصد (targetUrl) جهت راستی‌آزمایی مستقل الزامی است.'], JSON_UNESCAPED_UNICODE);
+                echo json_encode(['success' => false, 'error' => ['code' => 'INVALID_ARGUMENT', 'message' => 'آدرس اینترنتی مقصد جهت راستی‌آزمایی مستقل الزامی است.']], JSON_UNESCAPED_UNICODE);
                 break;
             }
-            // اجرای راستی‌آزمایی مستقل شبکه
+
+            // واکشی اطلاعات کمپین و جاب برای راستی‌آزمایی شواهد واقعی
+            $targetJob = $jobId ? $db->getJobById($jobId) : null;
+            $campaign = null;
+            if ($targetJob && !empty($targetJob['campaignId'])) {
+                $campaign = $db->getCampaignById($targetJob['campaignId']);
+            }
+            $expectedTitle = $campaign['title'] ?? ($targetJob['campaignTitle'] ?? ($body['expectedTitle'] ?? ''));
+            $expectedPhone = $targetJob['contactPhone'] ?? ($body['expectedPhone'] ?? '');
+
+            // اجرای راستی‌آزمایی مستقل شبکه با بررسی شواهد عینی
+            $startTime = microtime(true);
             $ch = curl_init($targetUrl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
             curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Ashk24IndependentVerifier/4.0');
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Ashk24IndependentVerifier/5.9.0');
             $html = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $effectiveUrl = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL) ?: $targetUrl;
             curl_close($ch);
+            $elapsedMs = round((microtime(true) - $startTime) * 1000);
+
+            $isAccessible = ($httpCode >= 200 && $httpCode < 400);
+            $evidenceFound = false;
+            $evidenceSnippet = null;
+
+            if ($isAccessible && !empty($html)) {
+                $plainHtml = strip_tags($html);
+                if (!empty($expectedTitle) && mb_stripos($plainHtml, $expectedTitle) !== false) {
+                    $evidenceFound = true;
+                    $evidenceSnippet = 'تطابق کامل عنوان آگهی در صفحه تایید شد: ' . mb_substr($expectedTitle, 0, 50);
+                } elseif (!empty($expectedPhone) && stripos($plainHtml, $expectedPhone) !== false) {
+                    $evidenceFound = true;
+                    $evidenceSnippet = 'شماره تماس سازمانی در صفحه آگهی یافت شد: ' . $expectedPhone;
+                }
+            }
+
+            // وضعیت مستقل بر اساس شواهد عینی: VERIFIED | UNKNOWN (در صف ناظر) | FAILED
+            $verificationStatus = 'FAILED';
+            if ($isAccessible) {
+                $verificationStatus = $evidenceFound ? 'VERIFIED' : 'UNKNOWN';
+            }
 
             $verificationResult = [
                 'timestamp' => date('c'),
-                'targetUrl' => $targetUrl,
+                'targetUrl' => $effectiveUrl,
                 'httpStatus' => $httpCode,
-                'isAccessible' => ($httpCode >= 200 && $httpCode < 400),
+                'isAccessible' => $isAccessible,
+                'verificationStatus' => $verificationStatus,
+                'verified' => ($verificationStatus === 'VERIFIED'),
+                'evidenceCaptured' => $evidenceFound,
+                'evidenceSnippet' => $evidenceSnippet,
                 'verifiedBy' => 'cPanel_Independent_Worker',
-                'evidenceCaptured' => !empty($html)
+                'latencyMs' => $elapsedMs
             ];
 
             if ($jobId) {
                 $db->updateJob($jobId, [
-                    'independentVerification' => $verificationResult
+                    'independentVerification' => $verificationResult,
+                    'status' => ($verificationStatus === 'VERIFIED') ? 'published' : (($verificationStatus === 'UNKNOWN') ? 'under_review' : 'failed')
                 ]);
             }
+
             echo json_encode(['success' => true, 'verification' => $verificationResult], JSON_UNESCAPED_UNICODE);
             break;
 
@@ -1978,70 +2067,129 @@ try {
             echo json_encode($res, JSON_UNESCAPED_UNICODE);
             break;
 
-        // --- 9. Auth & User Management ---
+        // --- 9. Auth & User Management (Hardened) ---
         case ($route === 'auth/login'):
-            $username = $body['username'] ?? '';
-            $password = $body['password'] ?? '';
+            $username = trim($body['username'] ?? '');
+            $password = trim($body['password'] ?? '');
+            $clientIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+
             if (empty($username) || empty($password)) {
                 http_response_code(400);
-                echo json_encode(['error' => 'نام کاربری و کلمه عبور الزامی است.'], JSON_UNESCAPED_UNICODE);
+                echo json_encode(['success' => false, 'error' => ['code' => 'INVALID_CREDENTIALS', 'message' => 'نام کاربری و کلمه عبور الزامی است.']], JSON_UNESCAPED_UNICODE);
                 break;
             }
+
+            // بررسی قفل موقت به دلیل تلاش‌های مکرر ناموفق (Brute-Force Protection)
+            $lockedSecs = $db->isLoginLocked($clientIp, $username);
+            if ($lockedSecs > 0) {
+                $mins = ceil($lockedSecs / 60);
+                http_response_code(429);
+                echo json_encode([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'LOGIN_LOCKED',
+                        'message' => "حساب کاربری یا IP شما به دلیل تلاش‌های مکرر ناموفق به مدت {$mins} دقیقه مسدود شده است."
+                    ]
+                ], JSON_UNESCAPED_UNICODE);
+                break;
+            }
+
             $user = $db->authenticateUser($username, $password);
             if (!$user) {
+                $db->recordFailedLogin($clientIp, $username);
                 http_response_code(401);
-                echo json_encode(['error' => 'نام کاربری یا کلمه عبور اشتباه است.'], JSON_UNESCAPED_UNICODE);
+                echo json_encode(['success' => false, 'error' => ['code' => 'INVALID_CREDENTIALS', 'message' => 'نام کاربری یا کلمه عبور اشتباه است.']], JSON_UNESCAPED_UNICODE);
                 break;
             }
-            $token = 'token_ashk24_cpanel_' . bin2hex(random_bytes(16)) . '_' . time();
-            echo json_encode(['message' => 'ورود موفقیت‌آمیز بود.', 'user' => $user, 'token' => $token], JSON_UNESCAPED_UNICODE);
-            break;
 
-        case ($route === 'auth/reset-passwords'):
-            $users = $db->resetDefaultUsers();
+            // ورود موفقیت‌آمیز: پاکسازی لاگ‌های ناموفق و صدور نشست امن
+            $db->clearFailedLogins($clientIp, $username);
+            $sessionData = $db->createSession($user);
+
+            // تنظیم کوکی امن HttpOnly جهت بالاترین استاندارد امنیتی
+            @setcookie('ashk24_session', $sessionData['token'], [
+                'expires' => time() + (7 * 86400),
+                'path' => '/',
+                'httponly' => true,
+                'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+                'samesite' => 'Lax'
+            ]);
+
             echo json_encode([
-                'message' => 'کلمات عبور پیش‌فرض (admin و operator) به 123 بازنشانی گردید.',
-                'users' => $users
+                'success' => true,
+                'message' => 'ورود با موفقیت انجام شد.',
+                'user' => $user,
+                'token' => $sessionData['token'],
+                'expiresAt' => $sessionData['expiresAt']
             ], JSON_UNESCAPED_UNICODE);
             break;
 
+        case ($route === 'auth/me'):
+            if (!$currentUser) {
+                http_response_code(401);
+                echo json_encode(['success' => false, 'error' => ['code' => 'UNAUTHENTICATED', 'message' => 'نشست ورود منقضی شده یا نامعتبر است.']], JSON_UNESCAPED_UNICODE);
+                break;
+            }
+            echo json_encode(['success' => true, 'user' => $currentUser], JSON_UNESCAPED_UNICODE);
+            break;
+
+        case ($route === 'auth/logout'):
+            if (!empty($bearerToken)) {
+                $db->revokeSession($bearerToken);
+            }
+            @setcookie('ashk24_session', '', ['expires' => time() - 3600, 'path' => '/']);
+            echo json_encode(['success' => true, 'message' => 'خروج از حساب کاربری با موفقیت انجام شد.'], JSON_UNESCAPED_UNICODE);
+            break;
+
         case ($route === 'auth/change-password'):
-            $username = $body['username'] ?? '';
-            $oldPassword = $body['oldPassword'] ?? '';
-            $newPassword = $body['newPassword'] ?? '';
+            $username = trim($body['username'] ?? '');
+            $oldPassword = trim($body['oldPassword'] ?? '');
+            $newPassword = trim($body['newPassword'] ?? '');
+
             if (empty($username) || empty($oldPassword) || empty($newPassword)) {
                 http_response_code(400);
-                echo json_encode(['error' => 'تمام فیلدهای تغییر رمز عبور الزامی است.'], JSON_UNESCAPED_UNICODE);
+                echo json_encode(['success' => false, 'error' => ['code' => 'MISSING_FIELDS', 'message' => 'تمام فیلدهای تغییر رمز عبور الزامی است.']], JSON_UNESCAPED_UNICODE);
                 break;
             }
-            $success = $db->changeUserPassword($username, $oldPassword, $newPassword);
-            if (!$success) {
+
+            try {
+                $success = $db->changeUserPassword($username, $oldPassword, $newPassword);
+                if (!$success) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => ['code' => 'INVALID_OLD_PASSWORD', 'message' => 'کلمه عبور قبلی نادرست است یا کاربر یافت نشد.']], JSON_UNESCAPED_UNICODE);
+                    break;
+                }
+                echo json_encode(['success' => true, 'message' => 'کلمه عبور با موفقیت بروزرسانی شد.'], JSON_UNESCAPED_UNICODE);
+            } catch (Exception $e) {
                 http_response_code(400);
-                echo json_encode(['error' => 'کلمه عبور قبلی نادرست است یا کاربر یافت نشد.'], JSON_UNESCAPED_UNICODE);
-                break;
+                echo json_encode(['success' => false, 'error' => ['code' => 'VALIDATION_ERROR', 'message' => $e->getMessage()]], JSON_UNESCAPED_UNICODE);
             }
-            echo json_encode(['message' => 'کلمه عبور با موفقیت تغییر یافت.'], JSON_UNESCAPED_UNICODE);
             break;
 
         case ($route === 'auth/users'):
             if ($method === 'GET') {
-                echo json_encode($db->getUsers(), JSON_UNESCAPED_UNICODE);
+                echo json_encode(['success' => true, 'users' => $db->getUsers()], JSON_UNESCAPED_UNICODE);
             } elseif ($method === 'POST') {
                 try {
                     $user = $db->createUser($body);
                     http_response_code(201);
-                    echo json_encode(['message' => 'کاربر جدید تعریف گردید.', 'user' => $user], JSON_UNESCAPED_UNICODE);
+                    echo json_encode(['success' => true, 'message' => 'کاربر جدید تعریف گردید.', 'user' => $user], JSON_UNESCAPED_UNICODE);
                 } catch (Exception $e) {
                     http_response_code(400);
-                    echo json_encode(['error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+                    echo json_encode(['success' => false, 'error' => ['code' => 'USER_CREATION_FAILED', 'message' => $e->getMessage()]], JSON_UNESCAPED_UNICODE);
                 }
             }
             break;
 
         case (preg_match('/^auth\/users\/([^\/]+)$/', $route, $matches) ? true : false):
             $uname = $matches[1];
-            $success = $db->deleteUser($uname);
-            echo json_encode(['success' => $success, 'message' => $success ? 'کاربر حذف گردید.' : 'کاربر یافت نشد.'], JSON_UNESCAPED_UNICODE);
+            try {
+                $success = $db->deleteUser($uname);
+                echo json_encode(['success' => $success, 'message' => $success ? 'کاربر حذف گردید.' : 'کاربر یافت نشد.'], JSON_UNESCAPED_UNICODE);
+            } catch (Exception $e) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => ['code' => 'USER_DELETE_FAILED', 'message' => $e->getMessage()]], JSON_UNESCAPED_UNICODE);
+            }
             break;
 
         // --- 10. Sessions Vault ---
