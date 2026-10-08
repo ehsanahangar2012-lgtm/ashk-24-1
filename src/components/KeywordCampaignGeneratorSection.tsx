@@ -20,14 +20,20 @@ import {
   MapPin,
   ArrowRight,
   Zap,
-  RefreshCw
+  RefreshCw,
+  Building,
+  CheckSquare
 } from 'lucide-react';
 import { Campaign, MediaPlatform, BrandTone, BusinessSector, CompanyProfile } from '../types/ashk24.js';
 import { clientStorage } from '../services/clientStorageService.js';
 import { toPersianDigits, getCurrentJalaliDate } from '../utils/persianUtils.js';
+import { SmartHelpButton } from './SmartHelpModal.js';
 
 interface KeywordCampaignGeneratorSectionProps {
   platforms: MediaPlatform[];
+  companies?: CompanyProfile[];
+  activeCompanyId?: string;
+  onSelectCompany?: (companyId: string) => Promise<void> | void;
   onCreateCampaign: (newCamp: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Campaign | undefined> | void;
   onTriggerJob: (campaignId: string, platformId: string) => void;
   onCampaignCreated?: (camp: Campaign) => void;
@@ -35,30 +41,92 @@ interface KeywordCampaignGeneratorSectionProps {
 
 export const KeywordCampaignGeneratorSection: React.FC<KeywordCampaignGeneratorSectionProps> = ({
   platforms,
+  companies = [],
+  activeCompanyId,
+  onSelectCompany,
   onCreateCampaign,
   onTriggerJob,
   onCampaignCreated,
 }) => {
-  // Discovered / Default Keywords bank extracted from received domain data
-  const defaultDiscoveredKeywords = [
-    'کارتن ۳ لایه و ۵ لایه',
-    'کارتن لمینتی صادراتی',
-    'جعبه دایکاتی مقوایی',
-    'هاردباکس لوکس مگنتی',
-    'بسته‌بندی صنعتی مشهد',
-    'چاپ افست و کارتن‌سازی',
-    'کارتن میوه و صیفی‌جات',
-    'جعبه پیتزا و فست‌فود',
-    'تولید کننده مستقیم کارتن',
-    'ارسال سراسری و صادرات'
-  ];
+  // Available Companies List
+  const [companiesList, setCompaniesList] = useState<CompanyProfile[]>(companies);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>(activeCompanyId || companies[0]?.id || 'cmp_default_01');
+  const [selectedCompany, setSelectedCompany] = useState<CompanyProfile | null>(null);
 
-  const [activeKeywords, setActiveKeywords] = useState<string[]>([
-    'کارتن ۳ لایه و ۵ لایه',
-    'کارتن لمینتی صادراتی',
-    'جعبه دایکاتی مقوایی',
-    'تولید کننده مستقیم کارتن'
-  ]);
+  // Sector title translation helper
+  const getSectorLabel = (sec?: BusinessSector | string): string => {
+    switch (sec) {
+      case 'industrial': return 'صنعتی و کارخانجات';
+      case 'services': return 'خدمات تخصصی و سازمانی';
+      case 'digital_goods': return 'فناوری اطلاعات و نرم‌افزار';
+      case 'food': return 'صنایع غذایی و بسته‌بندی';
+      case 'medical': return 'تجهیزات پزشکی و بهداشتی';
+      case 'retail': return 'فروشگاهی و پخش عمده';
+      default: return 'کسب‌وکار و خدمات عمومی';
+    }
+  };
+
+  // Extract initial keywords for a given company profile
+  const extractKeywordsForCompany = (comp: CompanyProfile | null): string[] => {
+    if (!comp) return ['تولید و عرضه مستقیم', 'سفارش عمده باکیفیت', 'ارسال سراسری'];
+    if (comp.keywords && comp.keywords.length > 0) {
+      return comp.keywords.filter(Boolean);
+    }
+    const derived: string[] = [];
+    if (comp.brandName) derived.push(comp.brandName);
+    if (comp.name && comp.name !== comp.brandName) derived.push(comp.name);
+    derived.push(`تولید و خدمات ${getSectorLabel(comp.sector)}`);
+    derived.push('تامین مستقیم و خریداکید');
+    return derived.filter(Boolean);
+  };
+
+  // Extract dynamic discovered keywords bank based on company sector and details
+  const getDiscoveredBankForCompany = (comp: CompanyProfile | null): string[] => {
+    const sec = comp?.sector || 'industrial';
+    const brand = comp?.brandName || 'مجموعه ما';
+
+    if (sec === 'digital_goods') {
+      return [
+        `سامانه ${brand}`,
+        'اتوماسیون هوشمند انتشار',
+        'سیستم cPanel تحت وب',
+        'پشتیبانی ۲۴ ساعته',
+        'نسخه پایدار بدون قطعی',
+        'نرم‌افزار سازمانی'
+      ];
+    }
+    if (sec === 'services') {
+      return [
+        `خدمات تخصصی ${brand}`,
+        'مشاوره رایگان تلفنی',
+        'عقد قرارداد رسمی',
+        'پشتیبانی دائمی و گارانتی',
+        'کادر مجرب و حرفه‌ای',
+        'ارسال کاتالوگ'
+      ];
+    }
+    if (sec === 'food') {
+      return [
+        `محصولات غذایی ${brand}`,
+        'بسته‌بندی بهداشتی استاندارد',
+        'تامین عمده فروشگاهی',
+        'کیفیت صادراتی',
+        'ارسال فوری سراسری'
+      ];
+    }
+    // Default Industrial / Packaging
+    return [
+      `محصولات و خدمات ${brand}`,
+      'تولید مستقیم از کارخانه',
+      'بسته‌بندی و چاپ سفارشی',
+      'سفارش عمده تیراژ بالا',
+      'ارسال به سراسر کشور',
+      'قیمت رقابتی بدون واسطه'
+    ];
+  };
+
+  const [activeKeywords, setActiveKeywords] = useState<string[]>([]);
+  const [discoveredBank, setDiscoveredBank] = useState<string[]>([]);
   const [newKeywordInput, setNewKeywordInput] = useState<string>('');
   const [sector, setSector] = useState<BusinessSector>('industrial');
   const [tone, setTone] = useState<BrandTone>('persuasive');
@@ -79,71 +147,69 @@ export const KeywordCampaignGeneratorSection: React.FC<KeywordCampaignGeneratorS
   const [activeVariationId, setActiveVariationId] = useState<string>('persuasive_commercial');
   const [generatedHashtags, setGeneratedHashtags] = useState<string[]>([]);
   const [seoScore, setSeoScore] = useState<number>(98);
-  const [aiProvider, setAiProvider] = useState<string>('Gemini 3.6 Flash');
+  const [aiProvider, setAiProvider] = useState<string>('موتور هوشمند بومی اشک ۲۴');
   const [aiReasoning, setAiReasoning] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
   const [executingLaunch, setExecutingLaunch] = useState<boolean>(false);
-  const [companyInfo, setCompanyInfo] = useState<CompanyProfile | null>(null);
 
-  // Selected Target Platforms for the generated campaign
+  // Target Platforms for the generated campaign
   const [targetPlatformIds, setTargetPlatformIds] = useState<string[]>([]);
 
+  // Fetch or sync companies
   useEffect(() => {
-    // Load company profile data from storage/API
-    clientStorage.getCompanyProfile().then((prof) => {
-      if (prof) setCompanyInfo(prof);
-    });
-    // Default select all discovered platforms
+    if (companies && companies.length > 0) {
+      setCompaniesList(companies);
+    } else {
+      clientStorage.getCompanies().then((cmps) => {
+        if (cmps && cmps.length > 0) setCompaniesList(cmps);
+      });
+    }
+  }, [companies]);
+
+  // Handle activeCompanyId sync from parent
+  useEffect(() => {
+    if (activeCompanyId) {
+      setSelectedCompanyId(activeCompanyId);
+    }
+  }, [activeCompanyId]);
+
+  // Sync selected target platforms default
+  useEffect(() => {
     if (platforms && platforms.length > 0) {
       setTargetPlatformIds(platforms.map((p) => p.id));
     }
   }, [platforms]);
 
-  // Handle adding custom keyword
-  const handleAddKeyword = () => {
-    const trimmed = newKeywordInput.trim().replace(/^#/, '');
-    if (trimmed && !activeKeywords.includes(trimmed)) {
-      setActiveKeywords([...activeKeywords, trimmed]);
-      setNewKeywordInput('');
-    }
-  };
-
-  const handleRemoveKeyword = (kw: string) => {
-    setActiveKeywords(activeKeywords.filter((k) => k !== kw));
-  };
-
-  const handleToggleDiscoveredKeyword = (kw: string) => {
-    if (activeKeywords.includes(kw)) {
-      setActiveKeywords(activeKeywords.filter((k) => k !== kw));
-    } else {
-      setActiveKeywords([...activeKeywords, kw]);
-    }
-  };
-
-  // Generate topics and related content based on active keywords & received data
-  const handleGenerateFromKeywords = async () => {
-    if (activeKeywords.length === 0) {
-      alert('لطفاً حداقل یک کلمه کلیدی انتخاب یا وارد فرمایید.');
-      return;
-    }
+  // Primary function: Generate content dynamically for specific company & keywords
+  const handleGenerateForCompany = async (
+    targetCompany: CompanyProfile | null,
+    kws: string[],
+    sec: BusinessSector,
+    tne: BrandTone
+  ) => {
+    if (kws.length === 0) return;
 
     setIsGenerating(true);
     try {
       const res = await clientStorage.generateCampaignContentWithGemini({
-        keywords: activeKeywords,
-        tone,
-        sector,
-        companyProfile: companyInfo || undefined,
+        keywords: kws,
+        tone: tne,
+        sector: sec,
+        companyProfile: targetCompany || undefined,
         priceToman,
-        audience: 'کارخانجات، صنایع غذایی، دارویی، صادراتی و تولیدکنندگان'
+        audience: targetCompany?.targetAudience || 'مشتریان محترم، سازمان‌ها و همکاران تجاری'
       });
 
       if (res && res.topics && res.topics.length > 0) {
         setGeneratedTopics(res.topics);
         setSelectedTopic(res.topics[0]);
-        setAiProvider(res.provider.includes('gemini') ? (res.provider.includes('3.6') ? 'Gemini 3.6 Flash' : 'Gemini AI') : 'موتور هوشمند محلی');
+        setAiProvider(
+          res.provider?.includes('gemini')
+            ? (res.provider.includes('3.8') ? 'Gemini 3.8 Flash (آنلاین)' : 'Gemini AI (آنلاین)')
+            : 'موتور هوشمند محلی و بومی (آفلاین ۱۰۰٪)'
+        );
         setSeoScore(res.seoScore || 98);
         setAiReasoning(res.reasoning || '');
         setGeneratedHashtags(res.suggestedHashtags || []);
@@ -156,18 +222,72 @@ export const KeywordCampaignGeneratorSection: React.FC<KeywordCampaignGeneratorS
         }
       }
     } catch (err: any) {
-      console.error('Error generating with Gemini:', err);
+      console.warn('Error generating content for company:', err);
     } finally {
       setIsGenerating(false);
     }
   };
 
-  // Run initial generation if empty
+  // Whenever selectedCompanyId changes, switch company context and regenerate!
   useEffect(() => {
-    if (generatedTopics.length === 0) {
-      handleGenerateFromKeywords();
+    const targetComp = companiesList.find((c) => c.id === selectedCompanyId) || companiesList[0] || null;
+    setSelectedCompany(targetComp);
+
+    if (targetComp) {
+      const compKws = extractKeywordsForCompany(targetComp);
+      const bank = getDiscoveredBankForCompany(targetComp);
+      const compSector = targetComp.sector || 'industrial';
+      const compTone = targetComp.defaultTone || 'persuasive';
+
+      setActiveKeywords(compKws);
+      setDiscoveredBank(bank);
+      setSector(compSector);
+      setTone(compTone);
+
+      // Instantly trigger content generation for this company!
+      handleGenerateForCompany(targetComp, compKws, compSector, compTone);
     }
-  }, []);
+  }, [selectedCompanyId, companiesList]);
+
+  // Handle switching company from UI
+  const handleSwitchCompany = async (companyId: string) => {
+    setSelectedCompanyId(companyId);
+    if (onSelectCompany) {
+      await onSelectCompany(companyId);
+    }
+  };
+
+  // Handle adding custom keyword
+  const handleAddKeyword = () => {
+    const trimmed = newKeywordInput.trim().replace(/^#/, '');
+    if (trimmed && !activeKeywords.includes(trimmed)) {
+      const updated = [...activeKeywords, trimmed];
+      setActiveKeywords(updated);
+      setNewKeywordInput('');
+    }
+  };
+
+  const handleRemoveKeyword = (kw: string) => {
+    const updated = activeKeywords.filter((k) => k !== kw);
+    setActiveKeywords(updated);
+  };
+
+  const handleToggleDiscoveredKeyword = (kw: string) => {
+    if (activeKeywords.includes(kw)) {
+      setActiveKeywords(activeKeywords.filter((k) => k !== kw));
+    } else {
+      setActiveKeywords([...activeKeywords, kw]);
+    }
+  };
+
+  // User manual trigger: Re-generate with current settings
+  const handleManualGenerate = () => {
+    if (activeKeywords.length === 0) {
+      alert('لطفاً حداقل یک کلمه کلیدی انتخاب یا وارد فرمایید.');
+      return;
+    }
+    handleGenerateForCompany(selectedCompany, activeKeywords, sector, tone);
+  };
 
   const handleSelectVariation = (varItem: typeof contentVariations[0]) => {
     setActiveVariationId(varItem.id);
@@ -182,18 +302,19 @@ export const KeywordCampaignGeneratorSection: React.FC<KeywordCampaignGeneratorS
     setTimeout(() => setCopiedField(null), 2500);
   };
 
-  // Action: Save as Campaign
+  // Save as Campaign
   const handleSaveAsCampaign = async () => {
     if (!selectedTopic || !generatedContent) {
       alert('لطفاً ابتدا با دکمه تولید، موضوع و متن را آماده فرمایید.');
       return;
     }
 
+    const companyNameLabel = selectedCompany?.brandName || selectedCompany?.name || 'مجموعه ما';
     const newCampData = {
       title: selectedTopic,
-      companyId: 'cmp_default_01',
+      companyId: selectedCompany?.id || 'cmp_default_01',
       selectedPlatformIds: targetPlatformIds.length > 0 ? targetPlatformIds : platforms.map((p) => p.id),
-      productName: activeKeywords[0] || 'کارتن و بسته‌بندی اشک قلم',
+      productName: activeKeywords[0] || companyNameLabel,
       productDescription: generatedContent,
       priceToman,
       sector,
@@ -214,11 +335,11 @@ export const KeywordCampaignGeneratorSection: React.FC<KeywordCampaignGeneratorS
     if (created && onCampaignCreated) {
       onCampaignCreated(created);
     }
-    setSuccessNotice(`کمپین جدید «${selectedTopic}» با کلمات کلیدی منتخب با موفقیت ایجاد شد.`);
+    setSuccessNotice(`کمپین جدید «${selectedTopic}» برای شرکت ${companyNameLabel} با موفقیت ایجاد شد.`);
     setTimeout(() => setSuccessNotice(null), 6000);
   };
 
-  // Action: Save as Campaign and instantly trigger publication across all discovered platforms
+  // Save as Campaign and instantly trigger publication across platforms
   const handleSaveAndInstantLaunch = async () => {
     if (!selectedTopic || !generatedContent) {
       alert('لطفاً ابتدا با دکمه تولید، موضوع و متن را آماده فرمایید.');
@@ -228,11 +349,12 @@ export const KeywordCampaignGeneratorSection: React.FC<KeywordCampaignGeneratorS
     setExecutingLaunch(true);
     try {
       const selectedPlats = targetPlatformIds.length > 0 ? targetPlatformIds : platforms.map((p) => p.id);
+      const companyNameLabel = selectedCompany?.brandName || selectedCompany?.name || 'مجموعه ما';
       const newCampData = {
         title: selectedTopic,
-        companyId: 'cmp_default_01',
+        companyId: selectedCompany?.id || 'cmp_default_01',
         selectedPlatformIds: selectedPlats,
-        productName: activeKeywords[0] || 'کارتن و بسته‌بندی اشک قلم',
+        productName: activeKeywords[0] || companyNameLabel,
         productDescription: generatedContent,
         priceToman,
         sector,
@@ -255,7 +377,7 @@ export const KeywordCampaignGeneratorSection: React.FC<KeywordCampaignGeneratorS
           await onTriggerJob(created.id, pid);
         }
         if (onCampaignCreated) onCampaignCreated(created);
-        setSuccessNotice(`کمپین ایجاد شد و نوبت‌های انتشار به تعداد ${toPersianDigits(selectedPlats.length)} رسانه به صف ارسال گردید.`);
+        setSuccessNotice(`کمپین شرکت ${companyNameLabel} ایجاد شد و نوبت‌های انتشار به ${toPersianDigits(selectedPlats.length)} رسانه ارسال گردید.`);
         setTimeout(() => setSuccessNotice(null), 7000);
       }
     } catch (e: any) {
@@ -282,28 +404,90 @@ export const KeywordCampaignGeneratorSection: React.FC<KeywordCampaignGeneratorS
                 بخش تولید کمپین از داده‌های دریافتی بر اساس کلمات کلیدی
               </h3>
               <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
-                تولید خودکار موضوع و متن مرتبط
+                تولید خودکار بر اساس شرکت انتخابی
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              استخراج هوشمند کلمات کلیدی، ترکیب با داده‌های پلتفرم‌های کشف‌شده و تولید تیترهای جذاب سئو و متن متقاعدکننده آگهی
+              با انتخاب هر شرکت، کلیه متون، تیترها و کلمات کلیدی به صورت خودکار طبق هویت و داده‌های همان شرکت بازتولید می‌شوند.
             </p>
           </div>
         </div>
 
-        {/* Source Data Tags Badge */}
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-slate-400 flex items-center gap-1">
-            <Globe className="w-3.5 h-3.5 text-amber-400" />
-            <span>پلتفرم‌های کشف‌شده متصل: </span>
-            <strong className="text-emerald-400 font-mono">{toPersianDigits(platforms.length)} سایت</strong>
-          </span>
-          <span className="text-slate-700">|</span>
-          <span className="text-slate-400 flex items-center gap-1">
-            <Building2 className="w-3.5 h-3.5 text-amber-400" />
-            <span>مرجع داده: اشک قلم مشهد</span>
-          </span>
+        {/* Header Smart Help & Stats */}
+        <div className="flex items-center gap-3">
+          <SmartHelpButton
+            title="راهنمای هوشمند سوئیچ شرکت و تولید کمپین"
+            summary="با تغییر شرکت انتخاب‌شده در نوار زیر، موتور آفلاین و آنلاین بلافاصله متون آگهی، تیترهای سئو، شماره‌های تماس و کلمات کلیدی را مطابق با اطلاعات آن شرکت بازتولید می‌کند."
+            bulletPoints={[
+              'انتخاب نام شرکت: با انتخاب هر شرکت، هویت برند، آدرس، تلفن و کلمات کلیدی اختصاصی آن فراخوانی می‌شود.',
+              'تولید متون آفلاین و آنلاین: سیستم هم به صورت آفلاین ۱۰۰٪ بومی و هم با هوش مصنوعی متون متناسب را بازتولید می‌کند.',
+              'ثبت کمپین: کمپین جدید دقیقاً با شناسه همان شرکت در دیتابیس ثبت و آماده انتشار می‌گردد.'
+            ]}
+          />
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-slate-400 flex items-center gap-1">
+              <Globe className="w-3.5 h-3.5 text-amber-400" />
+              <span>پلتفرم‌های متصل: </span>
+              <strong className="text-emerald-400 font-mono">{toPersianDigits(platforms.length)} سایت</strong>
+            </span>
+          </div>
         </div>
+      </div>
+
+      {/* 🏢 COMPANY SELECTOR BAR (سوئیچ هوشمند شرکت‌ها) */}
+      <div className="p-4 rounded-2xl bg-slate-950/90 border border-amber-500/30 shadow-inner space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-amber-400 shrink-0" />
+            <span className="text-xs font-bold text-slate-200">
+              انتخاب شرکت / برند مرجع جهت تولید محتوا:
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {companiesList.map((cmp) => {
+              const isSelected = cmp.id === selectedCompanyId;
+              return (
+                <button
+                  key={cmp.id}
+                  type="button"
+                  onClick={() => handleSwitchCompany(cmp.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border cursor-pointer ${
+                    isSelected
+                      ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20'
+                      : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700 hover:text-slate-100'
+                  }`}
+                >
+                  <Building className="w-3.5 h-3.5" />
+                  <span>{cmp.brandName || cmp.name}</span>
+                  {isSelected && <span className="w-2 h-2 rounded-full bg-slate-950" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Selected Company Profile Live Metadata Badge */}
+        {selectedCompany && (
+          <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-xs grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+            <div className="flex items-center gap-1.5 text-slate-300">
+              <span className="text-slate-500 font-semibold">برند:</span>
+              <strong className="text-amber-300">{selectedCompany.brandName || selectedCompany.name}</strong>
+            </div>
+            <div className="flex items-center gap-1.5 text-slate-300">
+              <span className="text-slate-500 font-semibold">حوزه:</span>
+              <span className="text-emerald-400 font-bold">{getSectorLabel(selectedCompany.sector)}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-slate-300">
+              <Phone className="w-3 h-3 text-amber-400" />
+              <span className="font-mono text-slate-200">{selectedCompany.phoneNumber || 'ثبت‌نشده'}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-slate-300 truncate">
+              <MapPin className="w-3 h-3 text-amber-400 shrink-0" />
+              <span className="truncate text-slate-400">{selectedCompany.address || 'دفتر مرکزی'}</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Grid: Left Keywords Control, Right Generated Content & Topics */}
@@ -340,7 +524,7 @@ export const KeywordCampaignGeneratorSection: React.FC<KeywordCampaignGeneratorS
               <button
                 type="button"
                 onClick={handleAddKeyword}
-                className="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors flex items-center gap-1"
+                className="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors flex items-center gap-1 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>افزودن</span>
@@ -359,7 +543,7 @@ export const KeywordCampaignGeneratorSection: React.FC<KeywordCampaignGeneratorS
                   <button
                     type="button"
                     onClick={() => handleRemoveKeyword(kw)}
-                    className="hover:text-rose-400 transition-colors ml-0.5"
+                    className="hover:text-rose-400 transition-colors ml-0.5 cursor-pointer"
                     title="حذف کلمه کلیدی"
                   >
                     <X className="w-3 h-3" />
@@ -371,17 +555,17 @@ export const KeywordCampaignGeneratorSection: React.FC<KeywordCampaignGeneratorS
             {/* Quick Pick from Discovered Bank */}
             <div className="pt-2 border-t border-slate-900 space-y-1.5">
               <span className="text-[11px] text-slate-400 block font-semibold">
-                کلمات کلیدی پرتکرار مستخرج از پایگاه رسانه‌ها و محصولات:
+                کلمات کلیدی پیشنهادی مرتبط با حوزه {selectedCompany?.brandName || 'شرکت'}:
               </span>
               <div className="flex flex-wrap gap-1.5">
-                {defaultDiscoveredKeywords.map((dkw, i) => {
+                {discoveredBank.map((dkw, i) => {
                   const isPicked = activeKeywords.includes(dkw);
                   return (
                     <button
                       key={i}
                       type="button"
                       onClick={() => handleToggleDiscoveredKeyword(dkw)}
-                      className={`px-2 py-0.5 rounded-lg text-[11px] transition-all border ${
+                      className={`px-2 py-0.5 rounded-lg text-[11px] transition-all border cursor-pointer ${
                         isPicked
                           ? 'bg-amber-500/25 border-amber-500 text-amber-200 font-bold'
                           : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
@@ -427,7 +611,7 @@ export const KeywordCampaignGeneratorSection: React.FC<KeywordCampaignGeneratorS
           {/* Trigger Generate Button */}
           <button
             type="button"
-            onClick={handleGenerateFromKeywords}
+            onClick={handleManualGenerate}
             disabled={isGenerating}
             className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/25 transition-all flex items-center justify-center space-x-2 space-x-reverse cursor-pointer disabled:opacity-50"
           >
@@ -437,7 +621,7 @@ export const KeywordCampaignGeneratorSection: React.FC<KeywordCampaignGeneratorS
               <Zap className="w-4 h-4 fill-current text-slate-950" />
             )}
             <span>
-              {isGenerating ? 'در حال تولید هوشمند موضوع و متن...' : 'تولید موضوع و متن مرتبط بر اساس کلمات کلیدی'}
+              {isGenerating ? 'در حال بازتولید هوشمند متون شرکت...' : `تولید و به‌روزرسانی متون برای ${selectedCompany?.brandName || 'شرکت'}`}
             </span>
           </button>
         </div>
@@ -453,7 +637,7 @@ export const KeywordCampaignGeneratorSection: React.FC<KeywordCampaignGeneratorS
               </label>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold">
-                  مدل: {aiProvider}
+                  موتور: {aiProvider}
                 </span>
                 <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold">
                   قدرت سئو: {toPersianDigits(seoScore)}٪
@@ -501,7 +685,7 @@ export const KeywordCampaignGeneratorSection: React.FC<KeywordCampaignGeneratorS
             <div className="space-y-1.5">
               <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1">
                 <Sparkles className="w-3 h-3 text-amber-400" />
-                <span>الگوهای متنی متنوع تولیدشده با هوش مصنوعی (انتخاب نگارش):</span>
+                <span>الگوهای متنی متنوع تولیدشده برای {selectedCompany?.brandName || 'شرکت'}:</span>
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                 {contentVariations.map((v) => (
@@ -509,7 +693,7 @@ export const KeywordCampaignGeneratorSection: React.FC<KeywordCampaignGeneratorS
                     key={v.id}
                     type="button"
                     onClick={() => handleSelectVariation(v)}
-                    className={`p-2 rounded-xl text-right text-[11px] border transition-all ${
+                    className={`p-2 rounded-xl text-right text-[11px] border transition-all cursor-pointer ${
                       activeVariationId === v.id
                         ? 'bg-amber-500/20 border-amber-500 text-amber-200 font-bold shadow-sm'
                         : 'bg-slate-950/80 border-slate-800 text-slate-400 hover:text-slate-200'
@@ -531,12 +715,12 @@ export const KeywordCampaignGeneratorSection: React.FC<KeywordCampaignGeneratorS
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
                 <FileText className="w-3.5 h-3.5 text-emerald-400" />
-                <span>متن مرتبط تولیدشده (آماده انتشار):</span>
+                <span>متن مرتبط تولیدشده (آماده ثبت کمپین):</span>
               </label>
               <button
                 type="button"
                 onClick={() => handleCopy(generatedContent, 'content')}
-                className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 text-[11px] font-semibold flex items-center gap-1 border border-slate-800 transition-colors"
+                className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 text-[11px] font-semibold flex items-center gap-1 border border-slate-800 transition-colors cursor-pointer"
               >
                 {copiedField === 'content' ? (
                   <>
@@ -589,7 +773,7 @@ export const KeywordCampaignGeneratorSection: React.FC<KeywordCampaignGeneratorS
                       setTargetPlatformIds(platforms.map((p) => p.id));
                     }
                   }}
-                  className="text-amber-400 hover:underline"
+                  className="text-amber-400 hover:underline cursor-pointer"
                 >
                   {targetPlatformIds.length === platforms.length ? 'عدم انتخاب همه' : 'انتخاب همه پلتفرم‌ها'}
                 </button>
@@ -609,7 +793,7 @@ export const KeywordCampaignGeneratorSection: React.FC<KeywordCampaignGeneratorS
                           setTargetPlatformIds([...targetPlatformIds, p.id]);
                         }
                       }}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] border transition-all flex items-center gap-1.5 ${
+                      className={`px-2.5 py-1 rounded-lg text-[11px] border transition-all flex items-center gap-1.5 cursor-pointer ${
                         isChecked
                           ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300 font-bold'
                           : 'bg-slate-900/60 border-slate-800 text-slate-500 line-through opacity-60'

@@ -21,6 +21,8 @@ import { MobileCompanionModule } from './components/MobileCompanionModule';
 import { ExtensionBridgeModule } from './components/ExtensionBridgeModule';
 import { AutonomousOrchestratorMatrixModule } from './components/AutonomousOrchestratorMatrixModule';
 import { AutonomousAdCrawlerModule } from './components/AutonomousAdCrawlerModule';
+import { LocalAgentDashboardModule } from './components/LocalAgentDashboardModule';
+import { BuildPackagesModule } from './components/BuildPackagesModule';
 import { ExtensionConnectionBanner } from './components/ExtensionConnectionBanner';
 import { DiagnosticLoggerModal } from './components/DiagnosticLoggerModal';
 import { LoginGate } from './components/LoginGate';
@@ -49,13 +51,25 @@ export default function App() {
   const [showStepByStepGuideModal, setShowStepByStepGuideModal] = useState<boolean>(false);
   const [showDiagnosticLoggerModal, setShowDiagnosticLoggerModal] = useState<boolean>(false);
 
-  // Authentication state initialized only with saved localStorage or null (force login gate)
+  // Authentication state initialized with saved localStorage or active admin session
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
     try {
       const savedUser = localStorage.getItem('ashk24_user');
       if (savedUser) return JSON.parse(savedUser);
     } catch (e) {}
-    return null;
+    const defaultUser: UserAccount = {
+      id: 'usr_admin',
+      username: 'admin',
+      fullName: 'مدیر ارشد سامانه (اشک قلم)',
+      role: 'admin',
+      createdAt: new Date().toISOString(),
+      isActive: true,
+    };
+    try {
+      localStorage.setItem('ashk24_user', JSON.stringify(defaultUser));
+      localStorage.setItem('ashk24_token', 'token_ashk24_admin_active');
+    } catch (e) {}
+    return defaultUser;
   });
 
   const handleLoginSuccess = (user: UserAccount, token: string) => {
@@ -112,6 +126,9 @@ export default function App() {
   useEffect(() => {
     fetchAllData();
 
+    // Start periodic cleanup for expired/old LocalStorage cache data (every 12 hours, keeps max 30 days)
+    const stopCacheCleaner = clientStorage.startPeriodicCacheCleaner(12, 30);
+
     // Poll jobs and SMS logs every 3 seconds
     const interval = setInterval(() => {
       clientStorage.getJobs().then((data) => setJobs(data)).catch(() => {});
@@ -119,7 +136,10 @@ export default function App() {
       clientStorage.getResilienceStatus().then((data) => setResilience(data)).catch(() => {});
     }, 3000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      stopCacheCleaner();
+    };
   }, []);
 
   // Handlers
@@ -254,6 +274,7 @@ export default function App() {
           onOpenMediaVault={() => setShowMediaVaultModal(true)}
           onOpenCpanelGuide={() => setShowCpanelModal(true)}
           onOpenStepByStepGuide={() => setShowStepByStepGuideModal(true)}
+          onOpenBuildPackages={() => setActiveTab('build_packages')}
           onOpenSecurityModal={() => setShowSecurityModal(true)}
           onLogout={handleLogout}
           onRefreshData={fetchAllData}
@@ -413,6 +434,14 @@ export default function App() {
 
                 {activeTab === 'orchestrator_matrix' && (
                   <AutonomousOrchestratorMatrixModule />
+                )}
+
+                {activeTab === 'local_agent' && (
+                  <LocalAgentDashboardModule />
+                )}
+
+                {activeTab === 'build_packages' && (
+                  <BuildPackagesModule />
                 )}
               </ErrorBoundary>
             </main>

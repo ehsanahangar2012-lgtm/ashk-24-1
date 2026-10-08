@@ -36,6 +36,7 @@ import { toPersianDigits, getJalaliCurrentDate } from '../utils/persianUtils.js'
 import { clientStorage } from '../services/clientStorageService.js';
 import { APP_VERSION, APP_VERSION_TAG } from '../config/version.js';
 import JSZip from 'jszip';
+import { downloadExtensionPackage } from '../utils/clientDownloadHelper.js';
 
 interface AutonomousSessionHarvesterModalProps {
   isOpen: boolean;
@@ -390,60 +391,7 @@ export const AutonomousSessionHarvesterModal: React.FC<AutonomousSessionHarveste
   const handleDownloadExtensionZip = async () => {
     setIsDownloadingExtension(true);
     try {
-      const versionedFilename = `ashk24-extension-v${APP_VERSION}.zip`;
-      // First try to fetch versioned extension zip
-      let res = await fetch(`/downloads/${versionedFilename}`);
-      if (!res.ok) {
-        res = await fetch('/downloads/ashk24-extension-latest.zip');
-      }
-      if (!res.ok) {
-        res = await fetch('/downloads/ashk24-session-harvester-extension.zip');
-      }
-
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = versionedFilename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      } else {
-        // Fallback: generate via JSZip on the fly
-        const zip = new JSZip();
-        
-        // Manifest
-        const manifestRes = await fetch('/extension/manifest.json');
-        zip.file('manifest.json', manifestRes.ok ? await manifestRes.text() : JSON.stringify({ name: "ASHK 24 Session Harvester", manifest_version: 3, version: "1.0.0" }));
-
-        // Background & Content
-        const bgRes = await fetch('/extension/background.js');
-        if (bgRes.ok) zip.file('background.js', await bgRes.text());
-
-        const ctRes = await fetch('/extension/content.js');
-        if (ctRes.ok) zip.file('content.js', await ctRes.text());
-
-        const popRes = await fetch('/extension/popup.html');
-        if (popRes.ok) zip.file('popup.html', await popRes.text());
-
-        const popJsRes = await fetch('/extension/popup.js');
-        if (popJsRes.ok) zip.file('popup.js', await popJsRes.text());
-
-        const readRes = await fetch('/extension/README.md');
-        if (readRes.ok) zip.file('README.md', await readRes.text());
-
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
-        const url = URL.createObjectURL(zipBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'ashk24-session-harvester-extension.zip';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }
+      await downloadExtensionPackage(APP_VERSION);
     } catch (err) {
       console.error('Error downloading extension:', err);
     } finally {

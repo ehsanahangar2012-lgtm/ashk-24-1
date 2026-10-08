@@ -125,6 +125,34 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Toggle Floating HUD in Active Tab
+  const btnToggleHud = document.getElementById('btnToggleHud');
+  if (btnToggleHud) {
+    btnToggleHud.addEventListener('click', () => {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs && tabs[0] && tabs[0].id) {
+          chrome.tabs.sendMessage(tabs[0].id, { action: 'SHOW_HUD' }, () => {
+            if (chrome.runtime.lastError) {
+              // Inject content script if not already injected
+              chrome.scripting.executeScript({
+                target: { tabId: tabs[0].id },
+                files: ['content.js']
+              }).then(() => {
+                setTimeout(() => {
+                  chrome.tabs.sendMessage(tabs[0].id, { action: 'SHOW_HUD' });
+                }, 300);
+              }).catch(() => {});
+            }
+          });
+          btnToggleHud.innerText = 'دستیار در تب جاری فعال شد ✓';
+          setTimeout(() => {
+            btnToggleHud.innerHTML = '<span>🎯</span><span>فعال‌سازی دستیار هوشمند در صفحه فعلی</span>';
+          }, 2000);
+        }
+      });
+    });
+  }
+
   // Queue actions
   btnStartQueue.addEventListener('click', () => {
     chrome.runtime.sendMessage({ type: 'ASHK_RESUME_QUEUE' }, () => {

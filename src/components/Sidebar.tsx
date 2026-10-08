@@ -14,6 +14,8 @@ import {
   BarChart3,
   Puzzle,
   Workflow,
+  Terminal,
+  FolderDown,
 } from 'lucide-react';
 
 export type TabType =
@@ -27,7 +29,9 @@ export type TabType =
   | 'analytics'
   | 'mobile_companion'
   | 'extension_bridge'
-  | 'orchestrator_matrix';
+  | 'orchestrator_matrix'
+  | 'local_agent'
+  | 'build_packages';
 
 interface SidebarProps {
   activeTab: TabType;
@@ -126,6 +130,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: '۱۰. ماتریس هماهنگی خودمختار',
       icon: Workflow,
       badge: 'هوشمند',
+      badgeColor: 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30',
+    },
+    {
+      id: 'local_agent' as TabType,
+      label: '۱۱. ایجنت دسکتاپ محلی (Playwright)',
+      icon: Terminal,
+      badge: '۱-کلیک',
+      badgeColor: 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30',
+    },
+    {
+      id: 'build_packages' as TabType,
+      label: '۱۲. مخزن بیلدها و پکیج‌ها (Builds Vault)',
+      icon: FolderDown,
+      badge: 'پکیج‌ها',
       badgeColor: 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30',
     },
   ];

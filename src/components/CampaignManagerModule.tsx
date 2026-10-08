@@ -422,9 +422,18 @@ export const CampaignManagerModule: React.FC<CampaignManagerModuleProps> = ({
         </div>
       </div>
 
-      {/* 🌟 بخش ویژه: تولید هوشمند کمپین از داده‌های دریافتی بر اساس کلمات کلیدی (موضوع و متن مرتبط) */}
+      {/* 🌟 بخش ویژه: تولید هوشمند کمپین از داده‌های دریافتی بر اساس کلمات کلیدی (موضوع و متن مرتبط با سوئیچ شرکت) */}
       <KeywordCampaignGeneratorSection
         platforms={platforms || []}
+        companies={companies || []}
+        activeCompanyId={targetCompanyId || activeCompanyId}
+        onSelectCompany={async (id) => {
+          setTargetCompanyId(id);
+          try {
+            await clientStorage.setActiveCompany(id);
+            if (onRefreshAll) onRefreshAll();
+          } catch (e) {}
+        }}
         onCreateCampaign={onCreateCampaign}
         onTriggerJob={onTriggerJob}
         onCampaignCreated={() => {

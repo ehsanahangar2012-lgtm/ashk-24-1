@@ -946,9 +946,46 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
   }
 
+  // Tag DOM for immediate presence detection
+  try {
+    document.documentElement.setAttribute('data-ashk24-extension', 'installed');
+    document.documentElement.setAttribute('data-ashk24-version', '${APP_VERSION}');
+  } catch (_) {}
+
+  function sendStatusToApp() {
+    window.postMessage({
+      type: 'ASHK_EXTENSION_STATUS_REPLY',
+      installed: true,
+      version: '${APP_VERSION}',
+      response: {
+        installed: true,
+        isWorkerEnabled: true,
+        status: 'online',
+        version: '${APP_VERSION}',
+        syncedSessionsCount: 1,
+        orchestratorUrl: window.location.origin
+      }
+    }, '*');
+
+    try {
+      document.dispatchEvent(new CustomEvent('ASHK_EXT_READY', {
+        detail: { installed: true, version: '${APP_VERSION}', status: 'online' }
+      }));
+    } catch (_) {}
+  }
+
+  sendStatusToApp();
+  setInterval(sendStatusToApp, 3000);
+
   // Listen for Web App postMessage direct triggering
   window.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'ASHK24_AUTOFILL_REQUEST') {
+    if (!event.data || typeof event.data !== 'object') return;
+
+    if (event.data.type === 'ASHK_APP_QUERY_EXTENSION' || event.data.action === 'ASHK_PING') {
+      sendStatusToApp();
+    }
+
+    if (event.data.type === 'ASHK24_AUTOFILL_REQUEST') {
       const adData = event.data.payload;
       if (adData) {
         executeUniversalAutoFill(adData);

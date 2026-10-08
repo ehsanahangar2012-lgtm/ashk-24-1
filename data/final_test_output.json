@@ -1,9 +1,0 @@
-{
-  "locationSelected": "FAIL",
-  "modalClosed": "PASS",
-  "nextClickable": "FAIL",
-  "smsAuth": "PASS",
-  "postToken": "NOT RECEIVED",
-  "finalSubmit": "PASS",
-  "publication": "NOT VERIFIED"
-}

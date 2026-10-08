@@ -38,6 +38,7 @@ import { BusinessSector, MediaPlatform } from '../types/ashk24.js';
 import { toPersianDigits } from '../utils/persianUtils.js';
 import { clientStorage } from '../services/clientStorageService.js';
 import { AutonomousSessionHarvesterModal } from './AutonomousSessionHarvesterModal.js';
+import { downloadExtensionPackage } from '../utils/clientDownloadHelper.js';
 
 interface MediaDiscoveryModuleProps {
   platforms: MediaPlatform[];
@@ -1105,15 +1106,15 @@ switch ($action) {
             </button>
 
             {/* Direct Extension ZIP Download */}
-            <a
-              href="/downloads/ashk24-session-harvester-extension.zip"
-              download="ashk24-session-harvester-extension.zip"
-              className="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 flex items-center gap-1.5 transition-colors"
+            <button
+              type="button"
+              onClick={() => downloadExtensionPackage()}
+              className="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
               title="دانلود فایل زیپ افزونه مرورگر جهت نصب دستی در Chrome / Brave / Edge"
             >
               <Download className="w-4 h-4 text-cyan-400" />
               <span>دریافت افزونه (ZIP)</span>
-            </a>
+            </button>
           </div>
         </div>
       </div>

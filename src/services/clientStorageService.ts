@@ -69,6 +69,44 @@ const AUTO_PATCHES_KEY = 'ashk24_auto_patches';
 const SELF_HEALING_KEY = 'ashk24_self_healing';
 const DIAGNOSTIC_CONSOLE_KEY = 'ashk24_diagnostic_console_logs';
 
+const inMemoryCache = new Map<string, string>();
+const safeStorage = {
+  getItem: (key: string): string | null => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem(key);
+      }
+    } catch (e) {}
+    return inMemoryCache.get(key) || null;
+  },
+  setItem: (key: string, val: string): void => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(key, val);
+        return;
+      }
+    } catch (e) {}
+    inMemoryCache.set(key, val);
+  },
+  removeItem: (key: string): void => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem(key);
+      }
+    } catch (e) {}
+    inMemoryCache.delete(key);
+  },
+  clear: (): void => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.clear();
+      }
+    } catch (e) {}
+    inMemoryCache.clear();
+  },
+};
+const localStorage = safeStorage;
+
 let activeCpanelApiBase = '/cpanel-backend/api/index.php';
 
 // Helper for unified cPanel REST API calls with dynamic path resilience
@@ -934,6 +972,128 @@ export const IRANIAN_AD_CATALOG: IranianCatalogItem[] = [
 class ClientStorageService {
   constructor() {
     this.cleanLegacyStorageBloat();
+    this.purgeExpiredCacheData(30);
+  }
+
+  /**
+   * پاکسازی خودکار و دوره‌ای کش و داده‌های منقضی‌شده یا قدیمی در LocalStorage بر اساس timestamp.
+   * این تابع به‌صورت خودکار در هنگام استارت برنامه و به‌صورت دوره‌ای اجرا می‌شود.
+   * @param maxAgeDays حداکثر طول عمر مجاز داده‌های کش (به روز - پیش‌فرض ۳۰ روز)
+   */
+  public purgeExpiredCacheData(maxAgeDays: number = 30): {
+    purgedItemsCount: number;
+    purgedKeysCount: number;
+    details: Record<string, number>;
+  } {
+    const cutoffMs = Date.now() - maxAgeDays * 24 * 60 * 60 * 1000;
+    let totalPurgedItems = 0;
+    let totalPurgedKeys = 0;
+    const details: Record<string, number> = {};
+
+    const cleanArrayStorageByTimestamp = (
+      key: string,
+      timestampFieldGetter: (item: any) => string | number | undefined | null
+    ) => {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return;
+
+        const initialLength = parsed.length;
+        const filtered = parsed.filter((item) => {
+          if (!item) return false;
+          const tsVal = timestampFieldGetter(item);
+          if (!tsVal) return true;
+
+          let timeMs = typeof tsVal === 'number' ? tsVal : Date.parse(String(tsVal));
+          if (isNaN(timeMs)) return true;
+
+          return timeMs >= cutoffMs;
+        });
+
+        const removedCount = initialLength - filtered.length;
+        if (removedCount > 0) {
+          localStorage.setItem(key, JSON.stringify(filtered));
+          totalPurgedItems += removedCount;
+          details[key] = removedCount;
+        }
+      } catch (e) {
+        console.warn(`[Cache Cleaner] Error cleaning ${key}:`, e);
+      }
+    };
+
+    // Clean array storages based on timestamp
+    cleanArrayStorageByTimestamp(JOBS_KEY, (j) => j.completedAt || j.updatedAt || j.createdAt || j.timestamp);
+    cleanArrayStorageByTimestamp(SMS_LOGS_KEY, (s) => s.receivedAt || s.timestamp);
+    cleanArrayStorageByTimestamp(EMAIL_LOGS_KEY, (e) => e.receivedAt || e.timestamp);
+    cleanArrayStorageByTimestamp(TELEMETRY_LOGS_KEY, (t) => t.timestamp);
+    cleanArrayStorageByTimestamp(AUTONOMOUS_LOGS_KEY, (a) => a.timestamp);
+    cleanArrayStorageByTimestamp(CRON_EXECUTIONS_KEY, (c) => c.finishedAt || c.startedAt || c.timestamp);
+    cleanArrayStorageByTimestamp(DOM_EVENTS_KEY, (d) => d.timestamp);
+    cleanArrayStorageByTimestamp(DIAGNOSTIC_CONSOLE_KEY, (dc) => dc.timestamp);
+    cleanArrayStorageByTimestamp(PUBLICATION_REPORTS_KEY, (r) => r.timestamp || r.publishedAt);
+
+    // Clean individual cache items with expiration or timestamp
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const allKeys: string[] = [];
+        for (let i = 0; i < window.localStorage.length; i++) {
+          const k = window.localStorage.key(i);
+          if (k) allKeys.push(k);
+        }
+
+        allKeys.forEach((k) => {
+          if (k.startsWith('ashk24_cache_') || k.includes('_cache')) {
+            try {
+              const rawVal = window.localStorage.getItem(k);
+              if (!rawVal) return;
+              const parsed = JSON.parse(rawVal);
+              if (parsed && typeof parsed === 'object') {
+                if (parsed.expiresAt && typeof parsed.expiresAt === 'number' && parsed.expiresAt < Date.now()) {
+                  window.localStorage.removeItem(k);
+                  totalPurgedKeys++;
+                  details[k] = 1;
+                } else if (parsed.timestamp) {
+                  const tMs = typeof parsed.timestamp === 'number' ? parsed.timestamp : Date.parse(parsed.timestamp);
+                  if (!isNaN(tMs) && tMs < cutoffMs) {
+                    window.localStorage.removeItem(k);
+                    totalPurgedKeys++;
+                    details[k] = 1;
+                  }
+                }
+              }
+            } catch (e) {}
+          }
+        });
+      }
+    } catch (e) {}
+
+    if (totalPurgedItems > 0 || totalPurgedKeys > 0) {
+      console.log(
+        `🧹 [Client Storage Engine] ${totalPurgedItems} آیتم قدیمی و ${totalPurgedKeys} کلید کش منقضی شده با موفقیت از LocalStorage پاکسازی شدند.`
+      );
+    }
+
+    return {
+      purgedItemsCount: totalPurgedItems,
+      purgedKeysCount: totalPurgedKeys,
+      details,
+    };
+  }
+
+  /**
+   * راه‌اندازی پاکسازی دوره‌ای و منظم LocalStorage در فواصل زمانی مشخص (مثلاً هر ۱۲ ساعت)
+   */
+  public startPeriodicCacheCleaner(intervalHours: number = 12, maxAgeDays: number = 30): () => void {
+    this.purgeExpiredCacheData(maxAgeDays);
+
+    const intervalMs = intervalHours * 60 * 60 * 1000;
+    const timerId = setInterval(() => {
+      this.purgeExpiredCacheData(maxAgeDays);
+    }, intervalMs);
+
+    return () => clearInterval(timerId);
   }
 
   private cleanLegacyStorageBloat(): void {
@@ -1822,39 +1982,45 @@ class ClientStorageService {
     }
 
     // Local heuristic fallback
-    const brandName = params.companyProfile?.brandName || 'مجتمع چاپ و کارتن‌سازی اشک قلم';
+    const brandName = params.companyProfile?.brandName || params.companyProfile?.name || 'مجموعه ما';
     const phone = params.companyProfile?.phoneNumber || '09153108763';
-    const address = params.companyProfile?.address || 'مشهد، شهرک صنعتی کلات، کوشش ۳';
-    const priceText = params.priceToman && params.priceToman > 0 ? `${toPersianDigits(params.priceToman.toLocaleString())} تومان` : 'توافقی و متناسب با تیراژ سفارشی';
+    const address = params.companyProfile?.address || 'دفتر مرکزی و فروش';
+    const priceText = params.priceToman && params.priceToman > 0 ? `${toPersianDigits(params.priceToman.toLocaleString())} تومان` : 'توافقی و متناسب با تیراژ درخواستی';
 
-    const primaryKw = params.keywords[0] || 'کارتن سازی و جعبه مقوایی';
-    const secondaryKw = params.keywords[1] || 'چاپ و بسته بندی صنعتی';
-    const thirdKw = params.keywords[2] || 'کارتن لمینتی ۳ لایه و ۵ لایه';
+    const primaryKw = params.keywords[0] || 'محصولات و خدمات تخصصی';
+    const secondaryKw = params.keywords[1] || 'تامین و سفارش مستقیم';
+    const thirdKw = params.keywords[2] || 'تولید و عرضه باکیفیت';
+    const targetAudience = params.audience || 'مشتریان محترم، سازمان‌ها و همکاران تجاری';
 
     const topics = [
-      `تولید و سفارش عمده ${primaryKw} در مشهد و ارسال فوری به سراسر کشور`,
-      `${brandName} | طراحی و تولید ${secondaryKw} با قیمت مستقیم کارخانه`,
-      `تولید انواع ${thirdKw} با تضمین استحکام و کیفیت صادراتی`,
-      `خرید مستقیم ${primaryKw} بدون واسطه از خط تولید کارخانه در مشهد`,
-      `بسته‌بندی صنعتی، کاتالوگ و ${secondaryKw} ویژه کارخانجات و تولیدکنندگان`
+      `تولید و عرضه مستقیم ${primaryKw} توسط ${brandName} | بالاترین کیفیت و ارسال سراسری`,
+      `${brandName} | تامین دست اول ${secondaryKw} با قیمت رقابتی و شرایط ویژه`,
+      `سفارش عمده و اختصاصی ${thirdKw} با تضمین کیفیت و استاندارد ممتاز`,
+      `خرید بی‌واسطه ${primaryKw} از ${brandName} با تخفیف ویژه همکاری و سفارش تیراژ بالا`,
+      `مشاوره، فروش و توزیع تخصصی ${secondaryKw} و ${primaryKw}`
     ];
 
-    const suggestedHashtags = params.keywords.map(k => '#' + k.replace(/\s+/g, '_'));
+    const suggestedHashtags = params.keywords.map(k => '#' + k.trim().replace(/\s+/g, '_')).concat([
+      '#' + brandName.trim().replace(/\s+/g, '_'),
+      '#خرید_عمده',
+      '#تامین_دست_اول'
+    ]);
 
     const commercialBody = `${topics[0]}
 --------------------------------------------------
-اگر برای کارخانه، فروشگاه یا محصولات صادراتی خود به دنبال تامین‌کننده دست‌اول ${primaryKw} و ${secondaryKw} با بالاترین کیفیت ورق و قیمت منصفانه هستید، ${brandName} همراه مطمئن شماست.
+اگر برای مجموعه، فروشگاه یا خط تولید خود به دنبال تامین‌کننده دست‌اول ${primaryKw} و ${secondaryKw} با بالاترین کیفیت و قیمت منصفانه هستید، ${brandName} همراه مطمئن شماست.
 
-🔹 مشخصات و مزایای همکاری:
-• تولید با ورق‌های استاندارد فلوتینگ درجه یک و مقاوم در برابر رطوبت
-• مجهز به دستگاه‌های پیشرفته چاپ فلکسو، افست، لمینت و دایکات
-• مقاومت بسیار بالا در جابجایی بار و افت فشار صادراتی
-• قیمت مستقیم درب کارخانه بدون واسطه
-• استعلام و ثبت سفارش فوری با تحویل سراسری
+🔹 مشخصات و مزایای همکاری با ما:
+• خرید ۱۰۰٪ مستقیم از منبع تولید و توزیع با حذف کامل واسطه‌ها
+• استفاده از بهترین مواد اولیه و استانداردهای روز
+• امکان سفارشی‌سازی کامل بر اساس نیاز و مشخصات مورد نظر شما
+• مشاوره تخصصی رایگان جهت بهینه‌سازی هزینه‌ها
+• شرایط پرداخت و تسویه توافقی برای خریداران عمده و قراردادهای مستمر
+• ارسال سریع، مطمئن و بسته‌بندی ایمن به سراسر کشور
 
-💰 قیمت پایه: ${priceText}
-📍 آدرس کارخانه: ${address}
-📞 تلفن هماهنگی و سفارش: ${phone}
+💰 شرایط قیمت: ${priceText}
+📍 نشانی: ${address}
+📞 تلفن هماهنگی و مشاوره فروش فوری: ${phone}
 
 ${suggestedHashtags.join(' ')}`;
 
@@ -1869,27 +2035,27 @@ ${suggestedHashtags.join(' ')}`;
       },
       {
         id: 'b2b_industrial',
-        name: 'متن رسمی صنعتی B2B ویژه کارخانجات و مسئولین خرید',
+        name: 'متن رسمی سازمانی B2B ویژه مدیران و مسئولین خرید',
         topic: topics[1],
-        content: `اطلاعیه تامین ملزومات بسته‌بندی و کارتن برای واحدهای تولیدی:\n${brandName} آمادگی دارد انواع ${primaryKw} و ${secondaryKw} را با قرارداد رسمی و قیمت درب کارخانه تامین کند.\n\nویژگی‌ها:\n• تاییدیه کنترل کیفیت و استحکام استاندارد\n• تامین تیراژهای سنگین با زمان‌بندی دقیق\n\nتلفن واحد فروش: ${phone}\nآدرس: ${address}`,
+        content: `اطلاعیه رسمی تامین و همکاری سازمانی:\nبدین‌وسیله به اطلاع کلیه مدیران محترم خرید، بازرگانی و واحدهای مرتبط می‌رساند که ${brandName} آمادگی کامل خود را جهت تامین پایدار ${primaryKw} و ${secondaryKw} با بالاترین استانداردهای تضمین کیفیت اعلام می‌دارد.\n\nمشخصات و تعهدات اجرایی:\n۱. عقد قرارداد رسمی معتبر با فاکتور و اسناد شفاف\n۲. ظرفیت تامین بالا با تعهد تحویل سر موعد بدون تاخیر\n۳. کنترل کیفیت مستمر و ارائه نمونه کار قبل از عقد قرارداد\n۴. قیمت‌گذاری دست‌اول مستقیم با تخفیف‌های پلکانی حجم سفارش\n\nمدیریت فروش و قراردادهای عمده: ${phone}\nمرکز پشتیبانی و دفتر: ${address}`,
         seoScore: 96,
-        characterCount: 420,
+        characterCount: 620,
       },
       {
         id: 'fast_urgent',
-        name: 'متن سریع و تخفیف‌دار با نرخ تبدیل بالا (Fast Action)',
+        name: 'متن سریع، تخفیف‌دار و با نرخ تبدیل بالا (Fast Action)',
         topic: topics[3],
-        content: `سفارش مستقیم و فوری ${primaryKw} از کارخانه مشهد با تخفیف ویژه تیراژ بالا.\nتحویل فوری به باربری و ارسال سریع.\nتماس فوری: ${phone}\nنشانی کارخانه: ${address}`,
+        content: `حراج و ثبت سفارش فوری ${primaryKw} مستقیم از ${brandName}!\nفرصت استثنایی خرید ${secondaryKw} با قیمت کف بازار و تحویل در کوتاه‌ترین زمان.\n\n- تخفیف ویژه برای سفارش‌های با تیراژ بالا و نقدی\n- آماده‌سازی و ارسال سریع به کلیه مناطق\n- تضمین کامل سلامت و کیفیت سفارش\n- تماس و استعلام فوری: ${phone}\n- نشانی: ${address}`,
         seoScore: 94,
-        characterCount: 220,
+        characterCount: 360,
       },
       {
         id: 'bullet_catalog',
-        name: 'متن مشخصات فنی و کاتالوگی',
+        name: 'متن مشخصات کاتالوگی، مشخصات فنی و جامع',
         topic: topics[2],
-        content: `مشخصات فنی و تولیدی ${thirdKw}:\n• ورق ۳ لایه و ۵ لایه با فلوت E، B، C و BC\n• چاپ چندرنگ با رزولوشن بالا\n• خدمات دایکات دقیق و بسته‌بندی پالتایز\n• قیمت: ${priceText}\n\nتلفن مشاوره: ${phone}\nنشانی: ${address}`,
+        content: `فهرست خدمات و مشخصات جامع ${brandName}:\n■ تولید و تامین تخصصی ${primaryKw} با تنوع بالا\n■ ارائه ملزومات و اقلام مرتبط با ${secondaryKw}\n■ خدمات مشاوره‌ای، فنی و اجرایی منطبق بر نیاز ${targetAudience}\n■ گارانتی اصالت کالا و تست کیفی محصولات\n\nدفتر و مرکز سفارش: ${address}\nتلفن هماهنگی، ارسال کاتالوگ و ثبت سفارش: ${phone}`,
         seoScore: 97,
-        characterCount: 380,
+        characterCount: 460,
       }
     ];
 
@@ -1900,7 +2066,7 @@ ${suggestedHashtags.join(' ')}`;
       contentVariations,
       suggestedHashtags,
       seoScore: 97,
-      reasoning: 'تولید شده با موتور محلی بر اساس کلمات کلیدی ورودی و اصول بازاریابی B2B',
+      reasoning: `تولید شده با موتور خلاق محلی بر اساس مشخصات برند «${brandName}» و کلمات کلیدی ورودی`,
     };
   }
 

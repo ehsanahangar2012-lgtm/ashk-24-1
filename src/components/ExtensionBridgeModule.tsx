@@ -21,6 +21,7 @@ import { extensionBridge, ExtensionWorkerStatus } from '../utils/extensionBridge
 import { APP_VERSION } from '../config/version';
 import { toPersianDigits } from '../utils/persianUtils';
 import { SmartHelpButton } from './SmartHelpModal';
+import { downloadExtensionPackage } from '../utils/clientDownloadHelper';
 
 interface ExtensionBridgeModuleProps {
   onOpenHarvesterModal?: () => void;
@@ -101,24 +102,14 @@ export const ExtensionBridgeModule: React.FC<ExtensionBridgeModuleProps> = ({
   const handleDownloadZip = async () => {
     setIsDownloading(true);
     try {
-      const filename = `ashk24-extension-v${APP_VERSION}.zip`;
-      let res = await fetch(`/downloads/${filename}`);
-      if (!res.ok) res = await fetch('/downloads/ashk24-extension-latest.zip');
-
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        addLog(`فایل فشرده افزونه (${filename}) با موفقیت دانلود شد.`, 'success');
+      const ok = await downloadExtensionPackage(APP_VERSION);
+      if (ok) {
+        addLog(`فایل فشرده رسمی افزونه اشک ۲۴ (نسخه v${APP_VERSION}) با حجم کامل و معتبر دانلود شد.`, 'success');
+      } else {
+        addLog('خطا در دانلود پکیج افزونه.', 'warn');
       }
     } catch (e) {
-      addLog('خطا در دانلود پکیج افزونه.', 'warn');
+      addLog('خطا در فرایند دانلود پکیج افزونه.', 'warn');
     } finally {
       setIsDownloading(false);
     }

@@ -145,6 +145,17 @@ async function handshake() {
     return true;
   } catch (err) {
     console.error(`❌ [Handshake Error]: ${err.message}`, err.cause ? `| Cause: ${JSON.stringify(err.cause)}` : '');
+    
+    if (CPANEL_URL.includes('secret.ashkghalam.ir') || err.code === 'ENOTFOUND' || (err.cause && err.cause.code === 'ENOTFOUND')) {
+      console.error(`\n=======================================================`);
+      console.error(`⚠️ [خطای عدم یافتن آدرس سرور سی‌پنل / DNS Error]`);
+      console.error(`آدرس «${CPANEL_URL}» در اینترنت وجود ندارد!`);
+      console.error(`توضیح: آدرس secret.ashkghalam.ir یک آدرس دمو و فرضی است.`);
+      console.error(`لطفاً آدرس واقعی هاست خود را که فایل‌های cpanel-backend را روی آن آپلود کرده‌اید وارد نمایید.`);
+      console.error(`مثال: https://your-domain.com/cpanel-backend/api/index.php`);
+      console.error(`=======================================================\n`);
+    }
+
     if (process.env.CI) {
       console.warn(`\n=======================================================`);
       console.warn(`ℹ️ [اطلاعیه استقرار ابری - Cloud Worker Graceful Exit]`);
@@ -320,7 +331,8 @@ async function executeJob(job, claimData) {
     const contextOptions = {
       userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
       viewport: { width: 1280, height: 800 },
-      locale: 'fa-IR'
+      locale: 'fa-IR',
+      ignoreHTTPSErrors: true
     };
     if (activeStorageState) {
       contextOptions.storageState = activeStorageState;
@@ -329,29 +341,104 @@ async function executeJob(job, claimData) {
     const context = await browser.newContext(contextOptions);
     const page = await context.newPage();
 
+    const PLATFORM_URL_MAP = {
+      plat_irantejarat: 'https://iran-tejarat.com/register.html',
+      plat_baskool: 'https://www.baskool.com/',
+      plat_niazerooz: 'https://www.niazerooz.com/register',
+      plat_niazpardaz: 'https://www.niazpardaz.com/register',
+      plat_locopoc: 'https://www.locopoc.com/register',
+      plat_shahrema: 'https://shahrema.com/register',
+      plat_parscenter: 'https://parscenter.com/User/Register',
+      plat_payamsara: 'https://payamsara.com/framework/user/register',
+      plat_agahi24: 'https://www.agahi24.com/register',
+      plat_istgah: 'https://www.istgah.com/register/',
+      plat_divar: 'https://divar.ir/download',
+      plat_sheypoor: 'https://www.sheypoor.com/auth'
+    };
+
     let targetUrl = (restoredSessionData && restoredSessionData.currentUrl) || job.targetUrl;
     if (!targetUrl) {
       const pid = (job.platformId || '').toLowerCase();
       const pdom = (job.platformDomain || '').toLowerCase();
-      if (pid.includes('agahi24') || pdom.includes('agahi24')) {
-        targetUrl = 'https://www.agahi24.com/register';
-      } else if (pid.includes('payamsara') || pdom.includes('payamsara')) {
-        targetUrl = 'https://payamsara.com/framework/user/register';
-      } else if (pid.includes('parscenter') || pdom.includes('parscenter')) {
-        targetUrl = 'https://parscenter.com/User/Register';
-      } else if (pid.includes('istgah') || pdom.includes('istgah')) {
-        targetUrl = 'https://www.istgah.com/register/';
+
+      if (PLATFORM_URL_MAP[pid]) {
+        targetUrl = PLATFORM_URL_MAP[pid];
       } else {
-        targetUrl = 'https://www.agahi24.com/register';
+        const domainCandidate = pdom || 'agahi24.com';
+        let cleanDomain = domainCandidate.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+        if (cleanDomain.startsWith('plat_')) {
+          cleanDomain = cleanDomain.replace('plat_', '');
+        }
+
+        if (cleanDomain.includes('agahi24')) {
+          targetUrl = 'https://www.agahi24.com/register';
+        } else if (cleanDomain.includes('payamsara')) {
+          targetUrl = 'https://payamsara.com/framework/user/register';
+        } else if (cleanDomain.includes('parscenter')) {
+          targetUrl = 'https://parscenter.com/User/Register';
+        } else if (cleanDomain.includes('istgah')) {
+          targetUrl = 'https://www.istgah.com/register/';
+        } else if (cleanDomain.includes('niazerooz')) {
+          targetUrl = 'https://www.niazerooz.com/register';
+        } else if (cleanDomain.includes('niazpardaz')) {
+          targetUrl = 'https://www.niazpardaz.com/register';
+        } else if (cleanDomain.includes('locopoc')) {
+          targetUrl = 'https://www.locopoc.com/register';
+        } else if (cleanDomain.includes('irantejarat') || cleanDomain.includes('iran-tejarat')) {
+          targetUrl = 'https://iran-tejarat.com/register.html';
+        } else if (cleanDomain.includes('baskool')) {
+          targetUrl = 'https://www.baskool.com/';
+        } else if (cleanDomain.includes('shahrema') || cleanDomain.includes('shahr.ma')) {
+          targetUrl = 'https://shahrema.com/register';
+        } else {
+          targetUrl = `https://www.${cleanDomain}`;
+        }
       }
     }
 
     console.log(`🌐 [Browser] Navigating to target: ${targetUrl}`);
-    const navResponse = await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 35000 });
+    let navResponse = null;
+    try {
+      navResponse = await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 35000 });
+    } catch (gotoErr) {
+      console.warn(`⚠️ [Navigation Retry] Primary navigation failed (${gotoErr.message}). Retrying navigation...`);
+      await page.waitForTimeout(2000);
+      try {
+        navResponse = await page.goto(targetUrl, { waitUntil: 'load', timeout: 35000 });
+      } catch (retryErr) {
+        console.error(`❌ [Navigation Failed]: ${retryErr.message}`);
+        throw retryErr;
+      }
+    }
     const httpStatus = navResponse ? navResponse.status() : 0;
     console.log(`📡 [Navigation] HTTP Status: ${httpStatus}`);
 
     await page.waitForTimeout(3000);
+
+    // Dismiss any blackout overlays or modal popups that could intercept pointer events
+    try {
+      await page.evaluate(() => {
+        const overlays = [
+          '#fvpp-blackout',
+          '.fvpp-blackout',
+          '[id*="blackout" i]',
+          '[class*="blackout" i]',
+          '[id*="overlay" i]',
+          '[class*="overlay" i]',
+          '.modal-backdrop',
+          '.backdrop',
+          '.modal',
+          '.popup-dialog'
+        ];
+        overlays.forEach(sel => {
+          document.querySelectorAll(sel).forEach(el => {
+            try { el.style.display = 'none'; } catch (e) {}
+            try { el.remove(); } catch (e) {}
+          });
+        });
+      });
+      console.log('🧹 [DOM Cleanup] Intercepting blackout overlays removed successfully.');
+    } catch (e) {}
 
     const title = await page.title();
     console.log(`📄 [DOM] Page Title: "${title}" | Current URL: ${page.url()}`);
@@ -367,22 +454,33 @@ async function executeJob(job, claimData) {
       }
     }
 
-    // Comprehensive selector list matching real Iranian web classified platforms:
-    // Agahi24: input[name="digits_phone"], input.mobile_field
-    // Payamsara: input[name="user_mobile"], input#user_mobile
-    const phoneSelector = 'input[name="digits_phone"], input[name="user_mobile"], input#user_mobile, input[type="tel"], input[name="phone"], input[name="mobile"], input[autocomplete="tel-national"]';
+    const phoneSelector = 'input[name="digits_phone"], input[name="user_mobile"], input#user_mobile, input[type="tel"], input[name="phone"], input[name="mobile"], input[autocomplete="tel-national"], input[placeholder*="موبایل"], input[placeholder*="همراه"], input[placeholder*="تلفن"], input[id*="mobile" i], input[id*="phone" i]';
     let phoneInput = null;
     try {
       console.log('⏳ [DOM Interaction] Checking for phone input field with platform-aware selectors...');
       phoneInput = await page.waitForSelector(phoneSelector, { state: 'visible', timeout: 8000 });
     } catch (e) {
-      console.log('ℹ️ Phone input not found or already past login step. Inspecting page state...');
+      console.log('ℹ️ Primary phone input not found directly. Checking for login/register modal triggers...');
+      try {
+        const triggers = await page.$$('a:has-text("ورود"), button:has-text("ورود"), a:has-text("ثبت نام"), button:has-text("ثبت نام"), .login-btn, .register-btn');
+        if (triggers.length > 0) {
+          await triggers[0].click({ force: true }).catch(() => {});
+          await page.waitForTimeout(2000);
+          phoneInput = await page.$(phoneSelector);
+        }
+      } catch (triggerErr) {
+        console.warn('⚠️ Modal trigger search failed:', triggerErr.message);
+      }
     }
 
     if (phoneInput && !isResumingJob) {
       console.log('📝 [Form Interaction] Detected phone input field. Entering contact number...');
       const contactPhone = job.contactPhone || '09153108763';
-      await phoneInput.click();
+      try {
+        await phoneInput.click({ force: true, timeout: 5000 });
+      } catch (err) {
+        try { await phoneInput.focus(); } catch (_) {}
+      }
       await phoneInput.fill(contactPhone);
       console.log(`✅ [Form Interaction] Filled phone: ${contactPhone}`);
 
@@ -424,7 +522,7 @@ async function executeJob(job, claimData) {
 
       if (submitBtn) {
         console.log('👉 [Form Interaction] Submitting step 1 (triggering real OTP dispatch)...');
-        await submitBtn.click();
+        await submitBtn.click({ force: true });
         await page.waitForTimeout(4500);
       }
     }

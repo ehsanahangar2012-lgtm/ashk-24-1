@@ -1,11 +1,12 @@
 {
   "name": "ashk24-automation",
   "private": true,
-  "version": "5.8.3",
+  "version": "5.8.33",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/generate-build-info.cjs && node scripts/purge-obsolete.cjs && node scripts/package-extension-zip.cjs && vite build && node scripts/copy-cpanel-dist.cjs",
+    "build": "node scripts/generate-build-info.cjs && node scripts/purge-obsolete.cjs && node scripts/package-extension-zip.cjs && vite build && node scripts/copy-cpanel-dist.cjs && node scripts/verify-bundle-manifest.cjs",
+    "build:info": "node scripts/verify-bundle-manifest.cjs",
     "preview": "vite preview",
     "clean": "node scripts/purge-obsolete.cjs && rm -rf dist",
     "lint": "tsc --noEmit"

@@ -35,6 +35,7 @@ import { APP_VERSION } from '../config/version.js';
 
 import { SmartHelpButton } from './SmartHelpModal.js';
 import { SmsRelayMonitorModule } from './SmsRelayMonitorModule.js';
+import { downloadMacroDroidConfig } from '../utils/clientDownloadHelper.js';
 
 export const MobileCompanionModule: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'host_bridge' | 'sms_relay_monitor' | 'otp_checker' | 'pwa_download' | 'smart_guide' | 'pairing'>('sms_relay_monitor');
@@ -327,18 +328,14 @@ export const MobileCompanionModule: React.FC = () => {
     }
   };
 
-  const handleDownloadMacroDroidRule = () => {
-    const ruleUrl = '/downloads/Ashk24_MacroDroid_Relay.json';
-    const a = document.createElement('a');
-    a.href = ruleUrl;
-    a.download = 'Ashk24_MacroDroid_Relay.json';
-    a.target = '_blank';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    setDownloadSuccess('macrodroid');
-    setTimeout(() => setDownloadSuccess(null), 5000);
+  const handleDownloadMacroDroidRule = async () => {
+    try {
+      await downloadMacroDroidConfig();
+      setDownloadSuccess('macrodroid');
+      setTimeout(() => setDownloadSuccess(null), 5000);
+    } catch (e) {
+      console.warn('MacroDroid download error:', e);
+    }
   };
 
   const handleInstallPWA = async () => {

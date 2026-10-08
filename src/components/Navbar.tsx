@@ -11,6 +11,7 @@ import {
   Menu,
   ChevronDown,
   BookOpen,
+  FolderDown,
 } from 'lucide-react';
 import { ResilienceStatus, CompanyProfile, UserAccount } from '../types/ashk24.js';
 
@@ -23,6 +24,7 @@ interface NavbarProps {
   onOpenMediaVault?: () => void;
   onOpenCpanelGuide?: () => void;
   onOpenStepByStepGuide?: () => void;
+  onOpenBuildPackages?: () => void;
   onOpenSecurityModal: () => void;
   onLogout: () => void;
   onRefreshData: () => void;
@@ -38,6 +40,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenMediaVault,
   onOpenCpanelGuide,
   onOpenStepByStepGuide,
+  onOpenBuildPackages,
   onOpenSecurityModal,
   onLogout,
   onRefreshData,
@@ -92,9 +95,20 @@ export const Navbar: React.FC<NavbarProps> = ({
               <h1 className="text-xs sm:text-base font-bold text-slate-100 tracking-tight truncate">
                 سامانه اشک ۲۴
               </h1>
-              <span className="inline-block text-[8px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0 font-mono">
-                {APP_VERSION_TAG}
-              </span>
+              {onOpenBuildPackages ? (
+                <button
+                  onClick={onOpenBuildPackages}
+                  className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 shrink-0 font-mono transition-colors cursor-pointer"
+                  title="مشاهده و دانلود بسته‌های بیلد و فایل‌ها"
+                >
+                  <FolderDown className="w-3 h-3 text-amber-400" />
+                  <span>{APP_VERSION_TAG} (بیلدها)</span>
+                </button>
+              ) : (
+                <span className="inline-block text-[8px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0 font-mono">
+                  {APP_VERSION_TAG}
+                </span>
+              )}
             </div>
             <p className="hidden md:block text-[11px] text-slate-400">
               اتوماسیون بازاریابی، تولید محتوا و انتشار خودکار آگهی (پلتفرم cPanel PHP)
@@ -115,6 +129,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               بک‌اند cPanel PHP 8.x + MySQL
             </span>
           </div>
+
+          {/* Direct Build Packages Center Button */}
+          {onOpenBuildPackages && (
+            <button
+              onClick={onOpenBuildPackages}
+              className="flex items-center space-x-1.5 space-x-reverse px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-bold shadow-md transition-all shrink-0"
+              title="مشاهده و دانلود تمام بسته‌های بیلدشده (cPanel، افزونه و ایجنت)"
+            >
+              <FolderDown className="w-4 h-4 shrink-0" />
+              <span>پکیج‌های بیلد ({APP_VERSION_TAG})</span>
+            </button>
+          )}
 
           {/* Step-by-Step Guide Button */}
           {onOpenStepByStepGuide && (
@@ -216,6 +242,16 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Mobile & Tablet Dropdown Menu Controls (< lg) */}
         <div className="flex lg:hidden items-center space-x-2 space-x-reverse shrink-0 relative" ref={menuRef}>
+          {onOpenBuildPackages && (
+            <button
+              onClick={onOpenBuildPackages}
+              title="مشاهده پکیج‌های بیلد"
+              className="p-2 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30 shrink-0 transition-colors"
+            >
+              <FolderDown className="w-3.5 h-3.5" />
+            </button>
+          )}
+
           <button
             onClick={onRefreshData}
             title="بروزرسانی"
@@ -234,6 +270,19 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {mobileMenuOpen && (
             <div className="absolute left-0 top-full mt-2 w-64 bg-slate-900 border border-slate-800 rounded-2xl p-2 shadow-2xl z-50 space-y-1 text-xs">
+              {onOpenBuildPackages && (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenBuildPackages();
+                  }}
+                  className="w-full text-right px-3 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 flex items-center space-x-2 space-x-reverse font-bold border border-amber-500/20"
+                >
+                  <FolderDown className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>پکیج‌های بیلد ({APP_VERSION_TAG})</span>
+                </button>
+              )}
+
               {onOpenStepByStepGuide && (
                 <button
                   onClick={() => {

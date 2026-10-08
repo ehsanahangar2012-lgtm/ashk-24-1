@@ -17,6 +17,7 @@ import { extensionBridge, ExtensionWorkerStatus } from '../utils/extensionBridge
 import { APP_VERSION } from '../config/version';
 import { toPersianDigits } from '../utils/persianUtils';
 import { SmartHelpButton } from './SmartHelpModal';
+import { downloadExtensionPackage } from '../utils/clientDownloadHelper';
 
 interface ExtensionStatusWidgetProps {
   onOpenExtensionModal?: () => void;
@@ -69,23 +70,7 @@ export const ExtensionStatusWidget: React.FC<ExtensionStatusWidgetProps> = ({
   const handleDownloadExtensionZip = async () => {
     setIsDownloading(true);
     try {
-      const filename = `ashk24-extension-v${APP_VERSION}.zip`;
-      let res = await fetch(`/downloads/${filename}`);
-      if (!res.ok) {
-        res = await fetch('/downloads/ashk24-extension-latest.zip');
-      }
-
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }
+      await downloadExtensionPackage(APP_VERSION);
     } catch (e) {
       console.error(e);
     } finally {

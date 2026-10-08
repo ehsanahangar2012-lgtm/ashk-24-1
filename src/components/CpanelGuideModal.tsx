@@ -27,6 +27,7 @@ import {
 import { ServerDiagnosticReport, ServerDiagnosticItem } from '../types/ashk24.js';
 import { clientStorage } from '../services/clientStorageService.js';
 import { APP_VERSION } from '../config/version.js';
+import { downloadCpanelPackage } from '../utils/clientDownloadHelper.js';
 
 interface CpanelGuideModalProps {
   isOpen: boolean;
@@ -134,6 +135,19 @@ extension = pdo_sqlite`;
     navigator.clipboard.writeText(cmd);
     setCopiedCommand(cmd);
     setTimeout(() => setCopiedCommand(null), 2500);
+  };
+
+  const [isDownloadingPackage, setIsDownloadingPackage] = useState(false);
+
+  const handleDownloadCpanelPackage = async () => {
+    setIsDownloadingPackage(true);
+    try {
+      await downloadCpanelPackage(APP_VERSION);
+    } catch (e) {
+      console.warn('cPanel package download error:', e);
+    } finally {
+      setIsDownloadingPackage(false);
+    }
   };
 
   const handleDownloadFile = (content: string, fileName: string) => {
@@ -370,14 +384,14 @@ extension = pdo_sqlite`;
                     <span className="text-xs font-bold text-slate-100">دانلود پکیج ZIP و آپلود در پوشه `public_html` هاست</span>
                   </div>
 
-                  <a
-                    href={`/downloads/ashk24-cpanel-v${APP_VERSION}.zip`}
-                    download={`ashk24-cpanel-v${APP_VERSION}.zip`}
-                    className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-bold shadow-md transition-all flex items-center space-x-1.5 space-x-reverse"
+                  <button
+                    onClick={handleDownloadCpanelPackage}
+                    disabled={isDownloadingPackage}
+                    className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-bold shadow-md transition-all flex items-center space-x-1.5 space-x-reverse disabled:opacity-50"
                   >
-                    <FolderDown className="w-4 h-4 shrink-0" />
-                    <span>دانلود پکیج ZIP استقرار cPanel (نسخه {APP_VERSION})</span>
-                  </a>
+                    <FolderDown className={`w-4 h-4 shrink-0 ${isDownloadingPackage ? 'animate-bounce' : ''}`} />
+                    <span>{isDownloadingPackage ? 'در حال آماده‌سازی...' : `دانلود پکیج ZIP استقرار cPanel (نسخه ${APP_VERSION})`}</span>
+                  </button>
                 </div>
 
                 <p className="text-[11px] text-slate-300 leading-relaxed pr-7">

@@ -2,17 +2,21 @@ const fs = require('fs');
 const path = require('path');
 const JSZip = require('jszip');
 
-async function packageExtension() {
+async function packageExtensionAndAgent() {
   const rootDir = path.resolve(__dirname, '..');
   const extDir = path.join(rootDir, 'public', 'extension');
+  const agentDir = path.join(rootDir, 'local-agent');
   const outDir = path.join(rootDir, 'public', 'downloads');
   const distOutDir = path.join(rootDir, 'dist', 'downloads');
 
   const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
-  const version = pkg.version || '4.7.8';
+  const version = pkg.version || '5.8.12';
 
   if (!fs.existsSync(outDir)) {
     fs.mkdirSync(outDir, { recursive: true });
+  }
+  if (!fs.existsSync(distOutDir)) {
+    fs.mkdirSync(distOutDir, { recursive: true });
   }
 
   // 1. Ensure manifest.json version is synced with package.json
@@ -23,52 +27,95 @@ async function packageExtension() {
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
   }
 
-  // 2. Build JSZip package
-  const zip = new JSZip();
-  const files = fs.readdirSync(extDir);
+  // 2. Build Extension JSZip package
+  const extZip = new JSZip();
+  const extFiles = fs.readdirSync(extDir);
 
-  for (const file of files) {
+  for (const file of extFiles) {
     const filePath = path.join(extDir, file);
     const stat = fs.statSync(filePath);
     if (stat.isFile()) {
       const content = fs.readFileSync(filePath);
-      zip.file(file, content);
+      extZip.file(file, content);
     }
   }
 
-  const zipBuffer = await zip.generateAsync({
+  const extZipBuffer = await extZip.generateAsync({
     type: 'nodebuffer',
     compression: 'DEFLATE',
     compressionOptions: { level: 9 }
   });
 
-  // 3. Purge older extension version archives from downloads directories
+  // 3. Build Local Agent JSZip package
+  const agentZip = new JSZip();
+  if (fs.existsSync(agentDir)) {
+    function addAgentFolder(dirPath, zipFolder) {
+      const entries = fs.readdirSync(dirPath);
+      for (const entry of entries) {
+        if (entry === 'node_modules' || entry === '.git' || entry === 'sessions' || entry === 'evidence' || entry === 'local-agent') continue;
+        const fullPath = path.join(dirPath, entry);
+        const stat = fs.statSync(fullPath);
+        if (stat.isDirectory()) {
+          addAgentFolder(fullPath, zipFolder.folder(entry));
+        } else if (stat.isFile()) {
+          zipFolder.file(entry, fs.readFileSync(fullPath));
+        }
+      }
+    }
+    addAgentFolder(agentDir, agentZip);
+  }
+
+  const agentZipBuffer = await agentZip.generateAsync({
+    type: 'nodebuffer',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 9 }
+  });
+
+  // 4. Purge older archives
   const syncDirs = [outDir, distOutDir];
   syncDirs.forEach(dir => {
     if (fs.existsSync(dir)) {
       fs.readdirSync(dir).forEach(file => {
-        if (file.includes('extension') && file.endsWith('.zip')) {
-          if (!file.includes(`v${version}`) && !file.includes('latest') && file !== 'ashk24-session-harvester-extension.zip') {
-            try {
-              fs.unlinkSync(path.join(dir, file));
-              console.log(`  🗑️ Purged old extension archive: ${file}`);
-            } catch (e) {}
-          }
+        const isOldVersioned = (file.endsWith('.zip') || file.endsWith('.bat') || file.endsWith('.sh')) &&
+          !file.includes(`v${version}`) &&
+          !file.includes('latest') &&
+          file !== 'start_agent.bat' &&
+          file !== 'start_agent.sh' &&
+          file !== 'Ashk24_MacroDroid_Relay.json' &&
+          !file.startsWith('ashk24-cpanel-');
+
+        if (isOldVersioned) {
+          try {
+            fs.unlinkSync(path.join(dir, file));
+            console.log(`  🗑️ Purged old version file: ${file}`);
+          } catch (e) {}
         }
       });
-    } else {
-      fs.mkdirSync(dir, { recursive: true });
     }
   });
 
-  // 4. Save versioned & alias files
+  // 5. Save versioned & alias files to public/downloads and dist/downloads
   syncDirs.forEach(dir => {
-    fs.writeFileSync(path.join(dir, `ashk24-extension-v${version}.zip`), zipBuffer);
-    fs.writeFileSync(path.join(dir, `ashk24-extension-latest.zip`), zipBuffer);
-    fs.writeFileSync(path.join(dir, `ashk24-session-harvester-extension.zip`), zipBuffer);
+    // Extension
+    fs.writeFileSync(path.join(dir, `ashk24-extension-v${version}.zip`), extZipBuffer);
+    fs.writeFileSync(path.join(dir, `ashk24-extension-latest.zip`), extZipBuffer);
+
+    // Local Agent
+    fs.writeFileSync(path.join(dir, `ashk24-local-agent-v${version}.zip`), agentZipBuffer);
+    fs.writeFileSync(path.join(dir, `ashk24-local-agent-latest.zip`), agentZipBuffer);
+
+    // Standalone Runner Scripts
+    const batContent = fs.readFileSync(path.join(agentDir, 'start_agent.bat'));
+    const shContent = fs.readFileSync(path.join(agentDir, 'start_agent.sh'));
+    fs.writeFileSync(path.join(dir, `start_agent_v${version}.bat`), batContent);
+    fs.writeFileSync(path.join(dir, 'start_agent.bat'), batContent);
+    fs.writeFileSync(path.join(dir, `start_agent_v${version}.sh`), shContent);
+    fs.writeFileSync(path.join(dir, 'start_agent.sh'), shContent);
   });
 
-  console.log(`📦 [Extension Package] Successfully packaged extension v${version} (${(zipBuffer.length / 1024).toFixed(1)} KB)`);
+  console.log(`📦 [Extension Package] Successfully packaged extension v${version} (${(extZipBuffer.length / 1024).toFixed(1)} KB)`);
+  console.log(`📦 [Local Agent Package] Successfully packaged local-agent v${version} (${(agentZipBuffer.length / 1024).toFixed(1)} KB)`);
+  console.log(`📦 [Runner Scripts] Successfully synced start_agent_v${version}.bat and .sh to downloads`);
 }
 
-packageExtension().catch(console.error);
+packageExtensionAndAgent().catch(console.error);

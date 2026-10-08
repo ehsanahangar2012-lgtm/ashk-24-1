@@ -23,6 +23,7 @@ import { SmartHelpButton } from './SmartHelpModal';
 import { toPersianDigits } from '../utils/persianUtils';
 import { extensionBridge, ExtensionWorkerStatus } from '../utils/extensionBridge';
 import { APP_VERSION } from '../config/version';
+import { downloadExtensionPackage } from '../utils/clientDownloadHelper';
 
 interface OrchestratorState {
   activeMode: string;
@@ -205,13 +206,13 @@ export const AutonomousOrchestratorMatrixModule: React.FC = () => {
             >
               تست پالس و برقراری ارتباط
             </button>
-            <a
-              href={`/downloads/ashk24-extension-v${APP_VERSION}.zip`}
-              download
-              className="w-full py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold text-xs transition-all border border-emerald-500/30 text-center flex items-center justify-center space-x-1 space-x-reverse"
+            <button
+              type="button"
+              onClick={() => downloadExtensionPackage(APP_VERSION)}
+              className="w-full py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold text-xs transition-all border border-emerald-500/30 text-center flex items-center justify-center space-x-1 space-x-reverse cursor-pointer"
             >
               <span>دانلود بسته بروزرسانی افزونه (v{APP_VERSION})</span>
-            </a>
+            </button>
           </div>
         </div>
 

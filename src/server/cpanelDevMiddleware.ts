@@ -30,18 +30,37 @@ function generateLocalCreativeVariations(
   brandName: string,
   phone: string,
   address: string,
-  price: string
+  price: string,
+  audience?: string,
+  aboutSummary?: string
 ) {
-  const primaryKw = keywords[0] || 'کارتن سازی و جعبه دایکاتی';
-  const secondaryKw = keywords[1] || 'چاپ و بسته بندی صنعتی';
-  const thirdKw = keywords[2] || 'کارتن لمینتی ۳ لایه و ۵ لایه';
+  const brand = (brandName && brandName.trim()) || 'مجموعه تخصصی ما';
+  const tel = (phone && phone.trim()) || '09153108763';
+  const addr = (address && address.trim()) || 'دفتر مرکزی و خط تولید';
+  const priceVal = (price && price.trim()) || 'توافقی و متناسب با تیراژ درخواستی';
+
+  const primaryKw = keywords[0] || 'محصولات و خدمات تخصصی';
+  const secondaryKw = keywords[1] || 'تامین و سفارش مستقیم';
+  const thirdKw = keywords[2] || 'تولید و عرضه باکیفیت';
+  const targetAudience = audience || 'واحدهای صنعتی، تجاری، فروشگاه‌ها و متقاضیان محترم';
+
+  const sectorTitles: Record<string, string> = {
+    industrial: 'صنعتی و کارخانجات',
+    services: 'خدمات تخصصی و سازمانی',
+    digital_goods: 'فناوری اطلاعات و نرم‌افزار',
+    food: 'صنایع غذایی و مصرفی',
+    medical: 'تجهیزات درمانی و بهداشتی',
+    retail: 'عرضه عمده و فروشگاهی',
+    general: 'کسب‌وکار و خدمات عمومی'
+  };
+  const sectorName = sectorTitles[sector] || 'تخصصی';
 
   const topics = [
-    `تولید و سفارش عمده ${primaryKw} در مشهد و ارسال فوری به سراسر کشور`,
-    `${brandName} | طراحی، دایکات و چاپ ${secondaryKw} با قیمت درب کارخانه`,
-    `تولید انواع ${thirdKw} با تضمین استحکام و کیفیت صادراتی`,
-    `خرید مستقیم ${primaryKw} بدون واسطه از خط تولید کارخانه در مشهد`,
-    `بسته‌بندی صنعتی، کاتالوگ و ${secondaryKw} ویژه کارخانجات و تولیدکنندگان`
+    `تولید و عرضه مستقیم ${primaryKw} توسط ${brand} | بالاترین کیفیت و ارسال سراسری`,
+    `${brand} | تامین دست اول ${secondaryKw} با قیمت رقابتی و شرایط ویژه`,
+    `سفارش عمده و اختصاصی ${thirdKw} با تضمین کیفیت و استاندارد ممتاز`,
+    `خرید بی‌واسطه ${primaryKw} از ${brand} با تخفیف ویژه همکاری و سفارش تیراژ بالا`,
+    `مشاوره، فروش و توزیع تخصصی ${secondaryKw} و ${primaryKw} ویژه ${sectorName}`
   ];
 
   const contentVariations = [
@@ -49,79 +68,79 @@ function generateLocalCreativeVariations(
       id: 'persuasive_commercial',
       name: 'متن تبلیغاتی پرفروش و مشتری‌پسند (توصیه اول سئو)',
       topic: topics[0],
-      content: `مجتمع تخصصی چاپ و بسته‌بندی ${brandName}
-تولیدکننده انواع ${primaryKw}، ${secondaryKw} و ${thirdKw} با بهره‌گیری از خط تولید مجهز و استاندارد روز.
+      content: `${brand} - ارائه‌دهنده و تامین‌کننده دست اول ${primaryKw} و ${secondaryKw}
+اگر به دنبال تامین پایدار ${primaryKw} با بالاترین کیفیت، قیمت رقابتی و حذف کامل واسطه‌ها هستید، مجموعه ${brand} با سابقه درخشان در خدمت شماست.
 
 مزایای کلیدی سفارش از ما:
-• خرید ۱۰۰٪ مستقیم از درب کارخانه و حذف کامل واسطه‌ها
-• استفاده از بهترین مواد اولیه با مقاومت و کروگیت درجه یک
-• تنوع در ابعاد، مدل‌های دایکاتی، لمینتی، چاپی و ضدآب
-• مشاوره تخصصی رایگان جهت بهینه‌سازی هزینه بسته‌بندی محصولات شما
-• شرایط تسویه توافقی برای خرید عمده و قراردادهای مستمر سازمانی
+• خرید ۱۰۰٪ مستقیم از منبع تولید و توزیع با تضمین نازل‌ترین قیمت
+• استفاده از بهترین مواد اولیه و استانداردهای روز
+• امکان سفارشی‌سازی کامل بر اساس نیاز و مشخصات مورد نظر شما
+• مشاوره تخصصی رایگان جهت بهینه‌سازی هزینه‌ها
+• شرایط پرداخت و تسویه توافقی برای خریداران عمده و قراردادهای مستمر
+• ارسال سریع، مطمئن و بسته‌بندی ایمن به سراسر کشور
 
-شرایط قیمت: ${price}
-نشانی کارخانه: ${address}
-تلفن مشاوره و ثبت سفارش فوری: ${phone}
-ارسال سریع و مطمئن به کلیه استان‌ها و مرزهای صادراتی`,
+شرایط قیمت: ${priceVal}
+نشانی: ${addr}
+تلفن هماهنگی و مشاوره فروش فوری: ${tel}
+پاسخگویی سریع در ساعات اداری و ایام کاری`,
       seoScore: 98,
-      characterCount: 680
+      characterCount: 650
     },
     {
       id: 'b2b_industrial',
-      name: 'متن رسمی صنعتی B2B ویژه کارخانجات و مدیران خرید',
+      name: 'متن رسمی سازمانی B2B ویژه مدیران و مسئولین خرید',
       topic: topics[1],
-      content: `اطلاعیه تامین ملزومات بسته‌بندی و کارتن برای واحدهای تولیدی و صنعتی:
-${brandName} آمادگی خود را جهت عقد قرارداد رسمی و تامین پایدار انواع ${primaryKw}، ${thirdKw} و ${secondaryKw} با بالاترین استانداردهای کیفی اعلام می‌دارد.
+      content: `اطلاعیه رسمی تامین و همکاری سازمانی:
+بدین‌وسیله به اطلاع کلیه مدیران محترم خرید، بازرگانی و واحدهای مرتبط می‌رساند که ${brand} آمادگی کامل خود را جهت تامین پایدار ${primaryKw}، ${secondaryKw} و ${thirdKw} با بالاترین استانداردهای تضمین کیفیت اعلام می‌دارد.
 
-مشخصات فنی و خدمات کارخانه:
-۱. تولید کارتن‌های ۳ لایه، ۵ لایه و ۷ لایه مقاوم در برابر ضربه و رطوبت
-۲. چاپ افست، فلکسو و طراحی زینک اختصاصی با رنگ‌های باکیفیت و تفکیک‌شده
-۳. قالب‌سازی دقیق دایکاتی و جعبه‌های مگنتی/صنعتی سفارشی
-۴. ظرفیت تولید روزانه بالا با تعهد تحویل سر موعد
+مشخصات و تعهدات اجرایی:
+۱. عقد قرارداد رسمی معتبر با فاکتور و اسناد شفاف
+۲. ظرفیت تامین بالا با تعهد تحویل سر موعد بدون تاخیر
+۳. کنترل کیفیت مستمر و ارائه نمونه کار قبل از عقد قرارداد
+۴. قیمت‌گذاری دست‌اول مستقیم با تخفیف‌های پلکانی حجم سفارش
 
-مدیریت فروش و قراردادهای صنعتی: ${phone}
-محل کارخانه: ${address}`,
+مدیریت فروش و قراردادهای عمده: ${tel}
+مرکز پشتیبانی و دفتر: ${addr}`,
       seoScore: 96,
-      characterCount: 650
+      characterCount: 620
     },
     {
       id: 'fast_urgent',
       name: 'متن سریع، تخفیف‌دار و با نرخ تبدیل بالا (Fast Action)',
       topic: topics[3],
-      content: `حراج و سفارش فوری ${primaryKw} مستقیم از کارخانه!
-اگر به دنبال ${secondaryKw} با قیمت کف بازار و کیفیت تضمین‌شده هستید، همین حالا با ما تماس بگیرید.
+      content: `حراج و ثبت سفارش فوری ${primaryKw} مستقیم از ${brand}!
+فرصت استثنایی خرید ${secondaryKw} با قیمت کف بازار و تحویل در کوتاه‌ترین زمان.
 
-- تخفیف ویژه برای سفارش‌های تیراژ بالا
-- آماده‌سازی و ارسال در سریع‌ترین زمان ممکن
-- پاسخگویی و مشاوره فوری: ${phone}
-- آدرس کارخانه: ${address}`,
+- تخفیف ویژه برای سفارش‌های با تیراژ بالا و نقدی
+- آماده‌سازی و ارسال سریع به کلیه مناطق
+- تضمین کامل سلامت و کیفیت سفارش
+- تماس و استعلام فوری: ${tel}
+- نشانی: ${addr}`,
       seoScore: 94,
-      characterCount: 390
+      characterCount: 360
     },
     {
       id: 'bullet_catalog',
-      name: 'متن مشخصات کاتالوگی و خدمات جامع',
+      name: 'متن مشخصات کاتالوگی، مشخصات فنی و جامع',
       topic: topics[2],
-      content: `فهرست خدمات جامع چاپ و کارتن‌سازی ${brandName}:
-■ تولید انواع کارتن ۳ لایه و ۵ لایه (ای فلوت، بی فلوت، سی فلوت)
-■ جعبه‌های مقوایی دایکاتی، دارویی، غذایی و صنعتی
-■ کارتن‌های لمینتی صادراتی با وضوح چاپ فوق‌العاده
-■ چاپ جعبه‌های لمینت دار با روکش سلفون و یووی
-■ بسته‌بندی اختصاصی کالا با تضمین ایمنی حمل‌ونقل
+      content: `فهرست خدمات و مشخصات جامع ${brand}:
+■ تولید و تامین تخصصی ${primaryKw} با تنوع بالا
+■ ارائه ملزومات و اقلام مرتبط با ${secondaryKw}
+■ خدمات مشاوره‌ای، فنی و اجرایی منطبق بر نیاز ${targetAudience}
+■ گارانتی اصالت کالا و تست کیفی محصولات
 
-دفتر کارخانه: ${address}
-تلفن هماهنگی و ارسال نمونه کار: ${phone}`,
+دفتر و مرکز سفارش: ${addr}
+تلفن هماهنگی، ارسال کاتالوگ و ثبت سفارش: ${tel}`,
       seoScore: 97,
-      characterCount: 480
+      characterCount: 460
     }
   ];
 
   const suggestedHashtags = keywords.map(kw => '#' + kw.trim().replace(/\s+/g, '_')).concat([
-    '#بسته_بندی_مشهد',
-    '#کارتن_سازی_صنعتی',
-    '#چاپ_اشک_قلم',
-    '#خرید_عمده_کارتن',
-    '#تولید_کارتن_صادراتی'
+    '#' + brand.trim().replace(/\s+/g, '_'),
+    '#خرید_عمده',
+    '#قیمت_مناسب',
+    '#تامین_دست_اول'
   ]);
 
   return {
@@ -131,7 +150,7 @@ ${brandName} آمادگی خود را جهت عقد قرارداد رسمی و �
     contentVariations,
     suggestedHashtags,
     seoScore: 97,
-    reasoning: 'تولید شده با موتور خلاق محلی بر اساس الگوهای بهینه فروش B2B و سئوی سایت‌های نیازمندی ایران'
+    reasoning: `تولید شده با موتور خلاق محلی بر اساس مشخصات برند «${brand}» و کلمات کلیدی ورودی`
   };
 }
 
@@ -144,51 +163,52 @@ async function generateCampaignWithGemini(params: {
   audience?: string;
   userPrompt?: string;
 }) {
-  const keywords = params.keywords && params.keywords.length > 0
-    ? params.keywords
-    : ['کارتن سازی مشهد', 'جعبه دایکاتی', 'کارتن لمینتی ۳ لایه و ۵ لایه', 'بسته بندی صنعتی'];
-  const tone = params.tone || 'persuasive';
-  const sector = params.sector || 'industrial';
-  const brandName = params.companyProfile?.brandName || 'مجتمع چاپ و کارتن‌سازی اشک قلم';
+  const brandName = params.companyProfile?.brandName || params.companyProfile?.name || 'مجموعه ما';
   const phone = params.companyProfile?.phoneNumber || '09153108763';
-  const address = params.companyProfile?.address || 'مشهد، شهرک صنعتی کلات';
+  const address = params.companyProfile?.address || 'دفتر مرکزی و خط تولید';
   const price = params.priceToman ? `${params.priceToman.toLocaleString('fa-IR')} تومان` : 'توافقی و تخفیف ویژه تیراژ بالا';
+  const tone = params.tone || params.companyProfile?.defaultTone || 'persuasive';
+  const sector = params.sector || params.companyProfile?.sector || 'industrial';
+  
+  const keywords = (params.keywords && params.keywords.length > 0)
+    ? params.keywords
+    : (params.companyProfile?.keywords && params.companyProfile.keywords.length > 0)
+      ? params.companyProfile.keywords
+      : ['محصولات و خدمات تخصصی', 'تامین مستقیم', 'سفارش عمده'];
 
   const ai = getGeminiClient();
 
   if (!ai) {
-    return generateLocalCreativeVariations(keywords, tone, sector, brandName, phone, address, price);
+    return generateLocalCreativeVariations(keywords, tone, sector, brandName, phone, address, price, params.audience, params.companyProfile?.aboutUsSummary);
   }
 
   try {
     const prompt = `
-شما یک متخصص ارشد بازاریابی صنعتی، کپی‌رایتینگ حرفه‌ای و سئو برای بازار ایران و سایت‌های نیازمندی (نظیر دیوار، ایستگاه، آگهی۲۴، پیام‌سرا، پارس‌سنتر، باسکول و نیازمندی‌های B2B) هستید.
-اطلاعات کسب‌وکار و سفارش:
-- نام برند/شرکت: ${brandName}
+شما یک متخصص ارشد کپی‌رایتینگ حرفه‌ای، بازاریابی B2B و سئو برای بازار ایران و سایت‌های نیازمندی و تبلیغاتی (نظیر دیوار، ایستگاه، آگهی۲۴، پیام‌سرا، باسکول و پارس‌سنتر) هستید.
+
+اطلاعات کسب‌وکار و شرکت هدف:
+- نام برند و شرکت: ${brandName}
 - شماره تماس: ${phone}
-- آدرس کارخانه/دفتر: ${address}
+- آدرس دفتر/کارخانه: ${address}
+- حوزه فعالیت: ${sector}
 - کلمات کلیدی هدف: ${keywords.join('، ')}
 - لحن تبلیغاتی: ${tone}
-- حوزه فعالیت: ${sector}
-- قیمت/شرایط مالی: ${price}
-- مخاطبان هدف: ${params.audience || 'کارخانجات، صنایع غذایی، دارویی، صادراتی و تولیدکنندگان'}
-${params.userPrompt ? `- درخواست تکمیلی کاربر: ${params.userPrompt}` : ''}
+- شرایط قیمت: ${price}
+- مخاطبان هدف: ${params.audience || 'مشتریان، کارخانجات، خریداران عمده و همکاران'}
+${params.companyProfile?.aboutUsSummary ? `- شرح فعالیت شرکت: ${params.companyProfile.aboutUsSummary}` : ''}
+${params.userPrompt ? `- درخواست تکمیلی: ${params.userPrompt}` : ''}
 
-وظیفه:
-بر اساس کلمات کلیدی بالا، موارد زیر را در قالب یک شیء JSON با ساختار معتبر تولید کن:
-1. "topics": آرایه‌ای از ۵ عنوان/موضوع تبلیغاتی جذاب، سئو شده و متنوع (شامل: موضوع B2B صنعتی، موضوع خرید مستقیم کارخانه، موضوع صادراتی و مقاومت بالا، موضوع تخفیف و تحویل فوری، موضوع اختصاصی جعبه و کارتن).
-2. "contentVariations": آرایه‌ای از حداقل ۴ متن کامل، جذاب، متقاعدکننده و تفکیک شده با ساختار زیر:
-   - "id": شناسه یکتا مثل persuasive_commercial, b2b_industrial, fast_urgent, bullet_catalog
-   - "name": نام فارسی تیپ متن (مثلاً "متن تبلیغاتی پرفروش و مشتری‌پسند (توصیه اول)")
-   - "topic": عنوان مرتبط با این متن
-   - "content": متن کامل شامل مقدمه، مزایای فنی و اقتصادی، آدرس، شماره تماس و نحوه سفارش
-   - "seoScore": نمره سئو عددی بین 93 تا 99
-   - "characterCount": تعداد کاراکتر
-3. "suggestedHashtags": آرایه‌ای از ۷ الی ۱۰ هشتگ پربازدید و هدفمند فارسی مرتبط با کلمات کلیدی با علامت #.
-4. "seoScore": عددی بین ۹۴ تا ۹۹.
-5. "reasoning": توضیح کوتاه ۱-۲ جمله‌ای درباره استراتژی سئو و ترغیب مشتری در این محتواها.
+دستورالعمل قطعی:
+تمامی موضوعات، متون و جملات تبلیغاتی باید ۱۰۰٪ متناسب با حوزه فعالیت و نام شرکت «${brandName}» و کلمات کلیدی بالا تولید شوند. به هیچ وجه از داده‌ها یا اسامی سایر شرکت‌ها استفاده نکنید.
 
-پاسخ را صرفاً به صورت JSON معتبر ارسال کن.
+پاسخ را در قالب یک شیء JSON با ساختار زیر ارائه دهید:
+1. "topics": ۵ موضوع/عنوان جذاب و سئوشده
+2. "contentVariations": ۴ متن کامل با شناسه‌های persuasive_commercial، b2b_industrial، fast_urgent و bullet_catalog (شامل نام فارسی، عنوان، متن کامل با ذکر آدرس و تلفن، نمره سئو و تعداد کاراکتر)
+3. "suggestedHashtags": ۷ الی ۱۰ هشتگ هدفمند مرتبط با کلمات کلیدی و نام برند با علامت #
+4. "seoScore": عددی بین ۹۴ تا ۹۹
+5. "reasoning": توضیح کوتاه ۱ جمله‌ای استراتژی سئو
+
+پاسخ را صرفاً به صورت JSON معتبر ارسال کنید.
 `;
 
     const candidateModels = ['gemini-3.8-flash', 'gemini-3.1-flash-lite'];
@@ -210,9 +230,8 @@ ${params.userPrompt ? `- درخواست تکمیلی کاربر: ${params.userPr
         const cleanJson = text.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
         parsed = JSON.parse(cleanJson);
         usedModel = modelName;
-        break; // Successfully obtained and parsed response
+        break;
       } catch (err: any) {
-        // Continue to next candidate model if current model experiences high demand (503), rate limit (429), or 404
         continue;
       }
     }
@@ -222,17 +241,18 @@ ${params.userPrompt ? `- درخواست تکمیلی کاربر: ${params.userPr
         success: true,
         provider: usedModel,
         topics: parsed.topics,
-        contentVariations: Array.isArray(parsed.contentVariations) && parsed.contentVariations.length > 0 ? parsed.contentVariations : generateLocalCreativeVariations(keywords, tone, sector, brandName, phone, address, price).contentVariations,
+        contentVariations: Array.isArray(parsed.contentVariations) && parsed.contentVariations.length > 0
+          ? parsed.contentVariations
+          : generateLocalCreativeVariations(keywords, tone, sector, brandName, phone, address, price, params.audience, params.companyProfile?.aboutUsSummary).contentVariations,
         suggestedHashtags: Array.isArray(parsed.suggestedHashtags) ? parsed.suggestedHashtags : [],
         seoScore: typeof parsed.seoScore === 'number' ? parsed.seoScore : 98,
-        reasoning: parsed.reasoning || `تولید شده با مدل هوش مصنوعی پیشرفته ${usedModel} بر اساس کلمات کلیدی و روانشناسی فروش`
+        reasoning: parsed.reasoning || `تولید شده با هوش مصنوعی برای برند «${brandName}»`
       };
     }
 
-    // Seamless fallback to local expert engine
-    return generateLocalCreativeVariations(keywords, tone, sector, brandName, phone, address, price);
+    return generateLocalCreativeVariations(keywords, tone, sector, brandName, phone, address, price, params.audience, params.companyProfile?.aboutUsSummary);
   } catch (err: any) {
-    return generateLocalCreativeVariations(keywords, tone, sector, brandName, phone, address, price);
+    return generateLocalCreativeVariations(keywords, tone, sector, brandName, phone, address, price, params.audience, params.companyProfile?.aboutUsSummary);
   }
 }
 
@@ -761,9 +781,14 @@ export function cpanelDevApiPlugin(): Plugin {
           cleanPath.endsWith('.apk')
         ) {
           const fileName = path.basename(cleanPath);
+          const downloadsDir = path.resolve(process.cwd(), 'public', 'downloads');
+          const distDownloadsDir = path.resolve(process.cwd(), 'dist', 'downloads');
+
+          let resolvedFilePath: string | null = null;
+
           const candidateFilePaths = [
-            path.resolve(process.cwd(), 'public', 'downloads', fileName),
-            path.resolve(process.cwd(), 'dist', 'downloads', fileName),
+            path.resolve(downloadsDir, fileName),
+            path.resolve(distDownloadsDir, fileName),
             path.resolve(process.cwd(), 'public', cleanPath.replace(/^\//, '')),
             path.resolve(process.cwd(), cleanPath.replace(/^\//, '')),
             path.resolve(process.cwd(), 'cpanel-backend', 'uploads', fileName),
@@ -772,27 +797,74 @@ export function cpanelDevApiPlugin(): Plugin {
           ];
 
           for (const fPath of candidateFilePaths) {
-            if (fs.existsSync(fPath) && fs.statSync(fPath).isFile()) {
-              const stats = fs.statSync(fPath);
-              if (stats.size > 0) {
-                const mimeType = fileName.endsWith('.apk')
-                  ? 'application/vnd.android.package-archive'
-                  : fileName.endsWith('.zip')
-                  ? 'application/zip'
-                  : fileName.endsWith('.json')
-                  ? 'application/json'
-                  : 'application/octet-stream';
+            if (fs.existsSync(fPath) && fs.statSync(fPath).isFile() && fs.statSync(fPath).size > 0) {
+              resolvedFilePath = fPath;
+              break;
+            }
+          }
 
-                const buffer = fs.readFileSync(fPath);
-                res.statusCode = 200;
-                res.setHeader('Content-Type', mimeType);
-                res.setHeader('Content-Length', buffer.length.toString());
-                res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-                res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-                res.end(buffer);
-                return;
+          // Smart category fallback if exact versioned filename not found on disk
+          if (!resolvedFilePath) {
+            const searchDirs = [downloadsDir, distDownloadsDir, process.cwd()];
+            for (const sDir of searchDirs) {
+              if (fs.existsSync(sDir)) {
+                const files = fs.readdirSync(sDir);
+                if (fileName.includes('extension')) {
+                  const match = files.find(f => f.startsWith('ashk24-extension') && f.endsWith('.zip'));
+                  if (match) { resolvedFilePath = path.join(sDir, match); break; }
+                } else if (fileName.includes('local-agent')) {
+                  const match = files.find(f => f.startsWith('ashk24-local-agent') && f.endsWith('.zip'));
+                  if (match) { resolvedFilePath = path.join(sDir, match); break; }
+                } else if (fileName.includes('cpanel')) {
+                  const match = files.find(f => f.startsWith('ashk24-cpanel') && f.endsWith('.zip'));
+                  if (match) { resolvedFilePath = path.join(sDir, match); break; }
+                } else if (fileName.startsWith('start_agent') && fileName.endsWith('.bat')) {
+                  const match = files.find(f => f.endsWith('.bat'));
+                  if (match) { resolvedFilePath = path.join(sDir, match); break; }
+                } else if (fileName.startsWith('start_agent') && fileName.endsWith('.sh')) {
+                  const match = files.find(f => f.endsWith('.sh'));
+                  if (match) { resolvedFilePath = path.join(sDir, match); break; }
+                } else if (fileName.toLowerCase().includes('macrodroid')) {
+                  const match = files.find(f => f.toLowerCase().includes('macrodroid'));
+                  if (match) { resolvedFilePath = path.join(sDir, match); break; }
+                }
               }
             }
+          }
+
+          if (resolvedFilePath && fs.existsSync(resolvedFilePath)) {
+            const stats = fs.statSync(resolvedFilePath);
+            if (stats.size > 0) {
+              const lower = fileName.toLowerCase();
+              const isArchive = /\.(zip|apk|tar|gz)$/i.test(lower);
+
+              let mimeType = 'application/octet-stream';
+              if (lower.endsWith('.apk')) mimeType = 'application/vnd.android.package-archive';
+              else if (lower.endsWith('.zip')) mimeType = 'application/zip';
+              else if (lower.endsWith('.json')) mimeType = 'application/json';
+              else if (lower.endsWith('.bat') || lower.endsWith('.sh')) mimeType = 'text/plain; charset=utf-8';
+              else if (lower.endsWith('.svg')) mimeType = 'image/svg+xml';
+              else if (lower.endsWith('.png')) mimeType = 'image/png';
+              else if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) mimeType = 'image/jpeg';
+              else if (lower.endsWith('.webp')) mimeType = 'image/webp';
+
+              const buffer = fs.readFileSync(resolvedFilePath);
+              res.statusCode = 200;
+              res.setHeader('Content-Type', mimeType);
+              res.setHeader('Content-Length', buffer.length.toString());
+              res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+              res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+              res.end(buffer);
+              return;
+            }
+          }
+
+          // If still not found and in /downloads/, return explicit 404 with JSON so SPA HTML is never served as download
+          if (cleanPath.startsWith('/downloads/')) {
+            res.statusCode = 404;
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.end(JSON.stringify({ error: 'File not found', fileName }));
+            return;
           }
         }
         
@@ -1051,6 +1123,52 @@ export function cpanelDevApiPlugin(): Plugin {
                 return sendJson(db.companyProfile);
               }
               return sendJson(db.companyProfile);
+
+            case 'companies':
+              db.companies = Array.isArray(db.companies) && db.companies.length > 0 ? db.companies : [{ ...db.companyProfile, isActive: true }];
+              if (method === 'POST') {
+                const newCompany = {
+                  id: body.id || `cmp_${Date.now()}`,
+                  updatedAt: new Date().toISOString(),
+                  ...body,
+                };
+                const idx = db.companies.findIndex((c: any) => c.id === newCompany.id);
+                if (idx >= 0) db.companies[idx] = newCompany;
+                else db.companies.push(newCompany);
+                if (newCompany.isActive || db.companies.length === 1) {
+                  db.companyProfile = newCompany;
+                }
+                writeDb(db);
+                return sendJson({ success: true, data: newCompany, companies: db.companies });
+              }
+              if (method === 'DELETE') {
+                const cmpId = body.id || urlObj.searchParams.get('id');
+                db.companies = db.companies.filter((c: any) => c.id !== cmpId);
+                if (db.companyProfile?.id === cmpId && db.companies.length > 0) {
+                  db.companyProfile = db.companies[0];
+                }
+                writeDb(db);
+                return sendJson({ success: true, message: 'شرکت حذف شد.', companies: db.companies });
+              }
+              return sendJson(db.companies);
+
+            case 'companies/switch-active': {
+              const targetId = body.companyId || body.id;
+              db.companies = Array.isArray(db.companies) && db.companies.length > 0 ? db.companies : [{ ...db.companyProfile, isActive: true }];
+              let found: any = null;
+              db.companies = db.companies.map((c: any) => {
+                if (c.id === targetId) {
+                  found = { ...c, isActive: true };
+                  return found;
+                }
+                return { ...c, isActive: false };
+              });
+              if (found) {
+                db.companyProfile = found;
+                writeDb(db);
+              }
+              return sendJson({ success: true, activeCompany: db.companyProfile, companies: db.companies });
+            }
 
             case 'platforms':
               if (method === 'POST') {

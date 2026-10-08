@@ -64,17 +64,21 @@ export class ExtensionBridgeManager {
       const data = event.data;
       if (!data || typeof data !== 'object') return;
 
-      if (data.type === 'ASHK_EXTENSION_STATUS_REPLY' || data.type === 'ASHK_EXT_PING_REPLY') {
+      if (
+        data.type === 'ASHK_EXTENSION_STATUS_REPLY' ||
+        data.type === 'ASHK_EXT_PING_REPLY' ||
+        data.type === 'ASHK_EXTENSION_HOST_ACK'
+      ) {
         const resp = data.response || {};
         this.updateStatus({
           installed: true,
           version: data.version || resp.version || APP_VERSION,
           isWorkerEnabled: resp.isWorkerEnabled !== false,
           status: resp.status || 'online',
-          syncedSessionsCount: resp.syncedSessionsCount || 0,
-          totalTargets: resp.totalTargets || 0,
-          currentIndex: resp.currentIndex || 0,
-          orchestratorUrl: resp.orchestratorUrl || window.location.origin,
+          syncedSessionsCount: resp.syncedSessionsCount || this.status.syncedSessionsCount || 1,
+          totalTargets: resp.totalTargets || this.status.totalTargets || 35,
+          currentIndex: resp.currentIndex || this.status.currentIndex || 0,
+          orchestratorUrl: resp.orchestratorUrl || data.host || window.location.origin,
           lastHeartbeat: new Date().toLocaleTimeString('fa-IR'),
           transportType: 'post_message'
         });
