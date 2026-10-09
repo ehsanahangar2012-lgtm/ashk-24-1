@@ -1,6 +1,6 @@
 /**
  * Ashk24 Acceptance Scenarios Test Suite
- * Version: 5.9.33
+ * Version: 5.9.36
  * 
  * آزمون‌های پذیرش جامع برای چرخه واقعی Workflow:
  * ۱. GitHub Worker در دسترس نیست یا در انتظار Runner است (بدون fallback ساختگی، ثبت صریح WAITING_FOR_WORKER با حفظ تمام شناسه‌ها)
@@ -15,7 +15,7 @@
 const assert = require('assert');
 
 console.log('======================================================================');
-console.log('🧪 شروع آزمون‌های پذیرش نسخه ۵.۹.۳۳ (Acceptance Scenarios Suite)');
+console.log('🧪 شروع آزمون‌های پذیرش نسخه ۵.۹.۳۶ (Acceptance Scenarios Suite)');
 console.log('======================================================================\n');
 
 const testResults = [];

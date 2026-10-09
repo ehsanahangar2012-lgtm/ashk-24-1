@@ -1346,22 +1346,81 @@ async function executeJob(job, claimData) {
     });
 
     console.log('🚀 [Ad Form Submit] Clicking publication submit button...');
-    let adSubmitBtn = await page.$('button[type="submit"], input[type="submit"], button:has-text("ثبت آگهی"), button:has-text("ارسال آگهی"), button:has-text("ذخیره")');
-    if (adSubmitBtn) {
-      await adSubmitBtn.click({ force: true });
-      await page.waitForTimeout(5000);
+    const adSubmitBtn = await page.$('button[type="submit"], input[type="submit"], button:has-text("ثبت آگهی"), button:has-text("ارسال آگهی"), button:has-text("ذخیره"), button:has-text("ارسال"), button:has-text("ثبت")');
+    if (!adSubmitBtn) {
+      console.error(`❌ [Submit Error] Submit button not found on page for job ${job.id}`);
+      await updateJobState(job.id, {
+        status: 'failed',
+        error: 'SUBMIT_BUTTON_NOT_FOUND',
+        currentStep: 'دکمه ارسال آگهی در صفحه مرورگر یافت نشد. وضعیت: FORM_ERROR.',
+        workflowId: job.workflowId || WORKFLOW_ID,
+        executionId: job.executionId || EXECUTION_ID
+      });
+      return false;
     }
 
-    // مرحله ۶: استخراج نتیجه واقعی انتشار و تفکیک از صفحات ثبت‌نام
+    try {
+      await adSubmitBtn.click({ force: true });
+      await page.waitForTimeout(4000);
+    } catch (clickErr) {
+      console.error(`❌ [Click Error] Failed clicking submit button: ${clickErr.message}`);
+      await updateJobState(job.id, {
+        status: 'failed',
+        error: 'SUBMIT_CLICK_FAILED',
+        currentStep: `خطا در کلیک دکمه ارسال: ${clickErr.message}`,
+        workflowId: job.workflowId || WORKFLOW_ID,
+        executionId: job.executionId || EXECUTION_ID
+      });
+      return false;
+    }
+
+    // مرحله ۶: استخراج نتیجه واقعی صفحه پس از ارسال
     const postSubmitUrl = page.url();
     const finalScreenshot = path.join(EVIDENCE_DIR, `job_${job.id}_submitted.png`);
     await page.screenshot({ path: finalScreenshot });
+
+    const postContent = await page.content();
+    const hasFormError = postContent.includes('خطا در ثبت') ||
+                         postContent.includes('الزامی است') ||
+                         postContent.includes('نامعتبر است') ||
+                         Boolean(await page.$('.error, .alert-danger, [aria-invalid="true"]'));
+
+    if (hasFormError) {
+      console.error(`❌ [Form Validation Error] Page rejected submission with validation errors.`);
+      await updateJobState(job.id, {
+        status: 'failed',
+        error: 'FORM_VALIDATION_ERROR',
+        currentStep: 'سامانه مقصد پس از ارسال فرم خطای اعتبارسنجی نمایش داد. وضعیت: FORM_ERROR.',
+        evidenceScreenshot: finalScreenshot,
+        workflowId: job.workflowId || WORKFLOW_ID,
+        executionId: job.executionId || EXECUTION_ID
+      });
+      return false;
+    }
+
+    // بررسی چالش OTP احتمالی
+    const otpGateDetected = postContent.includes('کد تایید') ||
+                            postContent.includes('کد پیامک') ||
+                            postSubmitUrl.includes('verify') ||
+                            postSubmitUrl.includes('otp') ||
+                            Boolean(await page.$('input[name*="otp" i], input[name*="code" i], input[id*="otp" i]'));
+
+    if (otpGateDetected) {
+      console.log(`🔐 [OTP Required] Platform requested OTP confirmation.`);
+      await updateJobState(job.id, {
+        status: 'waiting_otp',
+        currentStep: 'سایت مقصد برای تکمیل ارسال آگهی درخواست کد تایید (OTP) داده است. وضعیت: OTP_REQUIRED.',
+        evidenceScreenshot: finalScreenshot,
+        workflowId: job.workflowId || WORKFLOW_ID,
+        executionId: job.executionId || EXECUTION_ID
+      });
+      return true;
+    }
 
     const lowerPostUrl = postSubmitUrl.toLowerCase();
     const isStillAuthOrRegister = lowerPostUrl.includes('register') ||
                                   lowerPostUrl.includes('login') ||
                                   lowerPostUrl.includes('auth') ||
-                                  lowerPostUrl.includes('download') ||
                                   lowerPostUrl.includes('user/register');
 
     if (isStillAuthOrRegister) {
@@ -1371,7 +1430,6 @@ async function executeJob(job, claimData) {
         currentStep: 'آگهی در مرحله ورود/ثبت‌نام متوقف شد و به صفحه انتشار عمومی منتقل نشد.',
         error: 'AUTH_REQUIRED_OR_BLOCKED',
         evidenceScreenshot: finalScreenshot,
-        resume_supported: true,
         workflowId: job.workflowId || WORKFLOW_ID,
         executionId: job.executionId || EXECUTION_ID
       });
@@ -1394,11 +1452,10 @@ async function executeJob(job, claimData) {
     }
 
     // اگر آگهی در صف تایید یا بررسی است (فاقد لینک فوری عمومی)
-    const pageContent = await page.content();
-    const isUnderReview = pageContent.includes('در انتظار تایید') ||
-                          pageContent.includes('پس از تایید مدیریت') ||
-                          pageContent.includes('در حال بررسی') ||
-                          pageContent.includes('با موفقیت ثبت شد');
+    const isUnderReview = postContent.includes('در انتظار تایید') ||
+                          postContent.includes('پس از تایید مدیریت') ||
+                          postContent.includes('در حال بررسی') ||
+                          postContent.includes('با موفقیت ثبت شد');
 
     if (!publicAdUrl && isUnderReview) {
       console.log('ℹ️ [Moderation Queue] Ad submitted successfully, currently pending platform review.');
@@ -1406,7 +1463,6 @@ async function executeJob(job, claimData) {
         status: 'waiting_human',
         currentStep: 'آگهی با موفقیت ارسال شد و در انتظار تایید ناظر پلتفرم قرار گرفت. لینک پس از بررسی فعال خواهد شد.',
         evidenceScreenshot: finalScreenshot,
-        resume_supported: true,
         workflowId: job.workflowId || WORKFLOW_ID,
         executionId: job.executionId || EXECUTION_ID
       });
@@ -1417,45 +1473,30 @@ async function executeJob(job, claimData) {
       console.warn('⚠️ [No Public URL] Platform did not return an observable public ad link.');
       await updateJobState(job.id, {
         status: 'unknown',
-        currentStep: 'آگهی ارسال شد اما لینک عمومی معتبری توسط سامانه صادر نگردید.',
+        currentStep: 'آگهی ارسال شد اما لینک عمومی معتبری توسط سامانه صادر نگردید. وضعیت: UNKNOWN.',
         error: 'NO_PUBLIC_URL_DETECTED',
         evidenceScreenshot: finalScreenshot,
-        resume_supported: true,
         workflowId: job.workflowId || WORKFLOW_ID,
         executionId: job.executionId || EXECUTION_ID
       });
       return false;
     }
 
-    // مرحله ۷: راستی‌آزمایی مستقل و اثبات واقعی انتشار با داده‌های واقعی کمپین (حذف شواهد فرضی)
-    console.log(`🔎 [Independent Verification] Probing public ad link: ${publicAdUrl}`);
-    let verifiedIndependently = false;
-    let matchEvidence = '';
-    try {
-      const probeRes = await fetch(publicAdUrl, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36' }
-      });
-      if (probeRes.ok) {
-        const probeHtml = await probeRes.text();
-        // انطباق مستقل بر اساس کلمات معنادار عنوان واقعی آگهی یا شماره تماس واقعی
-        const titleWords = adTitleVal.split(/\s+/).filter(w => w.length >= 3);
-        const matchesTitle = titleWords.length > 0 && titleWords.some(w => probeHtml.includes(w));
-        const matchesPhone = contactPhoneVal && probeHtml.includes(contactPhoneVal);
-        const matchesJobId = job.id && probeHtml.includes(job.id);
+    // مرحله ۷: راستی‌آزمایی مستقل و اثبات واقعی انتشار با Unified Verification Service
+    console.log(`🔎 [Unified Verification] Verifying public ad link with shared engine: ${publicAdUrl}`);
+    const verifyEvidence = await verifyPublicationEvidence({
+      url: publicAdUrl,
+      expectedTitle: adTitleVal,
+      expectedJobId: job.id,
+      expectedPhone: contactPhoneVal,
+      timeoutMs: 8000
+    });
 
-        if (matchesTitle || matchesPhone || matchesJobId) {
-          verifiedIndependently = true;
-          matchEvidence = matchesTitle ? `تطبیق عنوان واقعی آگهی` : (matchesPhone ? `تطبیق شماره تماس` : `تطبیق شناسه ثبت`);
-        }
-      }
-    } catch (probeErr) {
-      console.warn(`⚠️ [Probe Error]: ${probeErr.message}`);
-    }
-
-    if (verifiedIndependently) {
+    if (verifyEvidence.verified) {
+      const matchDetails = verifyEvidence.matchedKeywords?.join('، ') || 'عنوان و شناسه کمپین';
       await updateJobState(job.id, {
         status: 'published',
-        currentStep: `آگهی در صفحه عمومی سامانه راستی‌آزمایی و منتشر گردید (شاهد قطعی: ${matchEvidence}).`,
+        currentStep: `آگهی در صفحه عمومی راستی‌آزمایی شد (شاهد قطعی: تطبیق ${matchDetails}).`,
         progressPercent: 100,
         evidenceScreenshot: finalScreenshot,
         adUrl: publicAdUrl,
@@ -1463,41 +1504,19 @@ async function executeJob(job, claimData) {
         workflowId: job.workflowId || WORKFLOW_ID,
         executionId: job.executionId || EXECUTION_ID
       });
+      console.log(`✅ [Job Completed] Verified published ad: ${publicAdUrl}`);
       return true;
     } else {
-      // شواهد کافی نیست -> وضعیت UNKNOWN ثبت می‌شود، نه PUBLISHED
+      console.warn(`⚠️ [Verification Failed] Evidence check rejected: ${verifyEvidence.error}`);
       await updateJobState(job.id, {
         status: 'unknown',
-        currentStep: 'لینک آگهی دریافت شد اما شواهد قطعی مبنی بر وجود محتوای همان آگهی در صفحه تایید نشد. وضعیت: UNKNOWN.',
+        currentStep: `لینک آگهی صادر شد اما محتوای اختصاصی کمپین در صفحه احراز نشد (${verifyEvidence.error || 'عدم تطبیق محتوا'}). وضعیت: UNKNOWN.`,
+        error: verifyEvidence.error || 'CONTENT_VERIFICATION_MISMATCH',
         adUrl: publicAdUrl,
         publicationVerified: false,
+        evidenceScreenshot: finalScreenshot,
         workflowId: job.workflowId || WORKFLOW_ID,
         executionId: job.executionId || EXECUTION_ID
-      });
-      return false;
-    }
-        resume_supported: true,
-        session_restored: sessionRestored,
-        restored_at: restoredAt || new Date().toISOString(),
-        independentVerification: {
-          timestamp: new Date().toISOString(),
-          targetUrl: publicAdUrl,
-          httpStatus: 200,
-          isAccessible: true,
-          verifiedBy: 'Ashk24_Independent_Verifier',
-          evidenceCaptured: true
-        }
-      });
-      console.log(`✅ [Job Handled] Execution completed and independently verified: ${publicAdUrl}`);
-      return true;
-    } else {
-      await updateJobState(job.id, {
-        status: 'waiting_human',
-        currentStep: 'لینک آگهی شناسایی شد اما محتوای آن در صفحه عمومی احراز نگردید (در انتظار فعال‌سازی سرور مقصد).',
-        evidenceScreenshot: finalScreenshot,
-        adUrl: publicAdUrl,
-        publicationVerified: false,
-        resume_supported: true
       });
       return false;
     }
