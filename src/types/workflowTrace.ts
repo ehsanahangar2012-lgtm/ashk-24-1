@@ -89,6 +89,16 @@ export interface WorkflowRecord {
   otpCode?: string;
   source?: 'SERVER_PERSISTED' | 'LOCAL_ONLY';
   isLocalOnly?: boolean;
+  // رهگیری دقیق زمان واقعی مراحل
+  otpWaitStartedAt?: string;
+  otpReceivedAt?: string;
+  realOtpWaitDurationMs?: number;
+  formFillStartedAt?: string;
+  formFillCompletedAt?: string;
+  realFormFillDurationMs?: number;
+  publicationVerificationStartedAt?: string;
+  publicationVerificationCompletedAt?: string;
+  realVerificationDurationMs?: number;
   createdAt: string;
   updatedAt: string;
 }

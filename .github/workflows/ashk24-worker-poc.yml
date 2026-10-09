@@ -7,6 +7,14 @@ on:
         description: 'Specific cPanel Job ID to claim (optional)'
         required: false
         default: ''
+      workflow_id:
+        description: 'Workflow ID for Distributed State Machine Tracking'
+        required: false
+        default: ''
+      execution_id:
+        description: 'Execution ID for Distributed Traceability'
+        required: false
+        default: ''
       platform_target:
         description: 'Target platform (e.g. payamsara, agahi24, istgah, parscenter, niazpardaz, all)'
         required: false
@@ -15,6 +23,8 @@ on:
         description: 'cPanel API URL (e.g. https://your-domain.com/cpanel-backend/api/index.php)'
         required: false
         default: ''
+  repository_dispatch:
+    types: [ashk24-worker-task]
   # Autonomous periodic run: uncomment after cPanel deployment
   # schedule:
   #   - cron: '0 */4 * * *'
@@ -89,8 +99,10 @@ jobs:
         env:
           CPANEL_URL: ${{ inputs.cpanel_url || secrets.CPANEL_URL || 'https://secret.ashkghalam.ir/cpanel-backend/api/index.php' }}
           CPANEL_AGENT_TOKEN: ${{ secrets.CPANEL_AGENT_TOKEN || 'secret_9153108763' }}
-          TARGET_JOB_ID: ${{ inputs.job_id || github.event.inputs.job_id || '' }}
-          PLATFORM_TARGET: ${{ inputs.platform_target || github.event.inputs.platform_target || 'payamsara' }}
+          TARGET_JOB_ID: ${{ inputs.job_id || github.event.inputs.job_id || github.event.client_payload.job_id || '' }}
+          WORKFLOW_ID: ${{ inputs.workflow_id || github.event.inputs.workflow_id || github.event.client_payload.workflow_id || '' }}
+          EXECUTION_ID: ${{ inputs.execution_id || github.event.inputs.execution_id || github.event.client_payload.execution_id || '' }}
+          PLATFORM_TARGET: ${{ inputs.platform_target || github.event.inputs.platform_target || github.event.client_payload.platform_target || 'payamsara' }}
           IRAN_PROXY_URL: ${{ secrets.IRAN_PROXY_URL }}
           VNC_PASSWORD: ${{ secrets.VNC_PASSWORD || 'Ashk24SecureSession' }}
           HEADLESS: 'false'

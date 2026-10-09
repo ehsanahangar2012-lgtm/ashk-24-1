@@ -357,6 +357,44 @@ export class WorkflowTraceService {
     });
   }
 
+  /**
+   * ذخیره مستقیم و پایدار پیوند عمومی آگهی در سطح ریشه گردش کار
+   */
+  public async updateWorkflowUrl(workflowId: string, publicUrl: string): Promise<void> {
+    if (!workflowId || !publicUrl) return;
+    try {
+      await callApi('workflows/action', {
+        method: 'POST',
+        body: JSON.stringify({
+          workflowId,
+          publicUrl,
+          action: 'update_workflow_url'
+        })
+      });
+    } catch (_) {}
+
+    const workflows = await this.getWorkflows();
+    const idx = workflows.findIndex(w => w.workflowId === workflowId);
+    if (idx !== -1) {
+      workflows[idx].publicUrl = publicUrl;
+      workflows[idx].updatedAt = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(workflows));
+    }
+  }
+
+  /**
+   * ثبت مقادیر واقعی زمان شروع، پایان و مدت مراحل (بدون زمان‌سنجی فیک)
+   */
+  public async updateWorkflowTimings(workflowId: string, timings: Partial<WorkflowRecord>): Promise<void> {
+    const workflows = await this.getWorkflows();
+    const idx = workflows.findIndex(w => w.workflowId === workflowId);
+    if (idx !== -1) {
+      Object.assign(workflows[idx], timings);
+      workflows[idx].updatedAt = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(workflows));
+    }
+  }
+
   private syncLocalWorkflow(wf: WorkflowRecord) {
     const raw = localStorage.getItem(STORAGE_KEY);
     let list: WorkflowRecord[] = [];

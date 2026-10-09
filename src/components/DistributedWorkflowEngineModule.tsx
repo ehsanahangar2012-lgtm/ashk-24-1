@@ -325,7 +325,7 @@ export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
           body: JSON.stringify({
             workflowId: activeWorkflow.workflowId,
             url: targetUrl,
-            expectedTitle: activeWorkflow.campaignTitle || 'کارتن'
+            expectedTitle: (activeWorkflow.campaignTitle || '').trim()
           })
         }
       );

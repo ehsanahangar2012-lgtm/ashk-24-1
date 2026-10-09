@@ -1462,6 +1462,33 @@ try {
             echo json_encode(['success' => true, 'message' => 'وضعیت جاب با موفقیت بروزرسانی شد.', 'job' => $updated], JSON_UNESCAPED_UNICODE);
             break;
 
+        case ($route === 'jobs/enqueue-agent-task'):
+            if ($method !== 'POST') { http_response_code(405); echo json_encode(['error' => 'Method Not Allowed']); break; }
+            $wfId = $body['workflowId'] ?? '';
+            $execId = $body['executionId'] ?? '';
+            $action = $body['action'] ?? 'execute_task';
+            $jobId = $body['jobId'] ?? ('job_' . bin2hex(random_bytes(6)));
+            $taskJob = [
+                'id' => $jobId,
+                'workflowId' => $wfId,
+                'executionId' => $execId,
+                'status' => 'pending',
+                'channel' => 'worker',
+                'targetWorker' => 'local_agent',
+                'action' => $action,
+                'platform' => $body['platform'] ?? 'generic',
+                'platformDomain' => $body['platformDomain'] ?? '',
+                'input' => $body['input'] ?? [],
+                'createdAt' => date('c')
+            ];
+            $saved = $db->addJob($taskJob);
+            echo json_encode([
+                'success' => true,
+                'message' => 'تسک با موفقیت به صف ورکر محلی اضافه شد.',
+                'job' => $taskJob
+            ], JSON_UNESCAPED_UNICODE);
+            break;
+
         case (preg_match('/^jobs\/([^\/]+)$/', $route, $matches) ? true : false):
         case (strpos($route, 'jobs/job_') === 0):
             $jobId = $matches[1] ?? str_replace('jobs/', '', $route);
@@ -1664,7 +1691,7 @@ try {
             $hasValidContent = !empty($resBody) && strlen($resBody) > 250 && stripos($resBody, '404 Not Found') === false && stripos($resBody, 'صفحه مورد نظر یافت نشد') === false;
 
             // بررسی تطابق محتوای مشخص آگهی (عنوان یا کلمات کلیدی کمپین) در متن صفحه
-            $hasContentMatch = true;
+            $hasContentMatch = false;
             if (!empty($expectedTitle) && $hasValidContent) {
                 $cleanKeywords = array_filter(explode(' ', preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $expectedTitle)), function($w) {
                     return mb_strlen($w) > 3;

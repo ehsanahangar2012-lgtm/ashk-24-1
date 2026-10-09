@@ -830,19 +830,45 @@
           }, '*');
         } else if (cmd.action === 'inject_field_values') {
           const mappings = cmd.input?.mappings || {};
+          const allFormElements = Array.from(document.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]), textarea, select'));
+          const fieldsFound = allFormElements.length;
           let applied = 0;
+          const filledFieldNames = [];
+
           for (const [key, val] of Object.entries(mappings)) {
-            const el = document.querySelector(`[name*="${key}" i], [id*="${key}" i]`);
+            const el = document.querySelector(`[name*="${key}" i], [id*="${key}" i], [placeholder*="${key}" i]`);
             if (el) {
               setNativeValue(el, String(val));
               applied++;
+              filledFieldNames.push(key);
             }
           }
+
+          // بررسی فیلدهای ضروری که خالی مانده‌اند در DOM واقعی
+          const missingRequiredFields = allFormElements
+            .filter(el => (el.required || el.getAttribute('aria-required') === 'true') && (!el.value || !el.value.trim()))
+            .map(el => el.name || el.id || el.placeholder || 'required_field');
+
+          // بررسی خطاهای اعتبارسنجی ثبت‌شده در DOM
+          const validationErrors = Array.from(document.querySelectorAll('.error, .invalid-feedback, .has-error, [role="alert"], .text-danger, .form-error, .alert-danger'))
+            .map(el => el.textContent?.trim())
+            .filter(t => t && t.length > 2);
+
+          const canSubmit = applied > 0 && missingRequiredFields.length === 0 && validationErrors.length === 0;
+
           window.postMessage({
             type: 'ASHK_EXT_COMMAND_RESPONSE',
             correlationId,
             success: true,
-            output: { valuesApplied: applied, totalMapped: Object.keys(mappings).length }
+            output: {
+              fieldsFound,
+              mappedFields: Object.keys(mappings).length,
+              filledFields: applied,
+              filledFieldNames,
+              missingRequiredFields,
+              validationErrors,
+              canSubmit
+            }
           }, '*');
         } else if (cmd.action === 'click_submit_button') {
           const submitBtn = document.querySelector('button[type="submit"], input[type="submit"], button.submit, #submit');

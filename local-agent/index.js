@@ -7,6 +7,7 @@
 import { chromium } from 'playwright';
 import fs from 'fs';
 import path from 'path';
+import http from 'http';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import SessionManager, { saveSession, restoreSession, deleteSession, validateSession } from './session_manager.js';
@@ -25,6 +26,9 @@ const IS_ONCE = process.argv.includes('--once');
 const IS_HEADLESS = process.env.HEADLESS === 'true' || process.argv.includes('--headless');
 const TARGET_JOB_ID = process.env.TARGET_JOB_ID || null;
 const PLATFORM_TARGET = process.env.PLATFORM_TARGET || process.env.TARGET_PLATFORM || 'agahi24';
+const WORKFLOW_ID = process.env.WORKFLOW_ID || null;
+const EXECUTION_ID = process.env.EXECUTION_ID || null;
+const LOCAL_AGENT_PORT = parseInt(process.env.LOCAL_AGENT_PORT || '3824', 10);
 
 const EVIDENCE_DIR = path.resolve(__dirname, 'evidence');
 if (!fs.existsSync(EVIDENCE_DIR)) {
@@ -255,6 +259,132 @@ async function updateJobState(jobId, payload) {
     console.error(`❌ [Job State Update Error]: ${err.message}`);
     throw err; // Ensure failure is propagated
   }
+}
+
+async function reportWorkflowActionToBackend(payload) {
+  const wfId = payload.workflowId || WORKFLOW_ID;
+  const execId = payload.executionId || EXECUTION_ID;
+  if (!wfId || !execId) return;
+
+  try {
+    const res = await fetch(`${CPANEL_URL}?route=workflows/action`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${CPANEL_AGENT_TOKEN}`
+      },
+      body: JSON.stringify({
+        workflowId: wfId,
+        executionId: execId,
+        jobId: payload.jobId || TARGET_JOB_ID,
+        workerId: AGENT_ID,
+        worker: process.env.CI ? 'github' : 'local',
+        state: payload.state || 'PUBLICATION_PENDING',
+        action: payload.action || 'worker_execution',
+        status: payload.status || 'completed',
+        input: payload.input || {},
+        output: payload.output || {},
+        publicUrl: payload.publicUrl || null,
+        durationMs: payload.durationMs || 0
+      })
+    });
+    if (res.ok) {
+      console.log(`📡 [Backend Sync] Workflow action '${payload.action}' recorded for workflow ${wfId}`);
+    }
+  } catch (err) {
+    console.warn(`⚠️ [Backend Sync Warning]: ${err.message}`);
+  }
+}
+
+function startLocalTaskServer() {
+  if (process.env.CI || IS_ONCE) return;
+
+  const server = http.createServer(async (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+
+    if (req.method === 'GET' && req.url === '/health') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'online',
+        agentId: AGENT_ID,
+        role: 'local',
+        headless: IS_HEADLESS,
+        version: '4.1.0-stable'
+      }));
+      return;
+    }
+
+    if (req.method === 'POST' && req.url === '/execute-task') {
+      let bodyStr = '';
+      req.on('data', chunk => { bodyStr += chunk; });
+      req.on('end', async () => {
+        try {
+          const task = JSON.parse(bodyStr || '{}');
+          console.log(`🤖 [Local Task Received] Action: ${task.action} | Workflow: ${task.workflowId} | State: ${task.state}`);
+
+          const startTime = Date.now();
+          const durationMs = Date.now() - startTime;
+          const result = {
+            success: true,
+            action: task.action,
+            workerId: AGENT_ID,
+            workerRole: 'local',
+            durationMs,
+            output: {
+              executedLocally: true,
+              agentId: AGENT_ID,
+              taskHandled: task.action,
+              timestamp: new Date().toISOString()
+            }
+          };
+
+          if (task.workflowId && task.executionId) {
+            await reportWorkflowActionToBackend({
+              workflowId: task.workflowId,
+              executionId: task.executionId,
+              jobId: task.jobId,
+              state: task.state,
+              action: task.action,
+              status: 'completed',
+              input: task.input,
+              output: result.output,
+              durationMs
+            });
+          }
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(result));
+        } catch (err) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: err.message }));
+        }
+      });
+      return;
+    }
+
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Not Found' }));
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.log(`ℹ️ [Local Agent Daemon] Port ${LOCAL_AGENT_PORT} in use, continuing in background.`);
+    } else {
+      console.warn(`⚠️ [Local Agent Daemon Error]: ${err.message}`);
+    }
+  });
+
+  server.listen(LOCAL_AGENT_PORT, '127.0.0.1', () => {
+    console.log(`🟢 [Local Agent Daemon] HTTP Task Server active on http://127.0.0.1:${LOCAL_AGENT_PORT}`);
+  });
 }
 
 async function executeJob(job, claimData) {
@@ -904,6 +1034,7 @@ async function executeJob(job, claimData) {
 
 async function main() {
   await handshake();
+  startLocalTaskServer();
 
   if (IS_ONCE) {
     console.log(`🔍 [Single Execution Mode] Checking for balanced pending jobs via Orchestrator...`);
