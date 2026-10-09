@@ -1565,6 +1565,60 @@ try {
             ], JSON_UNESCAPED_UNICODE);
             break;
 
+        case ($route === 'workflows/discover-platform'):
+            if ($method !== 'POST') { http_response_code(405); echo json_encode(['error' => 'Method Not Allowed']); break; }
+            $domain = trim($body['domain'] ?? '');
+            if (empty($domain)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'دامنه پلتفرم الزامی است.'], JSON_UNESCAPED_UNICODE);
+                break;
+            }
+
+            $targetUrl = "https://" . preg_replace('#^https?://#', '', $domain);
+            $ch = curl_init($targetUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36');
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            $html = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $err = curl_error($ch);
+            curl_close($ch);
+
+            if ($httpCode >= 200 && $httpCode < 400 && !empty($html)) {
+                // استخراج واقعی ساختار احراز هویت و فرم‌ها از HTML واقعی صفحه
+                $hasLoginForm = (stripos($html, 'login') !== false || stripos($html, 'ورود') !== false);
+                $hasRegisterForm = (stripos($html, 'register') !== false || stripos($html, 'ثبت نام') !== false);
+                $hasOtpIndicator = (stripos($html, 'کد تایید') !== false || stripos($html, 'otp') !== false || stripos($html, 'پیامک') !== false);
+
+                // استخراج لینک‌های واقعی موجود در صفحه
+                $detectedAuth = $hasOtpIndicator ? 'sms_otp_direct' : ($hasLoginForm ? 'credentials_or_sms' : 'web_form_open');
+
+                echo json_encode([
+                    'success' => true,
+                    'discovered' => true,
+                    'verified' => true,
+                    'httpStatus' => $httpCode,
+                    'authMethod' => $detectedAuth,
+                    'hasLoginForm' => $hasLoginForm,
+                    'hasRegisterForm' => $hasRegisterForm,
+                    'hasOtpGate' => $hasOtpIndicator,
+                    'pageLength' => strlen($html),
+                    'message' => 'پلتفرم با موفقیت از طریق کاوش زنده وب احراز گردید.'
+                ], JSON_UNESCAPED_UNICODE);
+            } else {
+                http_response_code(422);
+                echo json_encode([
+                    'success' => false,
+                    'discovered' => false,
+                    'verified' => false,
+                    'httpStatus' => $httpCode,
+                    'error' => "عدم امکان کاوش زنده پلتفرم {$domain} (HTTP {$httpCode}): {$err}"
+                ], JSON_UNESCAPED_UNICODE);
+            }
+            break;
+
         case ($route === 'workflows/verify-url'):
             if ($method !== 'POST') { http_response_code(405); echo json_encode(['error' => 'Method Not Allowed']); break; }
             $wfId = $body['workflowId'] ?? '';

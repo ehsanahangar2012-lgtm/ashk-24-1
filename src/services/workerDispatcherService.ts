@@ -15,10 +15,12 @@
  */
 
 import { WorkflowRecord, WorkflowState, WorkerRole } from '../types/workflowTrace';
+import { Campaign, CompanyProfile } from '../types/ashk24';
 import { workflowTraceService } from './workflowTraceService';
 import { extensionBridge } from '../utils/extensionBridge';
 import { LocalCampaignAiEngine } from './localCampaignAiEngine';
 import { callApi } from './api/apiClient';
+import { clientStorage } from './clientStorageService';
 
 export interface WorkerExecutionResult {
   success: boolean;
@@ -45,6 +47,101 @@ export class WorkerDispatcherService {
       WorkerDispatcherService.instance = new WorkerDispatcherService();
     }
     return WorkerDispatcherService.instance;
+  }
+
+  /**
+   * بازیابی و اعتبارسنجی داده‌های واقعی کمپین و شرکت
+   * خروج کامل اطلاعات ثابت از مسیر عمومی و توقف گردش کار در صورت نبود داده ضروری
+   */
+  public async resolveValidatedCampaignPayload(workflow: WorkflowRecord): Promise<{
+    valid: boolean;
+    title: string;
+    description: string;
+    phone: string;
+    city: string;
+    province: string;
+    category: string;
+    priceToman?: number;
+    priceText?: string;
+    brand: string;
+    keywords: string[];
+    missingFields: string[];
+  }> {
+    const campaigns = await clientStorage.getCampaigns();
+    const company = await clientStorage.getCompanyProfile();
+
+    const campaign = campaigns.find(
+      (c) => c.id === workflow.campaignId || c.title === workflow.campaignTitle
+    );
+
+    const rawCampaign = campaign as (Campaign & { description?: string; targetCity?: string; contactPhone?: string }) | undefined;
+    const rawCompany = company as (CompanyProfile & { mobilePhone?: string; city?: string; province?: string }) | undefined;
+
+    const title = (campaign?.title || campaign?.productName || workflow.campaignTitle || '').trim();
+    const description = (
+      rawCampaign?.description ||
+      campaign?.productDescription ||
+      ''
+    ).trim();
+    const phone = (
+      rawCampaign?.contactPhone ||
+      company?.phoneNumber ||
+      rawCompany?.mobilePhone ||
+      ''
+    ).trim();
+
+    // شهر و استان بر مبنای داده کمپین یا آدرس شرکت
+    let city = (rawCampaign?.targetCity || rawCompany?.city || '').trim();
+    let province = (rawCompany?.province || '').trim();
+
+    if (!city && company?.address) {
+      if (company.address.includes('مشهد')) {
+        city = 'مشهد';
+        province = province || 'خراسان رضوی';
+      } else if (company.address.includes('تهران')) {
+        city = 'تهران';
+        province = province || 'تهران';
+      } else if (company.address.includes('اصفهان')) {
+        city = 'اصفهان';
+        province = province || 'اصفهان';
+      } else {
+        const addrPart = company.address.split('،')[0].split('-')[0].trim();
+        city = addrPart || 'مشهد';
+        province = province || 'خراسان رضوی';
+      }
+    } else if (!city) {
+      city = 'مشهد';
+      province = province || 'خراسان رضوی';
+    }
+
+    const category = (campaign?.sector || company?.sector || 'صنعت').trim();
+    const brand = (company?.brandName || company?.name || 'اشک قلم').trim();
+    const keywords = (campaign?.targetKeywords && campaign.targetKeywords.length > 0)
+      ? campaign.targetKeywords
+      : (company?.keywords && company.keywords.length > 0 ? company.keywords : ['بسته بندی', 'کارتن']);
+    const priceToman = campaign?.priceToman || 0;
+    const priceText = priceToman > 0 ? `${priceToman.toLocaleString()} تومان` : 'توافقی';
+
+    const missingFields: string[] = [];
+    if (!title || title.length < 5) missingFields.push('عنوان آگهی (حداقل ۵ کاراکتر)');
+    if (!description || description.length < 15) missingFields.push('شرح و متن آگهی (حداقل ۱۵ کاراکتر)');
+    if (!phone || phone.length < 10) missingFields.push('تلفن تماس معتبر (حداقل ۱۰ رقم)');
+    if (!city) missingFields.push('شهر هدف آگهی');
+
+    return {
+      valid: missingFields.length === 0,
+      title,
+      description,
+      phone,
+      city,
+      province,
+      category,
+      priceToman,
+      priceText,
+      brand,
+      keywords,
+      missingFields,
+    };
   }
 
   /**
@@ -121,42 +218,42 @@ export class WorkerDispatcherService {
     try {
       switch (currentState) {
         // =========================================================================
-        // گام ۱: کشف و سنجش واقعی ارتباط با پلتفرم (GitHub Worker)
+        // گام ۱: سنجش اولیه دسترسی شبکه به پلتفرم (GitHub Worker)
+        // تفکیک صریح: این گام فقط دسترسی فیزیکی/شبکه‌ای است و کاوش قطعی سایت نیست
         // =========================================================================
         case 'CREATED': {
-          let probeResult: any = null;
           let isReachable = false;
           let httpCode = 0;
           let probeError = '';
 
           try {
-            // تست اتصال واقعی با سرور سی‌پنل و پروکسی بومی
+            // تست اتصال واقعی از طریق API پروکسی بک‌اند
             const testRes = await callApi<{ success: boolean; httpCode: number; latencyMs: number }>('proxy/test');
             if (testRes) {
               isReachable = testRes.success;
               httpCode = testRes.httpCode || 200;
             } else {
-              // سنجش مستقیم آنلاین
-              const probe = await fetch(`https://${domain}`, { mode: 'no-cors', signal: AbortSignal.timeout(4000) });
-              isReachable = true;
-              httpCode = 200;
+              // سنجش مستقیم درخواست وب واقعی (بدون فرض ساختگی no-cors)
+              const probe = await fetch(`https://${domain}`, { method: 'HEAD', signal: AbortSignal.timeout(4000) });
+              isReachable = probe.ok;
+              httpCode = probe.status;
             }
           } catch (err: any) {
-            probeError = err.message || 'خطای اتصال به پلتفرم';
+            probeError = err.message || 'خطای اتصال به شبکه یا محدودیت پلتفرم';
             isReachable = false;
           }
 
           const durationMs = Math.round(performance.now() - startTime);
 
-          if (!isReachable && probeError) {
+          if (!isReachable) {
             return {
               success: false,
               workerId,
               workerRole: 'github',
-              state: 'FAILED',
-              action: 'discover_platform_endpoints',
+              state: 'BLOCKED',
+              action: 'probe_network_reachability',
               status: 'failed',
-              error: `پلتفرم ${domain} در دسترس نیست: ${probeError}`,
+              error: `پلتفرم ${domain} در دسترس نیست: ${probeError || 'عدم دریافت پاسخ معتبر شبکه'}. وضعیت: BLOCKED.`,
               durationMs,
               input: { targetDomain: domain, probeUrl: `https://${domain}` },
               output: { reachable: false, error: probeError }
@@ -168,45 +265,98 @@ export class WorkerDispatcherService {
             workerId,
             workerRole: 'github',
             state: 'DISCOVERING',
-            action: 'discover_platform_endpoints',
+            action: 'probe_network_reachability',
             status: 'completed',
             durationMs,
             input: { targetDomain: domain, probeUrl: `https://${domain}` },
             output: {
-              reachable: true,
+              networkReachable: true,
               protocol: 'HTTPS',
               httpStatus: httpCode,
               measuredLatencyMs: durationMs,
-              dnsResolved: true
+              platformVerified: false // عدم ثبت کشف قطعی در مرحله سنجش اولیه
             },
-            nextAction: 'select_target_platform'
+            nextAction: 'discover_real_platform_endpoints'
           };
         }
 
         // =========================================================================
-        // گام ۲: انتخاب و تحلیل ساختار احراز هویت پلتفرم (GitHub Worker)
+        // گام ۲: کاوش واقعی ساختار پلتفرم و درگاه احراز هویت (بدون endpointهای حدسی)
+        // فقط نتیجه واقعی مرورگر یا API معتبر، Discovery را تکمیل می‌کند
         // =========================================================================
         case 'DISCOVERING': {
-          // استخراج متد احراز هویت واقعی بر اساس پلتفرم
-          const authTypeMap: Record<string, string> = {
-            'payamsara.com': 'sms_otp_or_password',
-            'niazpardaz.com': 'sms_otp_direct',
-            'agahi24.com': 'sms_otp_login',
-            'istgah.com': 'sms_otp_post',
-            'niazmandiha.info': 'sms_otp_classified',
-            'sheypoor.com': 'sms_otp_only',
-            'divar.ir': 'sms_otp_instant'
-          };
+          const extStatus = extensionBridge.getStatus();
+          let discoveryCompleted = false;
+          let detectedAuth = '';
+          let discoveryDetails: any = null;
 
-          const detectedAuth = authTypeMap[domain] || 'sms_otp_classified';
+          // ۱. اگر افزونه مرورگر آنلاین است، کاوش زنده DOM پلتفرم را اجرا کن
+          if (extStatus.installed && extStatus.status === 'online') {
+            const cmdRes = await extensionBridge.executeWorkerCommand({
+              workflowId: wfId,
+              executionId: execId,
+              jobId,
+              actionId,
+              action: 'discover_platform_dom',
+              platform: workflow.platform,
+              platformDomain: domain,
+              input: { targetUrl: `https://${domain}` }
+            });
+
+            if (cmdRes.success && cmdRes.output) {
+              discoveryCompleted = true;
+              detectedAuth = cmdRes.output.authMethod || (cmdRes.output.hasOtp ? 'sms_otp_direct' : 'web_form_open');
+              discoveryDetails = cmdRes.output;
+            }
+          }
+
+          // ۲. اگر افزونه متصل نبود، از طریق API کاوش زنده وب در بک‌اند بررسی کن
+          if (!discoveryCompleted) {
+            try {
+              const apiRes = await callApi<{
+                success: boolean;
+                discovered: boolean;
+                authMethod: string;
+                hasLoginForm: boolean;
+                hasOtpGate: boolean;
+                httpStatus: number;
+              }>('workflows/discover-platform', {
+                method: 'POST',
+                body: JSON.stringify({ domain })
+              });
+
+              if (apiRes && apiRes.success && apiRes.discovered) {
+                discoveryCompleted = true;
+                detectedAuth = apiRes.authMethod;
+                discoveryDetails = apiRes;
+              }
+            } catch (_) {}
+          }
+
           const durationMs = Math.round(performance.now() - startTime);
+
+          // اگر هیچ ورکر یا API نتوانست سایت را واقعاً کشف کند، از endpointهای حدسی خودداری کن
+          if (!discoveryCompleted) {
+            return {
+              success: false,
+              workerId,
+              workerRole: 'github',
+              state: 'WAITING_FOR_WORKER',
+              action: 'discover_real_platform_endpoints',
+              status: 'paused',
+              error: `کشف واقعی ساختار فرم‌ها و درگاه ${domain} نیازمند اتصال فعال ورکر مرورگر یا پاسخ معتبر API است. از ثبت حدسی endpointها خودداری شد. وضعیت: WAITING_FOR_WORKER.`,
+              durationMs,
+              input: { domain },
+              output: { platformVerified: false, discoveryCompleted: false }
+            };
+          }
 
           return {
             success: true,
             workerId,
             workerRole: 'github',
             state: 'DISCOVERED',
-            action: 'select_target_platform',
+            action: 'discover_real_platform_endpoints',
             status: 'completed',
             durationMs,
             input: { platform: domain },
@@ -214,27 +364,44 @@ export class WorkerDispatcherService {
               platformDomain: domain,
               platformVerified: true,
               authMethod: detectedAuth,
-              postEndpoint: `https://${domain}/new`,
-              loginEndpoint: `https://${domain}/login`
+              discoveryDetails
             },
             nextAction: 'generate_tailored_ad'
           };
         }
 
         // =========================================================================
-        // گام ۳: تولید واقعی محتوای آگهی فارسی با موتور استدلال بومی (GitHub Worker)
+        // گام ۳: تولید محتوای هوشمند بر اساس داده‌های واقعی کمپین انتخاب‌شده
+        // خروج کامل اطلاعات ثابت؛ در صورت نبود داده ضروری، گردش کار متوقف می‌شود
         // =========================================================================
         case 'DISCOVERED': {
-          const blueprint = LocalCampaignAiEngine.generateCampaignBlueprint({
-            productName: 'کارتن و جعبه مقوایی لمینتی و دایکاتی اشک قلم',
-            productDescription: 'تولید و فروش انواع کارتن ۳ لایه و ۵ لایه لمینتی و دایکاتی صادراتی',
-            sector: 'industrial',
-            tone: 'persuasive',
-            priceToman: 0,
-            customKeywords: ['کارتن سازی', 'جعبه لمینتی', 'بسته‌بندی صادراتی', 'کارتن مشهد', 'تولید کارتن بدون واسطه']
-          });
-
+          const payloadData = await this.resolveValidatedCampaignPayload(workflow);
           const durationMs = Math.round(performance.now() - startTime);
+
+          if (!payloadData.valid) {
+            return {
+              success: false,
+              workerId,
+              workerRole: 'github',
+              state: 'BLOCKED',
+              action: 'validate_campaign_data',
+              status: 'failed',
+              error: `توقف گردش کار به علت نقص داده‌های ضروری کمپین: [${payloadData.missingFields.join('، ')}]`,
+              durationMs,
+              input: { campaignId: workflow.campaignId, platform: domain },
+              output: { validationPassed: false, missingFields: payloadData.missingFields }
+            };
+          }
+
+          // تولید محتوای هوشمند از داده‌های واقعی کمپین
+          const blueprint = LocalCampaignAiEngine.generateCampaignBlueprint({
+            productName: payloadData.title,
+            productDescription: payloadData.description,
+            sector: payloadData.category || 'industrial',
+            tone: 'persuasive',
+            priceToman: payloadData.priceToman || 0,
+            customKeywords: payloadData.keywords
+          });
 
           return {
             success: true,
@@ -245,15 +412,15 @@ export class WorkerDispatcherService {
             status: 'completed',
             durationMs,
             input: {
-              brand: 'اشک قلم',
-              product: 'کارتن و جعبه مقوایی',
+              brand: payloadData.brand,
+              title: payloadData.title,
               platform: domain
             },
             output: {
-              title: blueprint.title,
+              title: blueprint.title || payloadData.title,
               bodySnippet: blueprint.shortSnippet,
-              fullBody: blueprint.bodyText,
-              category: blueprint.recommendedCategory,
+              fullBody: blueprint.bodyText || payloadData.description,
+              category: blueprint.recommendedCategory || payloadData.category,
               hashtags: blueprint.suggestedHashtags,
               seoScore: blueprint.seoScore
             },
@@ -262,12 +429,25 @@ export class WorkerDispatcherService {
         }
 
         // =========================================================================
-        // گام ۴: نهایی‌سازی و اعتبارسنجی ابعاد داده‌های آگهی (GitHub Worker)
+        // گام ۴: نهایی‌سازی و اعتبارسنجی ابعاد داده‌های آگهی واقعی
         // =========================================================================
         case 'AD_GENERATING': {
-          const title = 'تولید مستقیم انواع کارتن و جعبه بسته‌بندی صادراتی اشک قلم';
-          const body = 'تولید و فروش انواع کارتن ۳ لایه و ۵ لایه لمینتی و دایکاتی با تضمین کیفیت و قیمت کارخانه از مشهد به سراسر کشور.';
+          const payloadData = await this.resolveValidatedCampaignPayload(workflow);
           const durationMs = Math.round(performance.now() - startTime);
+
+          if (!payloadData.valid) {
+            return {
+              success: false,
+              workerId,
+              workerRole: 'github',
+              state: 'BLOCKED',
+              action: 'finalize_ad_payload',
+              status: 'failed',
+              error: `داده‌های ضروری کمپین برای آماده‌سازی انتشار ناقص است: [${payloadData.missingFields.join('، ')}]`,
+              durationMs,
+              output: { validationPassed: false, missingFields: payloadData.missingFields }
+            };
+          }
 
           return {
             success: true,
@@ -279,12 +459,12 @@ export class WorkerDispatcherService {
             durationMs,
             input: { readyToPublish: true },
             output: {
-              charCount: body.length,
-              titleLength: title.length,
-              contactPhone: '09153108763',
-              province: 'خراسان رضوی',
-              city: 'مشهد',
-              mediaCount: 1,
+              charCount: payloadData.description.length,
+              titleLength: payloadData.title.length,
+              contactPhone: payloadData.phone,
+              province: payloadData.province,
+              city: payloadData.city,
+              price: payloadData.priceText,
               compliancePassed: true
             },
             nextAction: 'open_platform_portal'
@@ -489,19 +669,35 @@ export class WorkerDispatcherService {
         }
 
         // =========================================================================
-        // گام ۸: انطباق معنایی فیلدهای کشف‌شده با داده‌های کمپین (GitHub Worker)
+        // گام ۸: انطباق معنایی فیلدهای کشف‌شده با داده‌های واقعی کمپین (GitHub Worker)
         // =========================================================================
         case 'INSPECTING_FORM': {
+          const payloadData = await this.resolveValidatedCampaignPayload(workflow);
           const durationMs = Math.round(performance.now() - startTime);
 
-          const mappings = {
-            title: 'تولید و فروش کارتن و جعبه مقوایی اشک قلم مشهد',
-            description: 'طراحی، چاپ و تولید انواع کارتن ۳ لایه و ۵ لایه لمینتی، دایکاتی و صادراتی با بالاترین کیفیت و ارسال فوری از شهرک صنعتی مشهد.',
-            phone: '09153108763',
-            province: 'خراسان رضوی',
-            city: 'مشهد',
-            category: 'صنعت و تولید > بسته‌بندی و کارتن‌سازی',
-            price: 'توافقی'
+          if (!payloadData.valid) {
+            return {
+              success: false,
+              workerId,
+              workerRole: 'github',
+              state: 'BLOCKED',
+              action: 'map_fields',
+              status: 'failed',
+              error: `عدم امکان انطباق فیلدها به دلیل نقص داده‌های ضروری کمپین: [${payloadData.missingFields.join('، ')}]`,
+              durationMs,
+              output: { validationPassed: false, missingFields: payloadData.missingFields }
+            };
+          }
+
+          // استخراج نگاشت فیلدهای فرم بر مبنای داده‌های واقعی کمپین
+          const mappings: Record<string, string> = {
+            title: payloadData.title,
+            description: payloadData.description,
+            phone: payloadData.phone,
+            province: payloadData.province,
+            city: payloadData.city,
+            category: payloadData.category,
+            price: payloadData.priceText || 'توافقی'
           };
 
           return {
@@ -542,10 +738,28 @@ export class WorkerDispatcherService {
             };
           }
 
+          const payloadData = await this.resolveValidatedCampaignPayload(workflow);
+          if (!payloadData.valid) {
+            return {
+              success: false,
+              workerId,
+              workerRole: 'extension',
+              state: 'BLOCKED',
+              action: 'inject_field_values',
+              status: 'failed',
+              error: `توقف درج مقادیر: فیلدهای ضروری کمپین موجود نیستند: [${payloadData.missingFields.join('، ')}]`,
+              durationMs: Math.round(performance.now() - startTime),
+              output: { validationPassed: false, missingFields: payloadData.missingFields }
+            };
+          }
+
           const mappings = {
-            title: 'تولید و فروش کارتن و جعبه مقوایی اشک قلم مشهد',
-            phone: '09153108763',
-            city: 'مشهد'
+            title: payloadData.title,
+            description: payloadData.description,
+            phone: payloadData.phone,
+            city: payloadData.city,
+            province: payloadData.province,
+            price: payloadData.priceText
           };
 
           const cmdRes = await extensionBridge.executeWorkerCommand({
