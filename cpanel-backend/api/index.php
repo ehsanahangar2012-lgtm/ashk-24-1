@@ -1606,24 +1606,47 @@ try {
             $err = curl_error($ch);
             curl_close($ch);
 
+            $expectedTitle = trim($body['expectedTitle'] ?? '');
             $hasValidContent = !empty($resBody) && strlen($resBody) > 250 && stripos($resBody, '404 Not Found') === false && stripos($resBody, 'صفحه مورد نظر یافت نشد') === false;
 
-            if ($httpCode >= 200 && $httpCode < 400 && $hasValidContent) {
+            // بررسی تطابق محتوای مشخص آگهی (عنوان یا کلمات کلیدی کمپین) در متن صفحه
+            $hasContentMatch = true;
+            if (!empty($expectedTitle) && $hasValidContent) {
+                $cleanKeywords = array_filter(explode(' ', preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $expectedTitle)), function($w) {
+                    return mb_strlen($w) > 3;
+                });
+                if (!empty($cleanKeywords)) {
+                    $matchesCount = 0;
+                    foreach ($cleanKeywords as $kw) {
+                        if (stripos($resBody, $kw) !== false) {
+                            $matchesCount++;
+                        }
+                    }
+                    $requiredMatches = min(2, count($cleanKeywords));
+                    $hasContentMatch = ($matchesCount >= $requiredMatches);
+                }
+            }
+
+            if ($httpCode >= 200 && $httpCode < 400 && $hasValidContent && $hasContentMatch) {
                 $updatedWf = $db->verifyWorkflowUrl($wfId, $targetUrl);
                 echo json_encode([
                     'success' => true,
                     'verified' => true,
+                    'contentMatched' => true,
                     'httpStatus' => $httpCode,
-                    'message' => 'لینک آگهی با موفقیت در اینترنت راستی‌آزمایی و ثبت گردید.',
+                    'message' => 'لینک آگهی و تطابق محتوا با موفقیت در اینترنت راستی‌آزمایی و ثبت گردید.',
                     'workflow' => $updatedWf
                 ], JSON_UNESCAPED_UNICODE);
             } else {
                 http_response_code(422);
+                $reason = !$hasContentMatch ? 'عنوان یا شناسه مشخص آگهی در محتوای صفحه یافت نشد (وضعیت UNKNOWN).' : "لینک آگهی باز نشد یا محتوای معتبر در صفحه یافت نشد (HTTP {$httpCode}): {$err}";
                 echo json_encode([
                     'success' => false,
                     'verified' => false,
+                    'contentMatched' => $hasContentMatch,
+                    'state' => 'UNKNOWN',
                     'httpStatus' => $httpCode,
-                    'error' => "لینک آگهی باز نشد یا محتوای معتبر در صفحه یافت نشد (HTTP {$httpCode}): {$err}"
+                    'error' => $reason
                 ], JSON_UNESCAPED_UNICODE);
             }
             break;

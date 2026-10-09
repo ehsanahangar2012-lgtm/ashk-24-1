@@ -52,6 +52,8 @@ export interface WorkflowAction {
   attempt?: number;
   error?: string;
   nextAction?: string;
+  source?: 'SERVER_PERSISTED' | 'LOCAL_ONLY';
+  isLocalOnly?: boolean;
   timestamp: string;
 }
 
@@ -62,6 +64,8 @@ export interface WorkflowExecution {
   primaryWorker: WorkerRole;
   currentState: WorkflowState;
   previousState?: WorkflowState;
+  source?: 'SERVER_PERSISTED' | 'LOCAL_ONLY';
+  isLocalOnly?: boolean;
   startedAt: string;
   completedAt?: string;
   actions: WorkflowAction[];
@@ -83,6 +87,8 @@ export interface WorkflowRecord {
   publicUrl?: string;
   publicationVerified: boolean;
   otpCode?: string;
+  source?: 'SERVER_PERSISTED' | 'LOCAL_ONLY';
+  isLocalOnly?: boolean;
   createdAt: string;
   updatedAt: string;
 }

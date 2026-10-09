@@ -91,12 +91,14 @@ export class WorkflowTraceService {
         body: JSON.stringify(payload)
       });
       if (res && res.success && res.workflow) {
+        res.workflow.source = 'SERVER_PERSISTED';
+        res.workflow.isLocalOnly = false;
         this.syncLocalWorkflow(res.workflow);
         return res.workflow;
       }
     } catch (_) {}
 
-    // ایجاد لوکال آفلاین
+    // ایجاد لوکال آفلاین با برچسب صریح LOCAL_ONLY
     const now = new Date().toISOString();
     const workflowId = 'wf_' + Math.random().toString(36).substring(2, 10);
     const executionId = 'exec_' + Math.random().toString(36).substring(2, 8);
@@ -111,6 +113,8 @@ export class WorkflowTraceService {
       state: 'CREATED',
       action: 'initialize_workflow',
       status: 'completed',
+      source: 'LOCAL_ONLY',
+      isLocalOnly: true,
       input: { campaignId: params.campaignId, platform: params.platform },
       output: { initialized: true },
       durationMs: 35,
@@ -124,6 +128,8 @@ export class WorkflowTraceService {
       attemptNumber: 1,
       primaryWorker,
       currentState: 'CREATED',
+      source: 'LOCAL_ONLY',
+      isLocalOnly: true,
       startedAt: now,
       actions: [initialAction]
     };
@@ -140,6 +146,8 @@ export class WorkflowTraceService {
       currentExecutionId: executionId,
       executions: [initialExecution],
       publicationVerified: false,
+      source: 'LOCAL_ONLY',
+      isLocalOnly: true,
       createdAt: now,
       updatedAt: now
     };
@@ -171,6 +179,7 @@ export class WorkflowTraceService {
     nextAction?: string;
     publicUrl?: string;
     publicationVerified?: boolean;
+    source?: 'SERVER_PERSISTED' | 'LOCAL_ONLY';
   }): Promise<WorkflowRecord> {
     try {
       const res = await callApi<{ success: boolean; workflow: WorkflowRecord }>('workflows/action', {
@@ -178,12 +187,14 @@ export class WorkflowTraceService {
         body: JSON.stringify(params)
       });
       if (res && res.success && res.workflow) {
+        res.workflow.source = 'SERVER_PERSISTED';
+        res.workflow.isLocalOnly = false;
         this.syncLocalWorkflow(res.workflow);
         return res.workflow;
       }
     } catch (_) {}
 
-    // آپدیت لوکال آفلاین
+    // آپدیت لوکال آفلاین با برچسب صریح LOCAL_ONLY (فاقد اثبات یا سابقه سرور)
     const workflows = await this.getWorkflows();
     const idx = workflows.findIndex(w => w.workflowId === params.workflowId);
     const now = new Date().toISOString();
@@ -198,6 +209,8 @@ export class WorkflowTraceService {
           attemptNumber: wf.executions.length + 1,
           primaryWorker: params.worker,
           currentState: params.state,
+          source: 'LOCAL_ONLY',
+          isLocalOnly: true,
           startedAt: now,
           actions: []
         };
@@ -223,6 +236,8 @@ export class WorkflowTraceService {
         attempt: params.attempt || 1,
         error: params.error,
         nextAction: params.nextAction,
+        source: 'LOCAL_ONLY',
+        isLocalOnly: true,
         timestamp: now
       };
 
@@ -231,6 +246,8 @@ export class WorkflowTraceService {
       wf.previousState = wf.currentState;
       wf.currentState = params.state;
       wf.activeWorker = params.worker;
+      wf.source = 'LOCAL_ONLY';
+      wf.isLocalOnly = true;
       wf.updatedAt = now;
 
       if (params.publicUrl) {

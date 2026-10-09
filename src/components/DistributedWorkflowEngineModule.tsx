@@ -219,30 +219,84 @@ export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
         action: 'inject_and_verify_otp',
         status: cmdRes.success ? 'completed' : 'failed',
         input: { otpCode: code },
-        output: cmdRes.output,
+        output: {
+          otpInjected: cmdRes.success,
+          verifiedByPlatform: false,
+          details: cmdRes.output
+        },
         durationMs: dur2,
         error: cmdRes.error,
-        nextAction: cmdRes.success ? 'await_portal_confirmation' : 'reenter_otp'
+        nextAction: cmdRes.success ? 'check_portal_otp_acceptance' : 'reenter_otp'
       });
 
-      // رویداد ۳: بررسی پذیرش واقعی کد در سایت
+      // رویداد ۳: بررسی پذیرش واقعی کد در سایت (عدم تایید صرف به دلیل پاسخ موفقیت افزونه)
       if (cmdRes.success) {
-        const dur3 = 85;
-        await workflowTraceService.recordAction({
+        const t2 = performance.now();
+        const checkCmd = await extensionBridge.executeWorkerCommand({
           workflowId: activeWorkflow.workflowId,
           executionId: activeWorkflow.currentExecutionId,
           jobId: activeWorkflow.jobId,
-          workerId: 'gh_orchestrator_main',
-          worker: 'github',
+          actionId: 'act_' + Math.random().toString(36).substring(2, 8),
+          action: 'check_otp_acceptance',
           platform: activeWorkflow.platform,
-          state: 'PUBLICATION_PENDING',
-          action: 'verify_portal_otp_acceptance',
-          status: 'completed',
-          input: { otpVerificationConfirmed: true },
-          output: { otpAccepted: true, portalSubmissionState: 'under_review' },
-          durationMs: dur3,
-          nextAction: 'verify_publication_link'
+          platformDomain: activeWorkflow.platformDomain
         });
+        const dur3 = checkCmd.durationMs || Math.round(performance.now() - t2);
+        const checkOut = checkCmd.output || {};
+
+        if (checkCmd.success && (checkOut.accepted === true || checkOut.verifiedByPlatform === true || checkOut.redirectUrl)) {
+          await workflowTraceService.recordAction({
+            workflowId: activeWorkflow.workflowId,
+            executionId: activeWorkflow.currentExecutionId,
+            jobId: activeWorkflow.jobId,
+            workerId: 'gh_orchestrator_main',
+            worker: 'github',
+            platform: activeWorkflow.platform,
+            state: 'PUBLICATION_PENDING',
+            action: 'verify_portal_otp_acceptance',
+            status: 'completed',
+            input: { otpVerificationConfirmed: true },
+            output: {
+              verifiedByPlatform: true,
+              portalAccepted: true,
+              moderationStatus: 'under_review',
+              redirectUrl: checkOut.redirectUrl
+            },
+            publicUrl: checkOut.redirectUrl,
+            durationMs: dur3,
+            nextAction: 'verify_publication_link'
+          });
+        } else if (checkOut.rejected === true || checkOut.invalidCode === true) {
+          await workflowTraceService.recordAction({
+            workflowId: activeWorkflow.workflowId,
+            executionId: activeWorkflow.currentExecutionId,
+            jobId: activeWorkflow.jobId,
+            workerId: 'gh_orchestrator_main',
+            worker: 'github',
+            platform: activeWorkflow.platform,
+            state: 'WAITING_FOR_OTP',
+            action: 'verify_portal_otp_acceptance',
+            status: 'failed',
+            error: 'کد تایید واردشده توسط سامانه مقصد رد شد. لطفاً کد صحیح را مجدداً وارد فرمایید.',
+            durationMs: dur3,
+            nextAction: 'receive_otp'
+          });
+        } else {
+          // عدم احراز قطعی -> وضعیت UNKNOWN
+          await workflowTraceService.recordAction({
+            workflowId: activeWorkflow.workflowId,
+            executionId: activeWorkflow.currentExecutionId,
+            jobId: activeWorkflow.jobId,
+            workerId: 'gh_orchestrator_main',
+            worker: 'github',
+            platform: activeWorkflow.platform,
+            state: 'UNKNOWN',
+            action: 'verify_portal_otp_acceptance',
+            status: 'paused',
+            error: 'پذیرش قطعی کد تایید توسط سایت مقصد احراز نشد. وضعیت: UNKNOWN.',
+            durationMs: dur3
+          });
+        }
       }
 
       setOtpInput('');
@@ -255,7 +309,7 @@ export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
   };
 
   /**
-   * راستی‌آزمایی مستقل لینک واقعی آگهی (بدون URL ساختگی یا تایید صرف بر اساس HTTP 200)
+   * راستی‌آزمایی مستقل لینک واقعی آگهی و احراز محتوای مشخص (عنوان/شناسه)
    */
   const handleVerifyManualUrl = async () => {
     if (!activeWorkflow || !manualUrlInput.trim()) return;
@@ -264,17 +318,21 @@ export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
 
     try {
       const t0 = performance.now();
-      const verifyRes = await callApi<{ success: boolean; verified: boolean; httpStatus: number }>(
+      const verifyRes = await callApi<{ success: boolean; verified: boolean; contentMatched?: boolean; httpStatus: number; error?: string }>(
         'workflows/verify-url',
         {
           method: 'POST',
-          body: JSON.stringify({ workflowId: activeWorkflow.workflowId, url: targetUrl })
+          body: JSON.stringify({
+            workflowId: activeWorkflow.workflowId,
+            url: targetUrl,
+            expectedTitle: activeWorkflow.campaignTitle || 'کارتن'
+          })
         }
       );
 
       const durationMs = Math.round(performance.now() - t0);
 
-      if (verifyRes && verifyRes.verified) {
+      if (verifyRes && verifyRes.verified && verifyRes.contentMatched) {
         await workflowTraceService.recordAction({
           workflowId: activeWorkflow.workflowId,
           executionId: activeWorkflow.currentExecutionId,
@@ -285,14 +343,14 @@ export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
           state: 'PUBLISHED',
           action: 'verify_publication_url',
           status: 'completed',
-          input: { url: targetUrl },
-          output: { verified: true, httpStatus: verifyRes.httpStatus },
+          input: { url: targetUrl, expectedTitle: activeWorkflow.campaignTitle },
+          output: { verified: true, contentMatched: true, httpStatus: verifyRes.httpStatus },
           publicUrl: targetUrl,
           publicationVerified: true,
           durationMs
         });
       } else {
-        // اگر شواهد کافی نیست یا صفحه باز نشد، وضعیت WAITING_FOR_HUMAN تنظیم می‌شود نه PUBLISHED
+        // اگر شواهد کافی نیست یا عنوان احراز نشد، وضعیت صریحاً UNKNOWN ثبت می‌شود نه PUBLISHED
         await workflowTraceService.recordAction({
           workflowId: activeWorkflow.workflowId,
           executionId: activeWorkflow.currentExecutionId,
@@ -300,12 +358,12 @@ export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
           workerId: 'gh_orchestrator_main',
           worker: 'github',
           platform: activeWorkflow.platform,
-          state: 'WAITING_FOR_HUMAN',
+          state: 'UNKNOWN',
           action: 'verify_publication_url',
           status: 'failed',
           input: { url: targetUrl },
-          output: { verified: false, reason: 'آگهی در صفحه عمومی تایید نشد یا در انتظار تایید ناظر است.' },
-          error: 'لینک آگهی باز نشد یا حاوی محتوای تاییدشده نبود.',
+          output: { verified: false, contentMatched: false, reason: verifyRes?.error || 'آگهی در صفحه عمومی تایید نشد یا محتوای مشخص آگهی در صفحه احراز نگردید.' },
+          error: verifyRes?.error || 'لینک آگهی باز نشد یا محتوای مشخص آگهی (عنوان/شناسه) احراز نگردید. وضعیت: UNKNOWN.',
           durationMs
         });
       }
@@ -445,6 +503,11 @@ export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
                       <span className="text-xs px-2.5 py-0.5 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-md font-mono">
                         {activeWorkflow.workflowId}
                       </span>
+                      {activeWorkflow.source === 'LOCAL_ONLY' && (
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                          LOCAL_ONLY (فاقد اثبات سرور)
+                        </span>
+                      )}
                       <h2 className="text-lg font-bold text-slate-100">{activeWorkflow.platform}</h2>
                       <span className="text-xs text-slate-400">({activeWorkflow.platformDomain})</span>
                     </div>
@@ -677,6 +740,11 @@ export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
                                     <span className="font-mono text-[11px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">
                                       {act.actionId}
                                     </span>
+                                    {act.source === 'LOCAL_ONLY' && (
+                                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                        LOCAL_ONLY
+                                      </span>
+                                    )}
                                     <div>
                                       <div className="flex items-center gap-2">
                                         <span className="font-bold text-slate-200">{act.action}</span>

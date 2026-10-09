@@ -53,10 +53,31 @@ export class WorkerDispatcherService {
    * Priority 2: Extension Worker
    * Priority 3: Local Worker
    */
+  /**
+   * بررسی این که آیا تسک مورد نظر توسط Local Worker واقعاً پشتیبانی می‌شود
+   */
+  public isTaskSupportedByLocalWorker(state: WorkflowState): boolean {
+    const supportedLocalTasks: WorkflowState[] = [
+      'AUTHENTICATING',
+      'REGISTERING',
+      'LOGGING_IN',
+      'INSPECTING_FORM',
+      'FILLING_FIELDS',
+      'SUBMITTING'
+    ];
+    return supportedLocalTasks.includes(state);
+  }
+
+  /**
+   * انتخاب هوشمند ورکر بر اساس اولویت‌بندی، نوع کار و وضعیت دسترسی واقعی
+   * Priority 1: GitHub Worker (هماهنگی، صف، تولید محتوا، استعلام ابری)
+   * Priority 2: Extension Worker (مجری اصلی DOM مرورگر، ورود، فرم و چالش‌های تعاملی)
+   * Priority 3: Local Worker (مجری جایگزین فقط برای تسک‌های واقعاً پشتیبانی‌شده)
+   */
   public resolveWorkerForState(state: WorkflowState): { role: WorkerRole; workerId: string } {
     const extStatus = extensionBridge.getStatus();
 
-    // گام‌هایی که مستقیماً به DOM مرورگر زنده نیاز دارند
+    // گام‌هایی که به پردازش و دسترسی DOM نیاز دارند
     const domRequiredStates: WorkflowState[] = [
       'OPENING_PLATFORM',
       'AUTHENTICATING',
@@ -72,7 +93,11 @@ export class WorkerDispatcherService {
       if (extStatus.installed && extStatus.status === 'online') {
         return { role: 'extension', workerId: `ext_worker_${extStatus.version || 'v5'}` };
       }
-      return { role: 'local', workerId: 'local_agent_worker' };
+      // اگر افزونه در دسترس نیست، فقط در صورتی Local Worker انتخاب می‌شود که همان تسک را واقعاً پشتیبانی کند
+      if (this.isTaskSupportedByLocalWorker(state)) {
+        return { role: 'local', workerId: 'local_agent_worker' };
+      }
+      return { role: 'extension', workerId: 'unassigned' };
     }
 
     // گام‌های هماهنگی، کشف اولیه، تولید محتوا و استعلام ابری
@@ -272,7 +297,7 @@ export class WorkerDispatcherService {
         case 'AD_READY': {
           const extStatus = extensionBridge.getStatus();
 
-          if (!extStatus.installed) {
+          if (!extStatus.installed && workerRole !== 'local') {
             const durationMs = Math.round(performance.now() - startTime);
             return {
               success: false,
@@ -281,7 +306,7 @@ export class WorkerDispatcherService {
               state: 'WAITING_FOR_WORKER',
               action: 'open_target_url',
               status: 'paused',
-              error: 'افزونه مرورگر در دسترس نیست. جهت هدایت مرورگر به درگاه نیازمندی‌ها، لطفاً افزونه را روی مرورگر فعال نمایید.',
+              error: 'افزونه مرورگر در دسترس نیست. وضعیت: WAITING_FOR_WORKER. لطفاً افزونه را روی مرورگر فعال نمایید.',
               durationMs,
               input: { targetUrl: `https://${domain}` },
               output: { extensionAvailable: false }
@@ -301,6 +326,22 @@ export class WorkerDispatcherService {
           });
 
           const durationMs = cmdRes.durationMs;
+
+          // بررسی واقعی نتیجه فرمان
+          if (!cmdRes.success) {
+            return {
+              success: false,
+              workerId: cmdRes.workerId || workerId,
+              workerRole: 'extension',
+              state: 'WAITING_FOR_WORKER',
+              action: 'open_target_url',
+              status: 'failed',
+              error: cmdRes.error || 'خطا در باز کردن آدرس درگاه توسط افزونه مرورگر',
+              durationMs,
+              input: { targetUrl: `https://${domain}` },
+              output: cmdRes.output
+            };
+          }
 
           return {
             success: true,
@@ -325,26 +366,56 @@ export class WorkerDispatcherService {
         // =========================================================================
         case 'OPENING_PLATFORM': {
           const extStatus = extensionBridge.getStatus();
-          const durationMs = Math.round(performance.now() - startTime);
+          if (!extStatus.installed && workerRole !== 'local') {
+            return {
+              success: false,
+              workerId,
+              workerRole: 'extension',
+              state: 'WAITING_FOR_WORKER',
+              action: 'check_login_state',
+              status: 'paused',
+              error: 'افزونه مرورگر در دسترس نیست. وضعیت: WAITING_FOR_WORKER.',
+              durationMs: Math.round(performance.now() - startTime)
+            };
+          }
 
-          // بررسی سشن‌های فعال همگام‌شده با سرور یا افزونه
-          const hasSyncedSession = extStatus.syncedSessionsCount > 0;
+          const cmdRes = await extensionBridge.executeWorkerCommand({
+            workflowId: wfId,
+            executionId: execId,
+            jobId,
+            actionId,
+            action: 'check_login_state',
+            platform: workflow.platform,
+            platformDomain: domain
+          });
 
+          const durationMs = cmdRes.durationMs;
+          if (!cmdRes.success) {
+            return {
+              success: false,
+              workerId: cmdRes.workerId || workerId,
+              workerRole: 'extension',
+              state: 'BLOCKED',
+              action: 'check_login_state',
+              status: 'failed',
+              error: cmdRes.error || 'بررسی وضعیت نشست توسط افزونه مرورگر با شکست مواجه شد.',
+              durationMs,
+              output: cmdRes.output
+            };
+          }
+
+          const isLoggedIn = Boolean(cmdRes.output?.sessionActive || cmdRes.output?.isLoggedIn);
           return {
             success: true,
-            workerId,
+            workerId: cmdRes.workerId || workerId,
             workerRole: 'extension',
-            state: 'LOGGING_IN',
+            state: isLoggedIn ? 'INSPECTING_FORM' : 'LOGGING_IN',
             action: 'check_login_state',
             status: 'completed',
             durationMs,
             input: { domain },
-            output: {
-              sessionActive: hasSyncedSession,
-              identifiedPhone: '09153108763',
-              requiresOtpGate: !hasSyncedSession
-            },
-            nextAction: 'inspect_form_fields'
+            output: cmdRes.output,
+            nextAction: isLoggedIn ? 'discover_dom_fields' : 'authenticate_user'
           };
         }
 
@@ -356,7 +427,7 @@ export class WorkerDispatcherService {
         case 'AUTHENTICATING': {
           const extStatus = extensionBridge.getStatus();
 
-          if (!extStatus.installed) {
+          if (!extStatus.installed && workerRole !== 'local') {
             const durationMs = Math.round(performance.now() - startTime);
             return {
               success: false,
@@ -365,7 +436,7 @@ export class WorkerDispatcherService {
               state: 'WAITING_FOR_WORKER',
               action: 'discover_dom_fields',
               status: 'paused',
-              error: 'افزونه مرورگر برای تحلیل DOM فعال نیست. لطفاً صفحه ثبت آگهی پلتفرم را در مرورگر باز کنید.',
+              error: 'افزونه مرورگر برای تحلیل DOM فعال نیست. وضعیت: WAITING_FOR_WORKER. لطفاً صفحه ثبت آگهی پلتفرم را در مرورگر باز کنید.',
               durationMs,
               input: { domain }
             };
@@ -394,7 +465,7 @@ export class WorkerDispatcherService {
               state: 'WAITING_FOR_WORKER',
               action: 'discover_dom_fields',
               status: 'paused',
-              error: 'فرمی در تب مرورگر شناسایی نشد. لطفاً صفحه درج آگهی جدید در سامانه مقصد را باز کنید.',
+              error: cmdRes.error || 'فرمی در تب مرورگر شناسایی نشد. لطفاً صفحه درج آگهی جدید در سامانه مقصد را باز کنید.',
               durationMs,
               fieldsFound: 0,
               input: { domain },
@@ -452,11 +523,12 @@ export class WorkerDispatcherService {
 
         // =========================================================================
         // گام ۹: درج واقعی مقادیر در فیلدهای فرم صفحه (Extension Worker)
+        // حذف کامل fallbackهای ساختگی مانند valuesApplied: 3
         // =========================================================================
         case 'MAPPING_FIELDS': {
           const extStatus = extensionBridge.getStatus();
 
-          if (!extStatus.installed) {
+          if (!extStatus.installed && workerRole !== 'local') {
             const durationMs = Math.round(performance.now() - startTime);
             return {
               success: false,
@@ -465,10 +537,16 @@ export class WorkerDispatcherService {
               state: 'WAITING_FOR_WORKER',
               action: 'inject_field_values',
               status: 'paused',
-              error: 'جهت درج مقادیر در فیلدهای صفحه به اتصال فعال افزونه مرورگر نیاز است.',
+              error: 'جهت درج مقادیر در فیلدهای صفحه به اتصال فعال افزونه مرورگر نیاز است. وضعیت: WAITING_FOR_WORKER',
               durationMs
             };
           }
+
+          const mappings = {
+            title: 'تولید و فروش کارتن و جعبه مقوایی اشک قلم مشهد',
+            phone: '09153108763',
+            city: 'مشهد'
+          };
 
           const cmdRes = await extensionBridge.executeWorkerCommand({
             workflowId: wfId,
@@ -478,16 +556,25 @@ export class WorkerDispatcherService {
             action: 'inject_field_values',
             platform: workflow.platform,
             platformDomain: domain,
-            input: {
-              mappings: {
-                title: 'تولید و فروش کارتن و جعبه مقوایی اشک قلم مشهد',
-                phone: '09153108763',
-                city: 'مشهد'
-              }
-            }
+            input: { mappings }
           });
 
           const durationMs = cmdRes.durationMs;
+
+          // بررسی قطعی نتیجه: عدم تلقی موفقیت صرفاً به دلیل ارسال
+          if (!cmdRes.success) {
+            return {
+              success: false,
+              workerId: cmdRes.workerId || workerId,
+              workerRole: 'extension',
+              state: 'BLOCKED',
+              action: 'inject_field_values',
+              status: 'failed',
+              error: cmdRes.error || 'درج مقادیر فیلدها در صفحه با شکست مواجه شد.',
+              durationMs,
+              output: cmdRes.output
+            };
+          }
 
           return {
             success: true,
@@ -497,15 +584,30 @@ export class WorkerDispatcherService {
             action: 'inject_field_values',
             status: 'completed',
             durationMs,
-            output: cmdRes.output || { valuesApplied: 3 },
+            output: cmdRes.output,
             nextAction: 'submit_classified_form'
           };
         }
 
         // =========================================================================
-        // گام ۱۰: ارسال فرم و ارزیابی درگاه OTP (Extension Worker)
+        // گام ۱۰: ارسال فرم و ارزیابی وضعیت واقعی صفحه پس از ارسال (Extension Worker)
+        // تفکیک دقیق: WAITING_FOR_OTP، PUBLICATION_PENDING، BLOCKED (خطای فرم)، و UNKNOWN
         // =========================================================================
         case 'FILLING_FIELDS': {
+          const extStatus = extensionBridge.getStatus();
+          if (!extStatus.installed && workerRole !== 'local') {
+            return {
+              success: false,
+              workerId,
+              workerRole: 'extension',
+              state: 'WAITING_FOR_WORKER',
+              action: 'click_submit_button',
+              status: 'paused',
+              error: 'افزونه مرورگر متصل نیست. وضعیت: WAITING_FOR_WORKER',
+              durationMs: Math.round(performance.now() - startTime)
+            };
+          }
+
           const cmdRes = await extensionBridge.executeWorkerCommand({
             workflowId: wfId,
             executionId: execId,
@@ -518,26 +620,94 @@ export class WorkerDispatcherService {
 
           const durationMs = cmdRes.durationMs;
 
-          // سامانه مقصد درخواست کد پیامک (OTP) کرده است
+          // ۱. اگر فرمان ارسال اصلاً به درستی در مرورگر اجرا نشد
+          if (!cmdRes.success) {
+            return {
+              success: false,
+              workerId: cmdRes.workerId || workerId,
+              workerRole: 'extension',
+              state: 'BLOCKED',
+              action: 'click_submit_button',
+              status: 'failed',
+              error: cmdRes.error || 'کلیک دکمه ارسال توسط افزونه مرورگر با شکست مواجه شد.',
+              durationMs,
+              output: cmdRes.output
+            };
+          }
+
+          const out = cmdRes.output || {};
+
+          // ۲. فقط زمانی WAITING_FOR_OTP ثبت می‌شود که وجود چالش OTP توسط مرورگر تایید شده باشد
+          if (out.otpGateDetected === true || out.hasOtpChallenge === true || out.pageState === 'otp_required') {
+            return {
+              success: true,
+              workerId: cmdRes.workerId || workerId,
+              workerRole: 'extension',
+              state: 'WAITING_FOR_OTP',
+              action: 'detect_otp_challenge',
+              status: 'paused',
+              durationMs,
+              input: { phoneNumber: out.phoneNumber || '09153108763' },
+              output: {
+                otpGateDetected: true,
+                message: 'چالش کد تایید پیامکی (OTP) توسط مرورگر تایید شد. لطفاً کد را در پنل وارد فرمایید.',
+                details: out
+              },
+              nextAction: 'receive_otp'
+            };
+          }
+
+          // ۳. پاسخ موفق دیگر (مثلاً ثبت مستقیم یا ورود به صف بازبینی بدون نیاز به OTP)
+          if (out.submitted === true || out.isDirectSuccess === true || out.pageState === 'published' || out.pageState === 'under_review') {
+            return {
+              success: true,
+              workerId: cmdRes.workerId || workerId,
+              workerRole: 'extension',
+              state: 'PUBLICATION_PENDING',
+              action: 'direct_submission_success',
+              status: 'completed',
+              durationMs,
+              output: {
+                directSubmission: true,
+                moderationStatus: 'under_review',
+                publicUrl: out.adUrl,
+                details: out
+              },
+              nextAction: 'verify_publication_link'
+            };
+          }
+
+          // ۴. خطای اعتبارسنجی فرم در صفحه پلتفرم
+          if (out.formError || out.hasFormError === true || out.pageState === 'form_error') {
+            return {
+              success: false,
+              workerId: cmdRes.workerId || workerId,
+              workerRole: 'extension',
+              state: 'BLOCKED',
+              action: 'form_validation_error',
+              status: 'failed',
+              error: out.errorMessage || out.formError || 'خطای اعتبارسنجی فیلدهای فرم در سایت مقصد مشاهده شد.',
+              durationMs,
+              output: out
+            };
+          }
+
+          // ۵. نبود پاسخ معتبر یا عدم تغییر صفحه: وضعیت نامشخص
           return {
-            success: true,
+            success: false,
             workerId: cmdRes.workerId || workerId,
             workerRole: 'extension',
-            state: 'WAITING_FOR_OTP',
-            action: 'detect_otp_challenge',
+            state: 'UNKNOWN',
+            action: 'inspect_post_submit_feedback',
             status: 'paused',
+            error: 'پس از کلیک دکمه ارسال، پاسخ قطعی یا چالش OTP از صفحه مرورگر دریافت نگردید. وضعیت: UNKNOWN.',
             durationMs,
-            input: { phoneNumber: '09153108763' },
-            output: {
-              otpGateDetected: true,
-              message: 'کد تایید پیامکی ارسال شد. لطفاً کد را در پنل وارد فرمایید.'
-            },
-            nextAction: 'receive_otp'
+            output: out
           };
         }
 
         // =========================================================================
-        // گام ۱۱: اگر منتظر OTP باشد اما متد عمومی Dispatch صدا زده شود
+        // گام ۱۱: اگر در انتظار OTP باشد اما متد عمومی Dispatch صدا زده شود
         // =========================================================================
         case 'WAITING_FOR_OTP': {
           const durationMs = Math.round(performance.now() - startTime);
@@ -554,7 +724,8 @@ export class WorkerDispatcherService {
         }
 
         // =========================================================================
-        // گام ۱۲: پس از ثبت کد تایید توسط کاربر -> اعمال در پلتفرم (Extension Worker)
+        // گام ۱۲: پس از ثبت کد تایید توسط کاربر -> ارسال به پلتفرم (Extension Worker)
+        // تفکیک دقیق: ارسال کد به‌تنهایی اثبات پذیرش OTP نیست
         // =========================================================================
         case 'OTP_RECEIVED': {
           const otpCode = workflow.otpCode;
@@ -572,7 +743,21 @@ export class WorkerDispatcherService {
             };
           }
 
-          // ارسال واقعی کد به افزونه جهت درج در فیلد و کلیک تایید
+          const extStatus = extensionBridge.getStatus();
+          if (!extStatus.installed && workerRole !== 'local') {
+            return {
+              success: false,
+              workerId,
+              workerRole: 'extension',
+              state: 'WAITING_FOR_WORKER',
+              action: 'inject_and_verify_otp',
+              status: 'paused',
+              error: 'افزونه مرورگر برای درج کد تایید در دسترس نیست. وضعیت: WAITING_FOR_WORKER',
+              durationMs: Math.round(performance.now() - startTime)
+            };
+          }
+
+          // ارسال واقعی کد به افزونه جهت درج در فیلد OTP
           const cmdRes = await extensionBridge.executeWorkerCommand({
             workflowId: wfId,
             executionId: execId,
@@ -586,6 +771,21 @@ export class WorkerDispatcherService {
 
           const durationMs = cmdRes.durationMs;
 
+          if (!cmdRes.success) {
+            return {
+              success: false,
+              workerId: cmdRes.workerId || workerId,
+              workerRole: 'extension',
+              state: 'BLOCKED',
+              action: 'inject_and_verify_otp',
+              status: 'failed',
+              error: cmdRes.error || 'درج کد تایید OTP توسط افزونه ناموفق بود.',
+              durationMs,
+              output: cmdRes.output
+            };
+          }
+
+          // کد ارسال شد؛ اما صریحاً تایید سایت در این مرحله false است تا از تایید جعلی جلوگیری شود
           return {
             success: true,
             workerId: cmdRes.workerId || workerId,
@@ -595,33 +795,114 @@ export class WorkerDispatcherService {
             status: 'completed',
             durationMs,
             input: { otpCode },
-            output: cmdRes.output || { otpInjected: true },
-            nextAction: 'await_portal_confirmation'
+            output: {
+              otpInjected: true,
+              verifiedByPlatform: false,
+              details: cmdRes.output
+            },
+            nextAction: 'check_portal_otp_acceptance'
           };
         }
 
         // =========================================================================
-        // گام ۱۳: بررسی تایید پورتال و استخراج لینک اولیه (GitHub Worker)
+        // گام ۱۳: بررسی تایید واقعی کد OTP توسط سایت (تفکیک رویداد سوم)
+        // OTP_SUBMITTED یا پاسخ افزونه به تنهایی پذیرش نیست؛ استعلام پاسخ سایت الزامی است
         // =========================================================================
         case 'OTP_SUBMITTED': {
-          const durationMs = Math.round(performance.now() - startTime);
+          const extStatus = extensionBridge.getStatus();
+          if (!extStatus.installed && workerRole !== 'local') {
+            return {
+              success: false,
+              workerId,
+              workerRole: 'extension',
+              state: 'WAITING_FOR_WORKER',
+              action: 'check_otp_acceptance',
+              status: 'paused',
+              error: 'افزونه مرورگر در دسترس نیست. برای بررسی پذیرش واقعی کد توسط سایت، اتصال افزونه الزامی است.',
+              durationMs: Math.round(performance.now() - startTime)
+            };
+          }
 
-          // استخراج لینک یا وضعیت بررسی از درگاه
+          // استعلام وضعیت واقعی صفحه پس از درج OTP
+          const verifyCmd = await extensionBridge.executeWorkerCommand({
+            workflowId: wfId,
+            executionId: execId,
+            jobId,
+            actionId,
+            action: 'check_otp_acceptance',
+            platform: workflow.platform,
+            platformDomain: domain
+          });
+
+          const durationMs = verifyCmd.durationMs;
+
+          if (!verifyCmd.success) {
+            return {
+              success: false,
+              workerId: verifyCmd.workerId || workerId,
+              workerRole: 'extension',
+              state: 'BLOCKED',
+              action: 'check_otp_acceptance',
+              status: 'failed',
+              error: verifyCmd.error || 'خطا در ارزیابی تایید کد توسط سایت',
+              durationMs,
+              output: verifyCmd.output
+            };
+          }
+
+          const out = verifyCmd.output || {};
+
+          // کد اشتباه یا منقضی: بازگشت به WAITING_FOR_OTP
+          if (out.rejected === true || out.invalidCode === true) {
+            return {
+              success: false,
+              workerId: verifyCmd.workerId || workerId,
+              workerRole: 'extension',
+              state: 'WAITING_FOR_OTP',
+              action: 'check_otp_acceptance',
+              status: 'failed',
+              error: 'کد تایید واردشده توسط سامانه مقصد رد شد (کد نادرست یا منقضی). لطفاً کد معتبر را وارد کنید.',
+              durationMs,
+              output: out,
+              nextAction: 'receive_otp'
+            };
+          }
+
+          // پذیرش قطعی توسط سایت احراز شد
+          if (out.accepted === true || out.verifiedByPlatform === true || out.redirectUrl) {
+            return {
+              success: true,
+              workerId: verifyCmd.workerId || workerId,
+              workerRole: 'github',
+              state: 'PUBLICATION_PENDING',
+              action: 'check_otp_acceptance',
+              status: 'completed',
+              durationMs,
+              input: { domain },
+              output: {
+                verifiedByPlatform: true,
+                portalAccepted: true,
+                adAccepted: true,
+                moderationStatus: 'under_review',
+                message: 'پذیرش واقعی کد توسط سامانه مقصد احراز شد.',
+                redirectUrl: out.redirectUrl
+              },
+              publicUrl: out.redirectUrl,
+              nextAction: 'verify_publication_link'
+            };
+          }
+
+          // شواهد کافی نیست -> وضعیت UNKNOWN (نه موفقیت ساختگی)
           return {
-            success: true,
-            workerId,
+            success: false,
+            workerId: verifyCmd.workerId || workerId,
             workerRole: 'github',
-            state: 'PUBLICATION_PENDING',
-            action: 'await_portal_confirmation',
-            status: 'completed',
+            state: 'UNKNOWN',
+            action: 'check_otp_acceptance',
+            status: 'paused',
+            error: 'شواهد قطعی مبنی بر پذیرش کد توسط سامانه مقصد یافت نشد؛ در انتظار پاسخ قطعی پلتفرم. وضعیت: UNKNOWN.',
             durationMs,
-            input: { domain },
-            output: {
-              adAccepted: true,
-              moderationStatus: 'under_review',
-              message: 'آگهی با موفقیت ثبت شد و در انتظار تایید اولیه پلتفرم است.'
-            },
-            nextAction: 'verify_publication_link'
+            output: out
           };
         }
 
@@ -645,7 +926,8 @@ export class WorkerDispatcherService {
         }
 
         // =========================================================================
-        // گام ۱۵: راستی‌آزمایی قطعی و استخراج لینک واقعی (GitHub Worker)
+        // گام ۱۵: راستی‌آزمایی قطعی لینک عمومی و احراز محتوای مشخص آگهی (عنوان/شناسه)
+        // اگر شواهد محتوا کافی نباشد: وضعیت صریحاً UNKNOWN است نه PUBLISHED
         // =========================================================================
         case 'VERIFYING_PUBLICATION': {
           const urlToVerify = workflow.publicUrl;
@@ -663,18 +945,22 @@ export class WorkerDispatcherService {
             };
           }
 
-          // فراخوانی سرویس راستی‌آزمایی بک‌اند
-          const verifyRes = await callApi<{ success: boolean; verified: boolean; httpStatus: number }>(
+          // فراخوانی سرویس راستی‌آزمایی بک‌اند با استعلام تطابق عنوان/شناسه
+          const verifyRes = await callApi<{ success: boolean; verified: boolean; contentMatched?: boolean; httpStatus: number; error?: string }>(
             'workflows/verify-url',
             {
               method: 'POST',
-              body: JSON.stringify({ workflowId: wfId, url: urlToVerify })
+              body: JSON.stringify({
+                workflowId: wfId,
+                url: urlToVerify,
+                expectedTitle: workflow.campaignTitle || 'کارتن'
+              })
             }
           );
 
           const durationMs = Math.round(performance.now() - startTime);
 
-          if (verifyRes && verifyRes.verified) {
+          if (verifyRes && verifyRes.verified && verifyRes.contentMatched) {
             return {
               success: true,
               workerId,
@@ -685,22 +971,23 @@ export class WorkerDispatcherService {
               durationMs,
               publicUrl: urlToVerify,
               publicationVerified: true,
-              input: { url: urlToVerify },
-              output: { verified: true, httpStatus: verifyRes.httpStatus }
+              input: { url: urlToVerify, expectedTitle: workflow.campaignTitle },
+              output: { verified: true, contentMatched: true, httpStatus: verifyRes.httpStatus }
             };
           }
 
+          // اگر شواهد کافی نیست، وضعیت UNKNOWN یا BLOCKED است، نه PUBLISHED
           return {
             success: false,
             workerId,
             workerRole: 'github',
-            state: 'WAITING_FOR_HUMAN',
+            state: 'UNKNOWN',
             action: 'verify_publication_url',
             status: 'failed',
-            error: 'آگهی هنوز در صفحه عمومی باز نمی‌شود یا در صف تایید ناظر سایت قرار دارد.',
+            error: verifyRes?.error || 'آگهی در صفحه عمومی تایید نشد یا محتوای مشخص آگهی در صفحه احراز نگردید. وضعیت: UNKNOWN.',
             durationMs,
             input: { url: urlToVerify },
-            output: { verified: false }
+            output: { verified: false, contentMatched: false, httpStatus: verifyRes?.httpStatus }
           };
         }
 
