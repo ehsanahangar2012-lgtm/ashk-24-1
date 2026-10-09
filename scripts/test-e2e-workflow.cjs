@@ -18,8 +18,14 @@ const fs = require('fs');
 const path = require('path');
 const { verifyPublicationEvidence } = require('../src/services/unifiedVerificationService.js');
 
+let activeVersion = '5.9.37';
+try {
+  const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'), 'utf8'));
+  activeVersion = pkg.version || activeVersion;
+} catch (e) {}
+
 console.log('===============================================================');
-console.log('🧪 اجرای تست جامع و کنترل‌شده End-to-End بر مبنای کمپین و پلتفرم واقعی');
+console.log(`🧪 اجرای تست جامع و کنترل‌شده End-to-End بر مبنای کمپین و پلتفرم واقعی (نسخه v${activeVersion})`);
 console.log('===============================================================');
 
 // استخراج کمپین واقعی از دیتابیس پروژه (عدم استفاده از اطلاعات ساختگی)

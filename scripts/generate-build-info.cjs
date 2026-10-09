@@ -61,5 +61,13 @@ const versionFilePath = path.join(__dirname, '../src/config/version.ts');
 const versionContent = `export const APP_VERSION = '${version}';\nexport const APP_VERSION_TAG = \`v\${APP_VERSION}\`;\n`;
 fs.writeFileSync(versionFilePath, versionContent);
 
-console.log(`✅ Generated build-info & version.ts: Version="v${version}", Timestamp="${buildInfo.timestamp}", Hash="${buildInfo.commitHash}"`);
+// 3. Synchronize src/services/unifiedVerificationService.js
+const verificationServicePath = path.join(__dirname, '../src/services/unifiedVerificationService.js');
+if (fs.existsSync(verificationServicePath)) {
+  let content = fs.readFileSync(verificationServicePath, 'utf8');
+  content = content.replace(/export const VERIFICATION_ENGINE_VERSION = '.*?';/, `export const VERIFICATION_ENGINE_VERSION = '${version}';`);
+  fs.writeFileSync(verificationServicePath, content);
+}
+
+console.log(`✅ Generated build-info, version.ts & unifiedVerificationService.js: Version="v${version}", Timestamp="${buildInfo.timestamp}", Hash="${buildInfo.commitHash}"`);
 

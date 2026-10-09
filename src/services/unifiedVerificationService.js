@@ -1,14 +1,9 @@
 /**
  * Ashk24 Unified Publication & Content Verification Service
  * Shared engine for Backend (Node/cPanel), Browser Client & Local Agent
- * Version: 5.9.36
- * 
- * قوانین اعتبارسنجی مستقل:
- * ۱. استخراج و بررسی ساختار URL: رد لینک‌های ورود، ثبت‌نام، پنل ادمین یا سبد خرید
- * ۲. راستی‌آزمایی واقعی شبکه و پروتکل HTTP: پاسخ باید معتبر و با کد وضعیت 200 باشد
- * ۳. راستی‌آزمایی دقیق و مستقل محتوا: تطبیق چند کلمه کلیدی غیرعمومی از عنوان کمپین و شناسه آگهی
- * ۴. رد قطعی تطبیق تک‌کلمه‌ای عمومی (مانند "کارتن" یا "آگهی") به عنوان گواه انتشار
  */
+
+export const VERIFICATION_ENGINE_VERSION = '5.9.38';
 
 // کلمات عمومی که به تنهایی برای اثبات انتشار آگهی معتبر نیستند
 const GENERIC_EXCLUDED_TERMS = new Set([
@@ -224,7 +219,7 @@ export async function verifyPublicationEvidence(options) {
     const res = await fetch(url, {
       method: 'GET',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Ashk24-Verification-Engine/5.9.36',
+        'User-Agent': `Mozilla/5.0 (Windows NT 10.0; Win64; x64) Ashk24-Verification-Engine/${VERIFICATION_ENGINE_VERSION}`,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
       },
       signal: controller.signal

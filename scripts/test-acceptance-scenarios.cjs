@@ -12,10 +12,18 @@
  * ۷. تفکیک فرم ورود/ثبت‌نام از فرم آگهی و انتقال به LOGIN_REQUIRED / REGISTRATION_REQUIRED
  */
 
+const fs = require('fs');
+const path = require('path');
 const assert = require('assert');
 
+let activeVersion = '5.9.37';
+try {
+  const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'), 'utf8'));
+  activeVersion = pkg.version || activeVersion;
+} catch (e) {}
+
 console.log('======================================================================');
-console.log('🧪 شروع آزمون‌های پذیرش نسخه ۵.۹.۳۶ (Acceptance Scenarios Suite)');
+console.log(`🧪 شروع آزمون‌های پذیرش نسخه ${activeVersion} (Acceptance Scenarios Suite)`);
 console.log('======================================================================\n');
 
 const testResults = [];
