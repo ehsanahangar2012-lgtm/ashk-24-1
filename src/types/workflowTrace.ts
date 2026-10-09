@@ -26,6 +26,7 @@ export type WorkflowState =
   | 'PUBLISHED'
   | 'FAILED'
   | 'WAITING_FOR_HUMAN'
+  | 'WAITING_FOR_WORKER'
   | 'CANCELLED';
 
 export type WorkerRole = 'github' | 'extension' | 'local';
@@ -34,6 +35,8 @@ export interface WorkflowAction {
   actionId: string;
   executionId: string;
   workflowId: string;
+  jobId?: string;
+  workerId?: string;
   worker: WorkerRole;
   platform: string;
   state: WorkflowState;
@@ -128,5 +131,6 @@ export const WORKFLOW_STATE_LABELS: Record<WorkflowState, { fa: string; color: s
   PUBLISHED: { fa: 'منتشر شد (دارای لینک معتبر)', color: 'text-emerald-300 bg-emerald-500/20 border-emerald-500/50', stepNumber: 20 },
   FAILED: { fa: 'متوقف با خطا', color: 'text-red-400 bg-red-500/20 border-red-500/50', stepNumber: 99 },
   WAITING_FOR_HUMAN: { fa: 'نیازمند اقدام دستی کاربر', color: 'text-orange-400 bg-orange-500/20 border-orange-500/50', stepNumber: 98 },
+  WAITING_FOR_WORKER: { fa: 'در انتظار فعال‌سازی Worker', color: 'text-amber-400 bg-amber-500/20 border-amber-500/50 animate-pulse', stepNumber: 96 },
   CANCELLED: { fa: 'لغو شده توسط اپراتور', color: 'text-slate-500 bg-slate-500/20 border-slate-500/40', stepNumber: 97 }
 };

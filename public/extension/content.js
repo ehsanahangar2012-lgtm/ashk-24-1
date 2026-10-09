@@ -796,6 +796,106 @@
       isHudMinimized = false;
       renderInPageFloatingHud('دستیار هوشمند با موفقیت در این صفحه فعال شد.');
     }
+
+    // پاسخ به فرمان‌های موتور ورک‌فلو توزیع‌شده (Distributed Workflow Worker Commands)
+    if (event.data.type === 'ASHK_EXECUTE_WORKER_COMMAND') {
+      const cmd = event.data;
+      const correlationId = cmd.correlationId;
+
+      try {
+        if (cmd.action === 'discover_dom_fields') {
+          const forms = document.querySelectorAll('form');
+          const inputEls = Array.from(document.querySelectorAll('input:not([type="hidden"]), textarea, select'));
+          const fields = inputEls.map((el) => ({
+            name: el.name || el.id || '',
+            type: el.type || el.tagName.toLowerCase(),
+            label: el.labels?.[0]?.textContent?.trim() || el.getAttribute('placeholder') || el.getAttribute('aria-label') || el.name || '',
+            required: el.required || el.hasAttribute('required')
+          }));
+
+          window.postMessage({
+            type: 'ASHK_EXT_COMMAND_RESPONSE',
+            correlationId,
+            success: true,
+            fieldsFound: fields.length,
+            output: {
+              formDetected: forms.length > 0 || fields.length > 0,
+              formsCount: forms.length,
+              fields: fields.map((f) => f.name || f.label).filter(Boolean),
+              fieldDetails: fields,
+              url: window.location.href,
+              title: document.title,
+              captchaDetected: Boolean(document.querySelector('img[src*="captcha" i], .captcha, #captcha'))
+            }
+          }, '*');
+        } else if (cmd.action === 'inject_field_values') {
+          const mappings = cmd.input?.mappings || {};
+          let applied = 0;
+          for (const [key, val] of Object.entries(mappings)) {
+            const el = document.querySelector(`[name*="${key}" i], [id*="${key}" i]`);
+            if (el) {
+              setNativeValue(el, String(val));
+              applied++;
+            }
+          }
+          window.postMessage({
+            type: 'ASHK_EXT_COMMAND_RESPONSE',
+            correlationId,
+            success: true,
+            output: { valuesApplied: applied, totalMapped: Object.keys(mappings).length }
+          }, '*');
+        } else if (cmd.action === 'click_submit_button') {
+          const submitBtn = document.querySelector('button[type="submit"], input[type="submit"], button.submit, #submit');
+          if (submitBtn) {
+            submitBtn.click();
+          }
+          // بررسی وجود فیلد OTP بعد از کلیک
+          const hasOtp = Boolean(document.querySelector('input[name*="otp" i], input[name*="code" i], input[id*="otp" i], input[id*="code" i]'));
+          window.postMessage({
+            type: 'ASHK_EXT_COMMAND_RESPONSE',
+            correlationId,
+            success: true,
+            output: {
+              clicked: Boolean(submitBtn),
+              requiresOtp: hasOtp,
+              currentUrl: window.location.href
+            }
+          }, '*');
+        } else if (cmd.action === 'inject_and_verify_otp') {
+          const code = cmd.input?.otpCode || '';
+          const otpInput = document.querySelector('input[name*="otp" i], input[name*="code" i], input[id*="otp" i], input[id*="code" i]');
+          if (otpInput && code) {
+            setNativeValue(otpInput, code);
+            const verifyBtn = document.querySelector('button[type="submit"], input[type="submit"], button');
+            if (verifyBtn) verifyBtn.click();
+          }
+          window.postMessage({
+            type: 'ASHK_EXT_COMMAND_RESPONSE',
+            correlationId,
+            success: true,
+            output: {
+              otpInjected: Boolean(otpInput),
+              portalStatus: 'submitted',
+              currentUrl: window.location.href
+            }
+          }, '*');
+        } else {
+          window.postMessage({
+            type: 'ASHK_EXT_COMMAND_RESPONSE',
+            correlationId,
+            success: true,
+            output: { handled: true, action: cmd.action, url: window.location.href }
+          }, '*');
+        }
+      } catch (err) {
+        window.postMessage({
+          type: 'ASHK_EXT_COMMAND_RESPONSE',
+          correlationId,
+          success: false,
+          error: err.message || 'خطا در اجرای فرمان افزونه'
+        }, '*');
+      }
+    }
   });
 
   // دریافت پیام از اکشن یا پاپ‌آپ افزونه Chrome

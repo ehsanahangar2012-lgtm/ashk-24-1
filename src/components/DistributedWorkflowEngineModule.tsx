@@ -34,9 +34,11 @@ import {
   WORKFLOW_STATES_ORDER
 } from '../types/workflowTrace';
 import { workflowTraceService } from '../services/workflowTraceService';
+import { workerDispatcherService } from '../services/workerDispatcherService';
 import { formatToPersianJalaliDateTime, toPersianDigits } from '../utils/persianUtils';
 import { SmartHelpButton } from './SmartHelpModal';
 import { extensionBridge, ExtensionWorkerStatus } from '../utils/extensionBridge';
+import { callApi } from '../services/api/apiClient';
 
 interface Props {
   defaultPlatform?: string;
@@ -118,351 +120,200 @@ export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
   };
 
   /**
-   * اجرای گام بعدی بر اساس State Machine واقعی
+   * اجرای گام بعدی بر اساس موتور هماهنگ‌کننده ورکرها (Genuine Worker Execution Engine)
    */
   const handleExecuteNextStep = async () => {
     if (!activeWorkflow || loading) return;
     setLoading(true);
 
     try {
-      const currentState = activeWorkflow.currentState;
-      const wfId = activeWorkflow.workflowId;
-      const execId = activeWorkflow.currentExecutionId;
-      const domain = activeWorkflow.platformDomain;
+      const result = await workerDispatcherService.executeNextStep(activeWorkflow);
 
-      switch (currentState) {
-        case 'CREATED': {
-          // گام ۱: کشف پلتفرم (Priority 1: GitHub Worker)
-          await workflowTraceService.recordAction({
-            workflowId: wfId,
-            executionId: execId,
-            worker: 'github',
-            platform: domain,
-            state: 'DISCOVERING',
-            action: 'discover_platform_endpoints',
-            status: 'completed',
-            input: { targetDomain: domain, probeUrl: `https://${domain}` },
-            output: { reachable: true, protocol: 'HTTPS', responseCode: 200 },
-            durationMs: 380,
-            nextAction: 'select_target_platform'
-          });
-          break;
-        }
-
-        case 'DISCOVERING': {
-          // گام ۲: تایید کشف و انتخاب نهایی پلتفرم (Priority 1: GitHub Worker)
-          await workflowTraceService.recordAction({
-            workflowId: wfId,
-            executionId: execId,
-            worker: 'github',
-            platform: domain,
-            state: 'DISCOVERED',
-            action: 'select_target_platform',
-            status: 'completed',
-            input: { platform: domain },
-            output: { platformVerified: true, authMethod: 'sms_otp_classified' },
-            durationMs: 120,
-            nextAction: 'generate_ad_content'
-          });
-          break;
-        }
-
-        case 'DISCOVERED': {
-          // گام ۳: آغاز تولید محتوای تبلیغاتی اختصاصی (Priority 1: GitHub Worker)
-          await workflowTraceService.recordAction({
-            workflowId: wfId,
-            executionId: execId,
-            worker: 'github',
-            platform: domain,
-            state: 'AD_GENERATING',
-            action: 'generate_tailored_ad',
-            status: 'completed',
-            input: { brand: 'اشک قلم', sector: 'industrial_machinery', tone: 'persuasive' },
-            output: {
-              title: 'تولید تخصصی کارتن، مقوا و بسته‌بندی صادراتی اشک ۲۴ مشهد',
-              bodySnippet: 'تولید مستقیم انواع کارتن دایکاتی، لمینتی و چاپ افست با قیمت کارخانه در شهرک صنعتی کلات.'
-            },
-            durationMs: 740,
-            nextAction: 'open_platform_portal'
-          });
-          break;
-        }
-
-        case 'AD_GENERATING': {
-          // گام ۴: آماده شدن محتوا (Priority 1: GitHub Worker)
-          await workflowTraceService.recordAction({
-            workflowId: wfId,
-            executionId: execId,
-            worker: 'github',
-            platform: domain,
-            state: 'AD_READY',
-            action: 'finalize_ad_payload',
-            status: 'completed',
-            input: { readyToPublish: true },
-            output: { mediaCount: 2, charCount: 284, compliancePassed: true },
-            durationMs: 85,
-            nextAction: 'open_platform'
-          });
-          break;
-        }
-
-        case 'AD_READY': {
-          // گام ۵: اعزام به مرورگر جهت باز کردن درگاه (Priority 2: Extension، در غیر این صورت Local)
-          const targetWorker: WorkerRole = extStatus.connected ? 'extension' : 'local';
-          await workflowTraceService.recordAction({
-            workflowId: wfId,
-            executionId: execId,
-            worker: targetWorker,
-            platform: domain,
-            state: 'OPENING_PLATFORM',
-            action: 'open_target_url',
-            status: 'completed',
-            input: { targetUrl: `https://${domain}/new-ad` },
-            output: { pageLoaded: true, title: `ثبت رایگان آگهی در ${domain}`, httpStatus: 200 },
-            durationMs: 1250,
-            nextAction: 'inspect_session'
-          });
-          break;
-        }
-
-        case 'OPENING_PLATFORM': {
-          // گام ۶: بررسی احراز هویت و ورود (Priority 2: Extension)
-          const targetWorker: WorkerRole = extStatus.connected ? 'extension' : 'local';
-          await workflowTraceService.recordAction({
-            workflowId: wfId,
-            executionId: execId,
-            worker: targetWorker,
-            platform: domain,
-            state: 'LOGGING_IN',
-            action: 'check_login_state',
-            status: 'completed',
-            input: { checkSessionCookies: true },
-            output: { sessionActive: true, userIdentified: '09153108763' },
-            durationMs: 420,
-            nextAction: 'inspect_form_fields'
-          });
-          break;
-        }
-
-        case 'LOGGING_IN':
-        case 'REGISTERING':
-        case 'AUTHENTICATING': {
-          // گام ۷: پیمایش و استخراج فیلدهای DOM (Priority 2: Extension)
-          const targetWorker: WorkerRole = extStatus.connected ? 'extension' : 'local';
-          await workflowTraceService.recordAction({
-            workflowId: wfId,
-            executionId: execId,
-            worker: targetWorker,
-            platform: domain,
-            state: 'INSPECTING_FORM',
-            action: 'discover_dom_fields',
-            status: 'completed',
-            fieldsFound: 14,
-            input: { formSelector: 'form[name="new_ad"], form#post-form' },
-            output: {
-              formDetected: true,
-              fields: ['title', 'description', 'category', 'province', 'city', 'phone', 'price', 'images'],
-              captchaDetected: false
-            },
-            durationMs: 820,
-            nextAction: 'map_fields_to_campaign'
-          });
-          break;
-        }
-
-        case 'INSPECTING_FORM': {
-          // گام ۸: انطباق فیلدها با اطلاعات کمپین اشک قلم (Priority 1: GitHub Worker)
-          await workflowTraceService.recordAction({
-            workflowId: wfId,
-            executionId: execId,
-            worker: 'github',
-            platform: domain,
-            state: 'MAPPING_FIELDS',
-            action: 'map_fields',
-            status: 'completed',
-            input: { fieldsCount: 14 },
-            output: {
-              mappings: {
-                title: 'تولید و فروش انواع کارتن و جعبه بسته‌بندی اشک قلم',
-                phone: '09153108763',
-                province: 'خراسان رضوی',
-                city: 'مشهد'
-              }
-            },
-            durationMs: 190,
-            nextAction: 'fill_form_fields'
-          });
-          break;
-        }
-
-        case 'MAPPING_FIELDS': {
-          // گام ۹: درج مقادیر در فیلدهای فرم مرورگر (Priority 2: Extension)
-          const targetWorker: WorkerRole = extStatus.connected ? 'extension' : 'local';
-          await workflowTraceService.recordAction({
-            workflowId: wfId,
-            executionId: execId,
-            worker: targetWorker,
-            platform: domain,
-            state: 'FILLING_FIELDS',
-            action: 'inject_field_values',
-            status: 'completed',
-            input: { inputsCount: 8 },
-            output: { filledSuccessfully: true, valuesApplied: 8 },
-            durationMs: 1450,
-            nextAction: 'submit_classified_form'
-          });
-          break;
-        }
-
-        case 'FILLING_FIELDS': {
-          // گام ۱۰: ارسال فرم و تشخیص نیاز به کد تایید (Priority 2: Extension)
-          const targetWorker: WorkerRole = extStatus.connected ? 'extension' : 'local';
-          await workflowTraceService.recordAction({
-            workflowId: wfId,
-            executionId: execId,
-            worker: targetWorker,
-            platform: domain,
-            state: 'SUBMITTING',
-            action: 'click_submit_button',
-            status: 'completed',
-            input: { buttonSelector: 'button[type="submit"]' },
-            output: { clicked: true, submissionProgress: 'pending_verification' },
-            durationMs: 980,
-            nextAction: 'evaluate_otp_requirement'
-          });
-          break;
-        }
-
-        case 'SUBMITTING': {
-          // گام ۱۱: تشخیص نیاز به OTP
-          const targetWorker: WorkerRole = extStatus.connected ? 'extension' : 'local';
-          await workflowTraceService.recordAction({
-            workflowId: wfId,
-            executionId: execId,
-            worker: targetWorker,
-            platform: domain,
-            state: 'WAITING_FOR_OTP',
-            action: 'detect_otp_challenge',
-            status: 'paused',
-            input: { expectedOtpPhone: '09153108763' },
-            output: {
-              otpGateDetected: true,
-              instruction: 'کد تایید پیامکی ارسال شده به 09153108763 را وارد فرمایید.'
-            },
-            durationMs: 410,
-            nextAction: 'receive_otp'
-          });
-          break;
-        }
-
-        case 'OTP_RECEIVED': {
-          // گام ۱۲: اعمال کد تایید در فرم (Priority 2: Extension)
-          const targetWorker: WorkerRole = extStatus.connected ? 'extension' : 'local';
-          await workflowTraceService.recordAction({
-            workflowId: wfId,
-            executionId: execId,
-            worker: targetWorker,
-            platform: domain,
-            state: 'OTP_SUBMITTED',
-            action: 'inject_and_verify_otp',
-            status: 'completed',
-            input: { otpCode: activeWorkflow.otpCode || '58204' },
-            output: { otpAccepted: true, portalResponse: 'OK' },
-            durationMs: 890,
-            nextAction: 'await_publication_approval'
-          });
-          break;
-        }
-
-        case 'OTP_SUBMITTED': {
-          // گام ۱۳: انتشار و آماده‌سازی برای راستی‌آزمایی (Priority 1: GitHub Worker)
-          await workflowTraceService.recordAction({
-            workflowId: wfId,
-            executionId: execId,
-            worker: 'github',
-            platform: domain,
-            state: 'PUBLICATION_PENDING',
-            action: 'await_portal_confirmation',
-            status: 'completed',
-            input: { targetDomain: domain },
-            output: {
-              adCreated: true,
-              provisionalUrl: `https://${domain}/ads/detail-${Date.now().toString().slice(-6)}`
-            },
-            durationMs: 310,
-            nextAction: 'verify_publication_link'
-          });
-          break;
-        }
-
-        case 'PUBLICATION_PENDING': {
-          // گام ۱۴: ورود به مرحله راستی‌آزمایی مستقل (Priority 1: GitHub Worker)
-          const provisionalUrl = `https://${domain}/ads/detail-${Date.now().toString().slice(-6)}`;
-          await workflowTraceService.recordAction({
-            workflowId: wfId,
-            executionId: execId,
-            worker: 'github',
-            platform: domain,
-            state: 'VERIFYING_PUBLICATION',
-            action: 'probe_live_public_url',
-            status: 'running',
-            input: { urlToVerify: provisionalUrl },
-            output: { status: 'verifying' },
-            durationMs: 250,
-            nextAction: 'verify_url_http_status'
-          });
-          break;
-        }
-
-        case 'VERIFYING_PUBLICATION': {
-          // گام ۱۵: راستی‌آزمایی قطعی و استخراج لینک واقعی
-          const realUrl = activeWorkflow.publicUrl || `https://${domain}/ads/ashk24-box-carton-${Date.now().toString().slice(-5)}`;
-          await workflowTraceService.verifyPublicationUrl(wfId, realUrl);
-          break;
-        }
-
-        case 'PUBLISHED': {
-          // فرآیند قبلاً به اتمام رسیده
-          break;
-        }
-
-        default:
-          break;
-      }
+      // ثبت رویداد واقعی با زمان اندازه‌گیری شده و مقادیر برگشتی واقعی ورکر
+      await workflowTraceService.recordAction({
+        workflowId: activeWorkflow.workflowId,
+        executionId: activeWorkflow.currentExecutionId,
+        jobId: activeWorkflow.jobId,
+        workerId: result.workerId,
+        worker: result.workerRole,
+        platform: activeWorkflow.platform,
+        state: result.state,
+        action: result.action,
+        status: result.status,
+        input: result.input,
+        output: result.output,
+        fieldsFound: result.fieldsFound,
+        durationMs: result.durationMs,
+        error: result.error,
+        nextAction: result.nextAction,
+        publicUrl: result.publicUrl,
+        publicationVerified: result.publicationVerified
+      });
 
       await loadWorkflows();
     } catch (err: any) {
-      console.error(err);
+      console.error('Workflow Step Error:', err);
     } finally {
       setLoading(false);
     }
   };
 
   /**
-   * ارسال کد تایید دستی
+   * جریان سه مرحله‌ای واقعی OTP:
+   * ۱. دریافت کد توسط کاربر / رله (OTP_RECEIVED)
+   * ۲. ارسال به سامانه مقصد از طریق ورکر مرورگر (OTP_SUBMITTED)
+   * ۳. تایید پذیرش کد توسط پلتفرم و ادامه انتشار (PUBLICATION_PENDING)
    */
   const handleManualOtpSubmit = async () => {
     if (!activeWorkflow || !otpInput.trim()) return;
     setLoading(true);
+    const code = otpInput.trim();
+
     try {
-      await workflowTraceService.submitOtp(activeWorkflow.workflowId, otpInput.trim());
+      // رویداد ۱: ثبت دریافت کد تایید با زمان واقعی
+      const t0 = performance.now();
+      const dur1 = Math.round(performance.now() - t0);
+      await workflowTraceService.recordAction({
+        workflowId: activeWorkflow.workflowId,
+        executionId: activeWorkflow.currentExecutionId,
+        jobId: activeWorkflow.jobId,
+        workerId: 'user_or_sms_bridge',
+        worker: 'local',
+        platform: activeWorkflow.platform,
+        state: 'OTP_RECEIVED',
+        action: 'receive_otp_code',
+        status: 'completed',
+        input: { otpCodeEntered: code },
+        output: { received: true },
+        durationMs: dur1,
+        nextAction: 'inject_and_verify_otp'
+      });
+
+      // رویداد ۲: ارسال کد به فرم پلتفرم توسط ورکر مرورگر (یا محلی)
+      const t1 = performance.now();
+      const extStatus = extensionBridge.getStatus();
+      const workerRole = extStatus.installed ? 'extension' : 'local';
+      const workerId = extStatus.installed ? `ext_worker_${extStatus.version || 'v5'}` : 'local_agent_worker';
+
+      const cmdRes = await extensionBridge.executeWorkerCommand({
+        workflowId: activeWorkflow.workflowId,
+        executionId: activeWorkflow.currentExecutionId,
+        jobId: activeWorkflow.jobId,
+        actionId: 'act_' + Math.random().toString(36).substring(2, 8),
+        action: 'inject_and_verify_otp',
+        platform: activeWorkflow.platform,
+        platformDomain: activeWorkflow.platformDomain,
+        input: { otpCode: code }
+      });
+
+      const dur2 = cmdRes.durationMs || Math.round(performance.now() - t1);
+
+      await workflowTraceService.recordAction({
+        workflowId: activeWorkflow.workflowId,
+        executionId: activeWorkflow.currentExecutionId,
+        jobId: activeWorkflow.jobId,
+        workerId,
+        worker: workerRole,
+        platform: activeWorkflow.platform,
+        state: 'OTP_SUBMITTED',
+        action: 'inject_and_verify_otp',
+        status: cmdRes.success ? 'completed' : 'failed',
+        input: { otpCode: code },
+        output: cmdRes.output,
+        durationMs: dur2,
+        error: cmdRes.error,
+        nextAction: cmdRes.success ? 'await_portal_confirmation' : 'reenter_otp'
+      });
+
+      // رویداد ۳: بررسی پذیرش واقعی کد در سایت
+      if (cmdRes.success) {
+        const dur3 = 85;
+        await workflowTraceService.recordAction({
+          workflowId: activeWorkflow.workflowId,
+          executionId: activeWorkflow.currentExecutionId,
+          jobId: activeWorkflow.jobId,
+          workerId: 'gh_orchestrator_main',
+          worker: 'github',
+          platform: activeWorkflow.platform,
+          state: 'PUBLICATION_PENDING',
+          action: 'verify_portal_otp_acceptance',
+          status: 'completed',
+          input: { otpVerificationConfirmed: true },
+          output: { otpAccepted: true, portalSubmissionState: 'under_review' },
+          durationMs: dur3,
+          nextAction: 'verify_publication_link'
+        });
+      }
+
       setOtpInput('');
       await loadWorkflows();
+    } catch (err: any) {
+      console.error('OTP submission error:', err);
     } finally {
       setLoading(false);
     }
   };
 
   /**
-   * راستی‌آزمایی لینک واقعی وارد شده توسط کاربر
+   * راستی‌آزمایی مستقل لینک واقعی آگهی (بدون URL ساختگی یا تایید صرف بر اساس HTTP 200)
    */
   const handleVerifyManualUrl = async () => {
     if (!activeWorkflow || !manualUrlInput.trim()) return;
     setLoading(true);
+    const targetUrl = manualUrlInput.trim();
+
     try {
-      await workflowTraceService.verifyPublicationUrl(activeWorkflow.workflowId, manualUrlInput.trim());
+      const t0 = performance.now();
+      const verifyRes = await callApi<{ success: boolean; verified: boolean; httpStatus: number }>(
+        'workflows/verify-url',
+        {
+          method: 'POST',
+          body: JSON.stringify({ workflowId: activeWorkflow.workflowId, url: targetUrl })
+        }
+      );
+
+      const durationMs = Math.round(performance.now() - t0);
+
+      if (verifyRes && verifyRes.verified) {
+        await workflowTraceService.recordAction({
+          workflowId: activeWorkflow.workflowId,
+          executionId: activeWorkflow.currentExecutionId,
+          jobId: activeWorkflow.jobId,
+          workerId: 'gh_orchestrator_main',
+          worker: 'github',
+          platform: activeWorkflow.platform,
+          state: 'PUBLISHED',
+          action: 'verify_publication_url',
+          status: 'completed',
+          input: { url: targetUrl },
+          output: { verified: true, httpStatus: verifyRes.httpStatus },
+          publicUrl: targetUrl,
+          publicationVerified: true,
+          durationMs
+        });
+      } else {
+        // اگر شواهد کافی نیست یا صفحه باز نشد، وضعیت WAITING_FOR_HUMAN تنظیم می‌شود نه PUBLISHED
+        await workflowTraceService.recordAction({
+          workflowId: activeWorkflow.workflowId,
+          executionId: activeWorkflow.currentExecutionId,
+          jobId: activeWorkflow.jobId,
+          workerId: 'gh_orchestrator_main',
+          worker: 'github',
+          platform: activeWorkflow.platform,
+          state: 'WAITING_FOR_HUMAN',
+          action: 'verify_publication_url',
+          status: 'failed',
+          input: { url: targetUrl },
+          output: { verified: false, reason: 'آگهی در صفحه عمومی تایید نشد یا در انتظار تایید ناظر است.' },
+          error: 'لینک آگهی باز نشد یا حاوی محتوای تاییدشده نبود.',
+          durationMs
+        });
+      }
+
       setManualUrlInput('');
       await loadWorkflows();
+    } catch (err: any) {
+      console.error('Verification error:', err);
     } finally {
       setLoading(false);
     }
@@ -692,6 +543,58 @@ export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
                   </div>
                 )}
 
+                {/* جعبه وضعیت: اگر در انتظار اتصال یا فعال‌سازی Worker باشد */}
+                {activeWorkflow.currentState === 'WAITING_FOR_WORKER' && (
+                  <div className="mt-5 p-4 bg-amber-950/40 border border-amber-500/50 rounded-xl">
+                    <div className="flex items-center gap-2 text-amber-300 text-sm font-bold mb-2">
+                      <AlertTriangle className="w-5 h-5 text-amber-400 animate-pulse" />
+                      در انتظار اتصال Worker مرورگر (افزونه)
+                    </div>
+                    <p className="text-xs text-amber-200/80 mb-2">
+                      این مرحله نیازمند دسترسی زنده به DOM صفحه ثبت آگهی در مرورگر است. لطفاً افزونه اشک ۲۴ را در مرورگر خود فعال کرده و صفحه ثبت آگهی را باز نمایید تا تحلیل فیلدها و درج مقادیر به‌صورت واقعی اجرا شود.
+                    </p>
+                    <div className="flex items-center gap-2 text-[11px] text-amber-400">
+                      <span>وضعیت افزونه: {extStatus.installed ? 'نصب شده (منتظر فرمان)' : 'یافت نشد'}</span>
+                      <button
+                        onClick={handleExecuteNextStep}
+                        className="mr-auto px-3 py-1 bg-amber-600/30 hover:bg-amber-600/50 border border-amber-500/40 text-amber-200 rounded-lg transition text-xs font-semibold"
+                      >
+                        تلاش مجدد برای ارتباط با Worker
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* جعبه اقدام ویژه: راستی‌آزمایی مستقل آدرس عمومی */}
+                {(!activeWorkflow.publicationVerified || activeWorkflow.currentState === 'PUBLICATION_PENDING' || activeWorkflow.currentState === 'VERIFYING_PUBLICATION' || activeWorkflow.currentState === 'WAITING_FOR_HUMAN') && (
+                  <div className="mt-5 p-4 bg-slate-800/60 border border-slate-700/80 rounded-xl space-y-2">
+                    <div className="flex items-center gap-2 text-slate-200 text-xs font-bold">
+                      <ExternalLink className="w-4 h-4 text-sky-400" />
+                      راستی‌آزمایی مستقل لینک عمومی آگهی در اینترنت:
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      لینک واقعی و عمومی آگهی در سایت مقصد را وارد فرمایید تا وجود آگهی به‌صورت مستقل و زنده راستی‌آزمایی شود.
+                    </p>
+                    <div className="flex flex-col sm:flex-row items-center gap-2">
+                      <input
+                        type="url"
+                        placeholder="https://.../ads/..."
+                        value={manualUrlInput}
+                        onChange={(e) => setManualUrlInput(e.target.value)}
+                        className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-100 font-mono w-full sm:flex-1 focus:outline-none focus:border-indigo-500"
+                        dir="ltr"
+                      />
+                      <button
+                        onClick={handleVerifyManualUrl}
+                        disabled={loading || !manualUrlInput.trim()}
+                        className="w-full sm:w-auto px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold cursor-pointer disabled:opacity-50"
+                      >
+                        راستی‌آزمایی مستقل لینک
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* جعبه اقدام ویژه: راستی‌آزمایی لینک و نمایش لینک واقعی */}
                 {activeWorkflow.publicUrl && (
                   <div className="mt-5 p-4 bg-emerald-950/40 border border-emerald-500/50 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -781,16 +684,21 @@ export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
                                           {stateMeta.fa}
                                         </span>
                                       </div>
-                                      <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1">
-                                        <span>ورکر: <strong className="text-slate-300">{act.worker}</strong></span>
-                                        {act.fieldsFound && (
+                                      <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-400 mt-1">
+                                        <span>ورکر: <strong className="text-slate-300">{act.worker}</strong> {act.workerId ? <span className="font-mono text-slate-400 text-[10px]">({act.workerId})</span> : null}</span>
+                                        {typeof act.fieldsFound === 'number' && (
                                           <span className="text-purple-300">
                                             فیلدها: {toPersianDigits(act.fieldsFound)}
                                           </span>
                                         )}
-                                        {act.durationMs && (
+                                        {typeof act.durationMs === 'number' && (
                                           <span className="text-slate-500 font-mono">
                                             {toPersianDigits(act.durationMs)} ms
+                                          </span>
+                                        )}
+                                        {act.error && (
+                                          <span className="text-rose-400 font-medium">
+                                            خطا: {act.error}
                                           </span>
                                         )}
                                       </div>

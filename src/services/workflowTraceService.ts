@@ -154,6 +154,9 @@ export class WorkflowTraceService {
   public async recordAction(params: {
     workflowId: string;
     executionId: string;
+    jobId?: string;
+    actionId?: string;
+    workerId?: string;
     worker: WorkerRole;
     platform: string;
     state: WorkflowState;
@@ -202,9 +205,11 @@ export class WorkflowTraceService {
       }
 
       const actionItem: WorkflowAction = {
-        actionId: 'act_' + Math.random().toString(36).substring(2, 8),
+        actionId: params.actionId || ('act_' + Math.random().toString(36).substring(2, 8)),
         executionId: params.executionId,
         workflowId: params.workflowId,
+        jobId: params.jobId || wf.jobId,
+        workerId: params.workerId || `${params.worker}_worker_node`,
         worker: params.worker,
         platform: params.platform || wf.platform,
         state: params.state,

@@ -307,6 +307,93 @@ export class ExtensionBridgeManager {
     } catch (e) {}
   }
 
+  /**
+   * اجرای فرمان واقعی بر روی افزونه مرورگر با ردگیری دقیق شناسه و زمان اجرا
+   */
+  public async executeWorkerCommand(command: {
+    workflowId: string;
+    executionId: string;
+    jobId: string;
+    actionId: string;
+    action: string;
+    platform: string;
+    platformDomain: string;
+    input?: any;
+    timeoutMs?: number;
+  }): Promise<{
+    success: boolean;
+    workerId: string;
+    output?: any;
+    fieldsFound?: number;
+    error?: string;
+    durationMs: number;
+  }> {
+    const startTime = performance.now();
+    const correlationId = 'cmd_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+    const workerId = 'ext_browser_' + (this.status.version || 'v5');
+    const timeoutMs = command.timeoutMs || 4500;
+
+    if (!this.status.installed && this.status.transportType === 'none') {
+      return {
+        success: false,
+        workerId,
+        error: 'افزونه مرورگر در دسترس نیست یا متصل نشده است.',
+        durationMs: Math.round(performance.now() - startTime)
+      };
+    }
+
+    return new Promise((resolve) => {
+      let resolved = false;
+
+      const timer = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          window.removeEventListener('message', handleMessage);
+          resolve({
+            success: false,
+            workerId,
+            error: 'پاسخی از افزونه مرورگر در مهلت زمانی دریافت نشد.',
+            durationMs: Math.round(performance.now() - startTime)
+          });
+        }
+      }, timeoutMs);
+
+      const handleMessage = (event: MessageEvent) => {
+        const data = event.data;
+        if (!data || typeof data !== 'object') return;
+        if (data.type === 'ASHK_EXT_COMMAND_RESPONSE' && data.correlationId === correlationId) {
+          if (!resolved) {
+            resolved = true;
+            clearTimeout(timer);
+            window.removeEventListener('message', handleMessage);
+            resolve({
+              success: data.success !== false,
+              workerId,
+              output: data.output || data.result,
+              fieldsFound: data.fieldsFound,
+              error: data.error,
+              durationMs: Math.round(performance.now() - startTime)
+            });
+          }
+        }
+      };
+
+      window.addEventListener('message', handleMessage);
+
+      const payload = {
+        type: 'ASHK_EXECUTE_WORKER_COMMAND',
+        correlationId,
+        ...command,
+        timestamp: Date.now()
+      };
+
+      window.postMessage(payload, '*');
+      try {
+        document.dispatchEvent(new CustomEvent('ASHK_EXT_REQUEST', { detail: payload }));
+      } catch (_) {}
+    });
+  }
+
   private updateStatus(newPartial: Partial<ExtensionWorkerStatus>) {
     this.status = { ...this.status, ...newPartial };
     this.notifyListeners();
