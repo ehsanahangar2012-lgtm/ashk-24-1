@@ -1336,6 +1336,90 @@ export function cpanelDevApiPlugin(): Plugin {
               });
             }
 
+            case 'workflows/dispatch-github-task': {
+              const wfId = body.workflowId || '';
+              const execId = body.executionId || '';
+              const jobId = body.jobId || '';
+              const actionId = body.actionId || '';
+              const action = body.action || '';
+              const state = body.state || '';
+
+              if (!wfId || !action) {
+                return sendJson({ success: false, error: 'workflowId و action برای dispatch الزامی هستند.' }, 400);
+              }
+
+              const ghToken = process.env.GITHUB_WORKER_TOKEN || process.env.GITHUB_TOKEN || '';
+              const ghRepo = process.env.GITHUB_WORKER_REPO || process.env.GITHUB_REPOSITORY || '';
+
+              if (!ghToken || !ghRepo) {
+                return sendJson({
+                  success: false,
+                  status: 'WAITING_FOR_WORKER',
+                  accepted: false,
+                  workflowId: wfId,
+                  actionId,
+                  error: 'پیکربندی GitHub Worker Token در سرور یافت نشد یا ورکر ابری در دسترس نیست. وضعیت: WAITING_FOR_WORKER.'
+                }, 503);
+              }
+
+              try {
+                const ghRes = await fetch(`https://api.github.com/repos/${ghRepo}/dispatches`, {
+                  method: 'POST',
+                  headers: {
+                    'User-Agent': 'Ashk24-Automation-Engine',
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Authorization': `Bearer ${ghToken}`,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    event_type: 'ashk24-worker-task',
+                    client_payload: {
+                      workflow_id: wfId,
+                      execution_id: execId,
+                      job_id: jobId,
+                      action_id: actionId,
+                      action,
+                      state,
+                      platform: body.platform || '',
+                      platformDomain: body.platformDomain || '',
+                      input: body.input || {}
+                    }
+                  })
+                });
+
+                if (ghRes.status === 204 || ghRes.status === 200 || ghRes.status === 201) {
+                  return sendJson({
+                    success: true,
+                    status: 'DISPATCHED',
+                    accepted: true,
+                    executionStatus: 'PENDING_RUNNER_PICKUP',
+                    workflowId: wfId,
+                    actionId,
+                    message: 'تسک با موفقیت به GitHub Worker ارسال گردید و در صف اجرای Runner قرار گرفت.'
+                  });
+                } else {
+                  const errText = await ghRes.text();
+                  return sendJson({
+                    success: false,
+                    status: 'WAITING_FOR_WORKER',
+                    accepted: false,
+                    workflowId: wfId,
+                    actionId,
+                    error: `خطای دریافت پاسخ از GitHub API (کد ${ghRes.status}): ${errText}. وضعیت: WAITING_FOR_WORKER.`
+                  }, 503);
+                }
+              } catch (err: any) {
+                return sendJson({
+                  success: false,
+                  status: 'WAITING_FOR_WORKER',
+                  accepted: false,
+                  workflowId: wfId,
+                  actionId,
+                  error: `عدم امکان برقراری ارتباط با GitHub: ${err.message}. وضعیت: WAITING_FOR_WORKER.`
+                }, 503);
+              }
+            }
+
             case 'workflows/verify-url': {
               if (!Array.isArray(db.distributedWorkflows)) db.distributedWorkflows = [];
               const wfId = body.workflowId;

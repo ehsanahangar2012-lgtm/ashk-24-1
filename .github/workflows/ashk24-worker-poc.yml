@@ -102,6 +102,12 @@ jobs:
           TARGET_JOB_ID: ${{ inputs.job_id || github.event.inputs.job_id || github.event.client_payload.job_id || '' }}
           WORKFLOW_ID: ${{ inputs.workflow_id || github.event.inputs.workflow_id || github.event.client_payload.workflow_id || '' }}
           EXECUTION_ID: ${{ inputs.execution_id || github.event.inputs.execution_id || github.event.client_payload.execution_id || '' }}
+          ACTION_ID: ${{ github.event.client_payload.action_id || '' }}
+          TASK_ACTION: ${{ github.event.client_payload.action || '' }}
+          TASK_STATE: ${{ github.event.client_payload.state || '' }}
+          TASK_INPUT: ${{ toJson(github.event.client_payload.input) }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
           PLATFORM_TARGET: ${{ inputs.platform_target || github.event.inputs.platform_target || github.event.client_payload.platform_target || 'payamsara' }}
           IRAN_PROXY_URL: ${{ secrets.IRAN_PROXY_URL }}
           VNC_PASSWORD: ${{ secrets.VNC_PASSWORD || 'Ashk24SecureSession' }}

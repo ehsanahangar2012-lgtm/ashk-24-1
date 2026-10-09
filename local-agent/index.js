@@ -29,6 +29,15 @@ const TARGET_JOB_ID = process.env.TARGET_JOB_ID || null;
 const PLATFORM_TARGET = process.env.PLATFORM_TARGET || process.env.TARGET_PLATFORM || 'agahi24';
 const WORKFLOW_ID = process.env.WORKFLOW_ID || null;
 const EXECUTION_ID = process.env.EXECUTION_ID || null;
+const ACTION_ID = process.env.ACTION_ID || null;
+const TASK_ACTION = process.env.TASK_ACTION || null;
+const TASK_STATE = process.env.TASK_STATE || null;
+let TASK_INPUT = null;
+try {
+  TASK_INPUT = process.env.TASK_INPUT ? (typeof process.env.TASK_INPUT === 'string' && process.env.TASK_INPUT.startsWith('{') ? JSON.parse(process.env.TASK_INPUT) : process.env.TASK_INPUT) : null;
+} catch (_) {
+  TASK_INPUT = null;
+}
 const LOCAL_AGENT_PORT = parseInt(process.env.LOCAL_AGENT_PORT || '3824', 10);
 
 const EVIDENCE_DIR = path.resolve(__dirname, 'evidence');
@@ -1514,6 +1523,31 @@ async function executeJob(job, claimData) {
 async function main() {
   await handshake();
   startLocalTaskServer();
+
+  if (TASK_ACTION) {
+    console.log(`🎯 [Direct Task Execution Mode] Action: ${TASK_ACTION}, ActionID: ${ACTION_ID || 'auto'}, State: ${TASK_STATE || 'AUTO'}`);
+    const directTask = {
+      action: TASK_ACTION,
+      actionId: ACTION_ID || `act_${Date.now()}`,
+      state: TASK_STATE,
+      workflowId: WORKFLOW_ID,
+      executionId: EXECUTION_ID,
+      jobId: TARGET_JOB_ID,
+      platform: PLATFORM_TARGET,
+      input: TASK_INPUT || {}
+    };
+
+    const taskResult = await executeTask(directTask);
+    console.log(`📊 [Direct Task Result]:`, JSON.stringify(taskResult, null, 2));
+
+    if (!taskResult.success) {
+      console.error(`❌ [Direct Task Failed]: ${taskResult.error || 'Execution did not complete successfully.'}`);
+      process.exit(1);
+    } else {
+      console.log(`✅ [Direct Task Completed Successfully]`);
+      process.exit(0);
+    }
+  }
 
   if (IS_ONCE) {
     console.log(`🔍 [Single Execution Mode] Checking for balanced pending jobs via Orchestrator...`);
