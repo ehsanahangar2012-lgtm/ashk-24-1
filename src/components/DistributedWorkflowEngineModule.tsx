@@ -303,8 +303,37 @@ export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
         });
         const dur3 = checkCmd.durationMs || Math.round(performance.now() - t2);
         const checkOut = checkCmd.output || {};
+        const hasExplicitProof = checkCmd.success && (
+          checkOut.accepted === true ||
+          checkOut.verifiedByPlatform === true ||
+          checkOut.otpVerified === true
+        );
 
-        if (checkCmd.success && (checkOut.accepted === true || checkOut.verifiedByPlatform === true || checkOut.redirectUrl)) {
+        if (hasExplicitProof) {
+          // ثبت تایید قطعی کد OTP
+          await workflowTraceService.recordAction({
+            workflowId: activeWorkflow.workflowId,
+            executionId: activeWorkflow.currentExecutionId,
+            jobId: activeWorkflow.jobId,
+            workerId: 'ext_worker_v5',
+            worker: 'extension',
+            platform: activeWorkflow.platform,
+            state: 'OTP_VERIFIED',
+            action: 'verify_portal_otp_acceptance',
+            status: 'completed',
+            input: { otpVerificationConfirmed: true },
+            output: {
+              verifiedByPlatform: true,
+              otpVerified: true,
+              portalAccepted: true,
+              redirectUrl: checkOut.redirectUrl
+            },
+            publicUrl: checkOut.redirectUrl,
+            durationMs: dur3,
+            nextAction: 'transition_to_publication_pending'
+          });
+
+          // انتقال به صف بررسی انتشار
           await workflowTraceService.recordAction({
             workflowId: activeWorkflow.workflowId,
             executionId: activeWorkflow.currentExecutionId,
@@ -313,17 +342,14 @@ export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
             worker: 'github',
             platform: activeWorkflow.platform,
             state: 'PUBLICATION_PENDING',
-            action: 'verify_portal_otp_acceptance',
+            action: 'transition_to_publication_pending',
             status: 'completed',
-            input: { otpVerificationConfirmed: true },
             output: {
-              verifiedByPlatform: true,
-              portalAccepted: true,
               moderationStatus: 'under_review',
               redirectUrl: checkOut.redirectUrl
             },
             publicUrl: checkOut.redirectUrl,
-            durationMs: dur3,
+            durationMs: 10,
             nextAction: 'verify_publication_link'
           });
         } else if (checkOut.rejected === true || checkOut.invalidCode === true) {
@@ -337,12 +363,12 @@ export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
             state: 'WAITING_FOR_OTP',
             action: 'verify_portal_otp_acceptance',
             status: 'failed',
-            error: 'کد تایید واردشده توسط سامانه مقصد رد شد. لطفاً کد صحیح را مجدداً وارد فرمایید.',
+            error: 'کد تایید واردشده توسط سامانه مقصد رد شد (کد نادرست یا منقضی). لطفاً کد معتبر را وارد فرمایید.',
             durationMs: dur3,
             nextAction: 'receive_otp'
           });
         } else {
-          // عدم احراز قطعی -> وضعیت UNKNOWN
+          // عدم احراز قطعی (وجود صرف ریدایرکت یا تغییر صفحه بدون تایید پیام متنی) -> وضعیت UNKNOWN
           await workflowTraceService.recordAction({
             workflowId: activeWorkflow.workflowId,
             executionId: activeWorkflow.currentExecutionId,
@@ -353,7 +379,7 @@ export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
             state: 'UNKNOWN',
             action: 'verify_portal_otp_acceptance',
             status: 'paused',
-            error: 'پذیرش قطعی کد تایید توسط سایت مقصد احراز نشد. وضعیت: UNKNOWN.',
+            error: 'شواهد قطعی مبنی بر پذیرش کد توسط سامانه مقصد یافت نشد (وجود ریدایرکت به‌تنهایی ملاک تایید پذیرش کد نیست). وضعیت: UNKNOWN.',
             durationMs: dur3
           });
         }

@@ -1646,6 +1646,89 @@ try {
             }
             break;
 
+        case ($route === 'workflows/dispatch-github-task'):
+            if ($method !== 'POST') { http_response_code(405); echo json_encode(['error' => 'Method Not Allowed']); break; }
+            $wfId = $body['workflowId'] ?? '';
+            $execId = $body['executionId'] ?? '';
+            $jobId = $body['jobId'] ?? '';
+            $actionId = $body['actionId'] ?? '';
+            $action = $body['action'] ?? '';
+            $state = $body['state'] ?? '';
+
+            if (empty($wfId) || empty($action)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'workflowId و action برای dispatch الزامی هستند.'], JSON_UNESCAPED_UNICODE);
+                break;
+            }
+
+            // بررسی دسترسی و تنظیمات GitHub Actions Dispatch
+            $ghToken = defined('GITHUB_WORKER_TOKEN') ? GITHUB_WORKER_TOKEN : (getenv('GITHUB_TOKEN') ?: '');
+            $ghRepo = defined('GITHUB_WORKER_REPO') ? GITHUB_WORKER_REPO : (getenv('GITHUB_REPOSITORY') ?: '');
+
+            $dispatched = false;
+            $dispatchError = '';
+
+            if (!empty($ghToken) && !empty($ghRepo)) {
+                $ch = curl_init("https://api.github.com/repos/{$ghRepo}/dispatches");
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'User-Agent: Ashk24-Automation-Engine',
+                    'Accept: application/vnd.github.v3+json',
+                    "Authorization: Bearer {$ghToken}",
+                    'Content-Type: application/json'
+                ]);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+                    'event_type' => 'ashk24-worker-task',
+                    'client_payload' => [
+                        'workflow_id' => $wfId,
+                        'execution_id' => $execId,
+                        'job_id' => $jobId,
+                        'action_id' => $actionId,
+                        'action' => $action,
+                        'state' => $state,
+                        'platform' => $body['platform'] ?? '',
+                        'platformDomain' => $body['platformDomain'] ?? '',
+                        'input' => $body['input'] ?? []
+                    ]
+                ]));
+                curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+                $resp = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $curlErr = curl_error($ch);
+                curl_close($ch);
+
+                if ($httpCode === 204 || $httpCode === 200 || $httpCode === 201) {
+                    $dispatched = true;
+                } else {
+                    $dispatchError = "GitHub API response HTTP {$httpCode}: {$resp} {$curlErr}";
+                }
+            } else {
+                $dispatchError = 'پیکربندی GitHub Worker Token در سرور یافت نشد یا ورکر ابری در دسترس نیست.';
+            }
+
+            if ($dispatched) {
+                echo json_encode([
+                    'success' => true,
+                    'status' => 'DISPATCHED',
+                    'accepted' => true,
+                    'executionStatus' => 'PENDING_RUNNER_PICKUP',
+                    'workflowId' => $wfId,
+                    'actionId' => $actionId,
+                    'message' => 'تسک با موفقیت به GitHub Worker ارسال گردید و در صف اجرای Runner قرار گرفت.'
+                ], JSON_UNESCAPED_UNICODE);
+            } else {
+                http_response_code(503);
+                echo json_encode([
+                    'success' => false,
+                    'status' => 'WAITING_FOR_WORKER',
+                    'accepted' => false,
+                    'workflowId' => $wfId,
+                    'error' => "ارسال تسک به GitHub Worker ناموفق بود: {$dispatchError}. وضعیت: WAITING_FOR_WORKER."
+                ], JSON_UNESCAPED_UNICODE);
+            }
+            break;
+
         case ($route === 'workflows/verify-url'):
             if ($method !== 'POST') { http_response_code(405); echo json_encode(['error' => 'Method Not Allowed']); break; }
             $wfId = $body['workflowId'] ?? '';

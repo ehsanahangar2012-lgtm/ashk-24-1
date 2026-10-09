@@ -185,8 +185,11 @@ export class WorkerDispatcherService {
       'REGISTERING',
       'LOGGING_IN',
       'INSPECTING_FORM',
+      'MAPPING_FIELDS',
       'FILLING_FIELDS',
-      'SUBMITTING'
+      'SUBMITTING',
+      'OTP_RECEIVED',
+      'OTP_SUBMITTED'
     ];
     return supportedLocalTasks.includes(state);
   }
@@ -207,8 +210,10 @@ export class WorkerDispatcherService {
       'REGISTERING',
       'LOGGING_IN',
       'INSPECTING_FORM',
+      'MAPPING_FIELDS',
       'FILLING_FIELDS',
       'SUBMITTING',
+      'OTP_RECEIVED',
       'OTP_SUBMITTED'
     ];
 
@@ -231,16 +236,28 @@ export class WorkerDispatcherService {
    * اجرای واقعی تسک توسط Local Agent از طریق ارتباط مستقیم با دیمون یا صف سرور
    * در صورت عدم اتصال Local Agent، هرگز به Extension ارجاع داده نمی‌شود و صریحاً WAITING_FOR_WORKER ثبت می‌گردد.
    */
+  /**
+   * اجرای واقعی تسک توسط Local Agent از طریق ارتباط مستقیم با دیمون یا صف سرور
+   * در صورت عدم اتصال Local Agent، هرگز به Extension ارجاع داده نمی‌شود و صریحاً WAITING_FOR_WORKER ثبت می‌گردد.
+   */
   public async executeLocalAgentTask(task: {
     workflowId: string;
     executionId: string;
     jobId: string;
+    actionId?: string;
     action: string;
     state: WorkflowState;
     platform: string;
     platformDomain: string;
     input: any;
-  }): Promise<{ success: boolean; output?: any; error?: string; durationMs: number }> {
+  }): Promise<{
+    success: boolean;
+    status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+    output?: any;
+    error?: string;
+    durationMs: number;
+    fieldsFound?: number;
+  }> {
     const t0 = performance.now();
     try {
       // ۱. تلاش برای ارسال مستقیم به دیمون فعال Local Agent (Port 3824)
@@ -252,11 +269,14 @@ export class WorkerDispatcherService {
       });
       if (localRes.ok) {
         const data = await localRes.json();
+        const success = Boolean(data.success);
         return {
-          success: Boolean(data.success),
+          success,
+          status: success ? 'COMPLETED' : 'FAILED',
           output: data.output || data,
           error: data.error,
-          durationMs: Math.round(performance.now() - t0)
+          durationMs: Math.round(performance.now() - t0),
+          fieldsFound: data.output?.fieldsFound ?? data.output?.fields?.length
         };
       }
     } catch (_) {}
@@ -271,9 +291,20 @@ export class WorkerDispatcherService {
         })
       });
       if (apiRes && apiRes.success) {
+        // تسک فقط به صف اضافه شده است؛ وضعیت صریحاً QUEUED است و نه موفقیت تکمیل‌شده
         return {
-          success: true,
-          output: apiRes.output || { queuedForLocalWorker: true },
+          success: false,
+          status: 'QUEUED',
+          output: {
+            queued: true,
+            status: 'QUEUED',
+            workflowId: task.workflowId,
+            executionId: task.executionId,
+            jobId: task.jobId,
+            actionId: task.actionId,
+            serverOutput: apiRes.output
+          },
+          error: 'تسک در صف Local Worker قرار گرفت (QUEUED) و در انتظار claim و اجرا است. وضعیت: WAITING_FOR_WORKER.',
           durationMs: Math.round(performance.now() - t0)
         };
       }
@@ -281,7 +312,8 @@ export class WorkerDispatcherService {
 
     return {
       success: false,
-      error: 'عامل ورکر محلی (Local Agent) در دسترس نیست. برای اجرای تسک‌های مرورگر بدون افزونه، لطفاً اسکریپت start_agent را روی سیستم خود اجرا نمایید.',
+      status: 'FAILED',
+      error: 'عامل ورکر محلی (Local Agent) در دسترس نیست. برای اجرای تسک‌های مرورگر بدون افزونه، لطفاً اسکریپت start_agent را روی سیستم خود اجرا نمایید. وضعیت: WAITING_FOR_WORKER.',
       durationMs: Math.round(performance.now() - t0)
     };
   }
@@ -289,7 +321,7 @@ export class WorkerDispatcherService {
   /**
    * لایه اجرایی مشترک ورکرها (Unified Worker Execution Layer)
    * تضمین می‌کند که هر تسک صرفاً توسط ورکر انتخاب‌شده اجرا شود:
-   * - GitHub: dispatch/claim واقعی task و ثبت ابری
+   * - GitHub: dispatch/claim واقعی task و ثبت ابری (بدون fallback ساختگی)
    * - Extension: اجرای مستقیم فرمان‌های مرورگر از طریق extensionBridge با اعتبارسنجی قرارداد خروجی
    * - Local: اجرای مستقیم از طریق API دیمون لوکال یا صف واقعی خودش (بدون فراخوانی افزونه)
    */
@@ -301,12 +333,24 @@ export class WorkerDispatcherService {
         workflowId: task.workflowId,
         executionId: task.executionId,
         jobId: task.jobId,
+        actionId: task.actionId,
         action: task.action,
         state: task.state,
         platform: task.platform,
         platformDomain: task.platformDomain,
         input: task.input
       });
+
+      if (localRes.status === 'QUEUED') {
+        return {
+          success: false,
+          workerId: 'local_agent_worker',
+          workerRole: 'local',
+          output: localRes.output,
+          error: 'تسک فقط به صف Local Worker افزوده شده و هنوز اجرا نشده است (QUEUED). وضعیت: WAITING_FOR_WORKER.',
+          durationMs: localRes.durationMs
+        };
+      }
 
       return {
         success: localRes.success,
@@ -315,7 +359,7 @@ export class WorkerDispatcherService {
         output: localRes.output,
         error: localRes.error,
         durationMs: localRes.durationMs,
-        fieldsFound: localRes.output?.fieldsFound ?? localRes.output?.fields?.length
+        fieldsFound: localRes.fieldsFound
       };
     }
 
@@ -356,31 +400,52 @@ export class WorkerDispatcherService {
       };
     }
 
-    // ورکر GitHub
+    // ورکر GitHub: ارتباط واقعی با مسیر dispatch ابری (بدون fallback ساختگی)
     try {
-      const ghRes = await callApi<{ success: boolean; output?: any; error?: string }>('workflows/dispatch-github-task', {
+      const ghRes = await callApi<{
+        success: boolean;
+        status?: string;
+        accepted?: boolean;
+        executionStatus?: string;
+        output?: any;
+        error?: string;
+      }>('workflows/dispatch-github-task', {
         method: 'POST',
         body: JSON.stringify(task)
       });
 
       if (ghRes && ghRes.success) {
+        // تفکیک دقیق پذیرش تسک، آغاز اجرا و تکمیل
         return {
           success: true,
           workerId: task.workerId,
           workerRole: 'github',
-          output: ghRes.output,
+          output: {
+            taskAccepted: ghRes.accepted !== false,
+            dispatchStatus: ghRes.status || 'DISPATCHED',
+            executionStatus: ghRes.executionStatus || 'PENDING_RUNNER_PICKUP',
+            serverOutput: ghRes.output
+          },
+          durationMs: Math.round(performance.now() - t0)
+        };
+      } else {
+        return {
+          success: false,
+          workerId: task.workerId,
+          workerRole: 'github',
+          error: ghRes?.error || 'ارسال تسک به GitHub Worker انجام نشد یا Runner در دسترس نیست. وضعیت: WAITING_FOR_WORKER.',
           durationMs: Math.round(performance.now() - t0)
         };
       }
-    } catch (_) {}
-
-    return {
-      success: true,
-      workerId: task.workerId,
-      workerRole: 'github',
-      output: { dispatchedLocally: true },
-      durationMs: Math.round(performance.now() - t0)
-    };
+    } catch (err: any) {
+      return {
+        success: false,
+        workerId: task.workerId,
+        workerRole: 'github',
+        error: `خطا در ارتباط با سرویس GitHub Worker: ${err.message || 'سرور پاسخگو نیست'}. وضعیت: WAITING_FOR_WORKER.`,
+        durationMs: Math.round(performance.now() - t0)
+      };
+    }
   }
 
   /**
@@ -1271,8 +1336,13 @@ export class WorkerDispatcherService {
             };
           }
 
-          // پذیرش قطعی توسط سایت احراز شد
-          if (out.accepted === true || out.verifiedByPlatform === true || out.redirectUrl) {
+          // پذیرش قطعی توسط سایت احراز شد: وجود شواهد صریح (نه صرفاً redirectUrl)
+          const hasExplicitProof = out.accepted === true ||
+                                   out.verifiedByPlatform === true ||
+                                   out.portalAccepted === true ||
+                                   out.otpVerified === true;
+
+          if (hasExplicitProof) {
             const redirectUrl = out.redirectUrl || out.publicUrl || out.adUrl || null;
             if (redirectUrl) {
               workflow.publicUrl = redirectUrl;
@@ -1282,8 +1352,8 @@ export class WorkerDispatcherService {
             return {
               success: true,
               workerId: execRes.workerId,
-              workerRole: 'github',
-              state: 'PUBLICATION_PENDING',
+              workerRole: execRes.workerRole,
+              state: 'OTP_VERIFIED',
               action: 'check_otp_acceptance',
               status: 'completed',
               durationMs: execRes.durationMs,
@@ -1291,27 +1361,51 @@ export class WorkerDispatcherService {
               output: {
                 verifiedByPlatform: true,
                 portalAccepted: true,
-                adAccepted: true,
+                otpVerified: true,
                 moderationStatus: 'under_review',
-                message: 'پذیرش واقعی کد توسط سامانه مقصد احراز شد.',
+                message: 'پذیرش واقعی کد تایید OTP توسط سامانه مقصد احراز و تایید گردید.',
                 redirectUrl
               },
               publicUrl: redirectUrl || undefined,
-              nextAction: 'verify_publication_link'
+              nextAction: 'transition_to_publication_pending'
             };
           }
 
-          // شواهد کافی نیست -> وضعیت UNKNOWN (نه موفقیت ساختگی)
+          // شواهد کافی نیست (یا صرفاً ریدایرکت رخ داده بدون تایید پیام متنی): وضعیت UNKNOWN یا WAITING_FOR_HUMAN
           return {
             success: false,
             workerId: execRes.workerId,
-            workerRole: 'github',
-            state: 'UNKNOWN',
+            workerRole: execRes.workerRole,
+            state: out.needsHumanIntervention ? 'WAITING_FOR_HUMAN' : 'UNKNOWN',
             action: 'check_otp_acceptance',
             status: 'paused',
-            error: 'شواهد قطعی مبنی بر پذیرش کد توسط سامانه مقصد یافت نشد؛ در انتظار پاسخ قطعی پلتفرم. وضعیت: UNKNOWN.',
+            error: 'شواهد قطعی مبنی بر پذیرش کد توسط سامانه مقصد یافت نشد (وجود ریدایرکت به‌تنهایی ملاک تایید پذیرش کد نیست). وضعیت: UNKNOWN.',
             durationMs: execRes.durationMs,
             output: out
+          };
+        }
+
+        // =========================================================================
+        // گام ۱۴: ثبت تایید OTP و هدایت به صف انتشار (GitHub Worker)
+        // =========================================================================
+        case 'OTP_VERIFIED': {
+          const durationMs = Math.round(performance.now() - startTime);
+          return {
+            success: true,
+            workerId,
+            workerRole: 'github',
+            state: 'PUBLICATION_PENDING',
+            action: 'transition_to_publication_pending',
+            status: 'completed',
+            durationMs,
+            publicUrl: workflow.publicUrl,
+            output: {
+              otpVerified: true,
+              moderationStatus: 'under_review',
+              publicUrl: workflow.publicUrl,
+              message: 'گردش کار پس از تایید قطعی OTP با موفقیت وارد صف انتشار گردید.'
+            },
+            nextAction: 'probe_live_public_url'
           };
         }
 

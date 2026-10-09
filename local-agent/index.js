@@ -407,38 +407,196 @@ function startLocalTaskServer() {
               };
             } else if (task.action === 'inject_field_values') {
               const mappings = task.input?.mappings || {};
+              const requiredKeys = ['title', 'description', 'phone'];
+
+              // ارزیابی تعداد کل فیلدهای ورودی در فرم صفحه
+              const allInputs = await page.$$('input, textarea, select');
+              const fieldsFound = allInputs.length;
+
               let filledCount = 0;
+              const missingRequired = [];
+              const validationErrors = [];
+
               for (const [key, val] of Object.entries(mappings)) {
-                if (!val) continue;
+                if (!val || String(val).trim() === '') {
+                  if (requiredKeys.includes(key)) {
+                    missingRequired.push(key);
+                  }
+                  continue;
+                }
                 const selector = `input[name*="${key}" i], textarea[name*="${key}" i], input[id*="${key}" i], textarea[id*="${key}" i]`;
                 const field = await page.$(selector);
                 if (field) {
-                  await field.fill(String(val));
-                  filledCount++;
+                  try {
+                    await field.fill(String(val));
+                    filledCount++;
+                  } catch (fillErr) {
+                    validationErrors.push(`خطا در درج فیلد ${key}: ${fillErr.message}`);
+                  }
+                } else if (requiredKeys.includes(key)) {
+                  missingRequired.push(key);
                 }
               }
+
+              const canSubmit = filledCount > 0 && missingRequired.length === 0 && validationErrors.length === 0;
+              taskSuccess = canSubmit;
+              if (!taskSuccess) {
+                taskError = missingRequired.length > 0
+                  ? `فیلدهای اجباری آگهی در فرم پر نشدند: [${missingRequired.join('، ')}]`
+                  : (filledCount === 0 ? 'هیچ فیلدی در فرم تطبیق نیافت یا پر نشد.' : `خطای اعتبارسنجی: [${validationErrors.join('، ')}]`);
+              }
+
               taskOutput = {
-                filledFields: filledCount,
+                fieldsFound,
                 mappedFields: Object.keys(mappings).length,
-                missingRequiredFields: [],
-                validationErrors: [],
-                canSubmit: filledCount > 0
+                filledFields: filledCount,
+                missingRequiredFields: missingRequired,
+                validationErrors,
+                canSubmit
               };
             } else if (task.action === 'click_submit_button') {
-              const submitBtn = await page.$('button[type="submit"], input[type="submit"], button:has-text("ثبت"), button:has-text("ارسال")');
-              if (submitBtn) {
-                await submitBtn.click({ force: true });
-                await page.waitForTimeout(4000);
+              const submitBtn = await page.$('button[type="submit"], input[type="submit"], button:has-text("ثبت"), button:has-text("ارسال"), button:has-text("انتشار")');
+              if (!submitBtn) {
+                taskSuccess = false;
+                taskError = 'دکمه ارسال فرم در ساختار صفحه یافت نشد.';
+                taskOutput = {
+                  clicked: false,
+                  submitted: false,
+                  pageState: 'FORM_ERROR',
+                  formError: 'دکمه ارسال فرم در ساختار صفحه موجود نیست.'
+                };
+              } else {
+                try {
+                  await submitBtn.click({ force: true });
+                  await page.waitForTimeout(3000);
+
+                  const postUrl = page.url();
+                  const pageText = await page.content();
+
+                  // بررسی خطای اعتبارسنجی فرم پس از کلیک
+                  const hasFormError = pageText.includes('خطا در ثبت') ||
+                                       pageText.includes('الزامی است') ||
+                                       pageText.includes('نامعتبر است') ||
+                                       Boolean(await page.$('.error, .alert-danger, [aria-invalid="true"]'));
+
+                  // بررسی چالش OTP
+                  const otpGateDetected = pageText.includes('کد تایید') ||
+                                          pageText.includes('کد پیامک') ||
+                                          postUrl.includes('verify') ||
+                                          postUrl.includes('otp') ||
+                                          Boolean(await page.$('input[name*="otp" i], input[name*="code" i], input[id*="otp" i]'));
+
+                  // بررسی ثبت موفق یا انتقال به صف انتشار
+                  const isSubmitted = pageText.includes('با موفقیت ثبت شد') ||
+                                      pageText.includes('در صف انتشار') ||
+                                      pageText.includes('در انتظار تایید') ||
+                                      postUrl.includes('success') ||
+                                      postUrl.includes('manage');
+
+                  let detectedState = 'UNKNOWN';
+                  if (hasFormError) {
+                    detectedState = 'FORM_ERROR';
+                    taskSuccess = false;
+                    taskError = 'خطای اعتبارسنجی در صفحه پس از ارسال فرم مشاهده شد.';
+                  } else if (otpGateDetected) {
+                    detectedState = 'OTP_REQUIRED';
+                    taskSuccess = true;
+                  } else if (isSubmitted) {
+                    detectedState = 'SUBMITTED';
+                    taskSuccess = true;
+                  } else {
+                    detectedState = 'UNKNOWN';
+                    taskSuccess = false;
+                    taskError = 'پس از کلیک دکمه ارسال، وضعیت صفحه نامشخص است (پاسخ قطعی دریافت نشد).';
+                  }
+
+                  taskOutput = {
+                    clicked: true,
+                    submitted: detectedState === 'SUBMITTED' || detectedState === 'OTP_REQUIRED',
+                    pageState: detectedState,
+                    otpGateDetected: detectedState === 'OTP_REQUIRED',
+                    hasFormError: detectedState === 'FORM_ERROR',
+                    currentUrl: postUrl
+                  };
+                } catch (clickErr) {
+                  taskSuccess = false;
+                  taskError = `خطا در کلیک دکمه ارسال: ${clickErr.message}`;
+                  taskOutput = {
+                    clicked: false,
+                    submitted: false,
+                    pageState: 'FORM_ERROR',
+                    formError: clickErr.message
+                  };
+                }
+            } else if (task.action === 'inject_and_verify_otp') {
+              const otpCode = task.input?.otpCode;
+              if (!otpCode) {
+                taskSuccess = false;
+                taskError = 'کد تایید OTP برای درج در صفحه فراهم نشده است.';
+                taskOutput = { otpInjected: false, verifiedByPlatform: false };
+              } else {
+                const otpInput = await page.$('input[name*="otp" i], input[name*="code" i], input[id*="otp" i], input[id*="code" i], input[type="tel"], input[type="number"], input.otp-input');
+                if (!otpInput) {
+                  taskSuccess = false;
+                  taskError = 'فیلد ورود کد تایید OTP در صفحه مرورگر یافت نشد.';
+                  taskOutput = { otpInjected: false, verifiedByPlatform: false };
+                } else {
+                  try {
+                    await otpInput.fill(String(otpCode));
+                    const confirmBtn = await page.$('button:has-text("تایید"), button:has-text("ثبت"), button:has-text("ارسال"), button[type="submit"]');
+                    if (confirmBtn) {
+                      await confirmBtn.click({ force: true });
+                      await page.waitForTimeout(2000);
+                    }
+                    taskSuccess = true;
+                    taskOutput = {
+                      otpInjected: true,
+                      verifiedByPlatform: false, // ارسال کد هرگز خودکار تایید سایت محسوب نمی‌شود
+                      otpCodeSubmitted: true
+                    };
+                  } catch (injectErr) {
+                    taskSuccess = false;
+                    taskError = `خطا در درج یا ارسال کد OTP: ${injectErr.message}`;
+                    taskOutput = { otpInjected: false, verifiedByPlatform: false };
+                  }
+                }
               }
-              const postUrl = page.url();
+            } else if (task.action === 'check_otp_acceptance') {
               const pageText = await page.content();
-              const otpGateDetected = pageText.includes('کد تایید') || pageText.includes('ارسال شد') || postUrl.includes('verify') || postUrl.includes('otp');
-              taskOutput = {
-                otpGateDetected,
-                submitted: true,
-                currentUrl: postUrl,
-                pageState: otpGateDetected ? 'otp_required' : 'submitted'
-              };
+              const postUrl = page.url();
+
+              const isInvalid = pageText.includes('کد نادرست') || pageText.includes('کد منقضی') || pageText.includes('اشتباه است');
+              const isAccepted = pageText.includes('با موفقیت تایید شد') ||
+                                 pageText.includes('تایید شماره انجام شد') ||
+                                 pageText.includes('در صف انتشار') ||
+                                 pageText.includes('آگهی شما ثبت شد');
+
+              if (isInvalid) {
+                taskSuccess = false;
+                taskError = 'کد تایید واردشده توسط سامانه مقصد رد شد.';
+                taskOutput = {
+                  rejected: true,
+                  invalidCode: true,
+                  otpVerified: false
+                };
+              } else if (isAccepted) {
+                taskSuccess = true;
+                taskOutput = {
+                  accepted: true,
+                  verifiedByPlatform: true,
+                  otpVerified: true,
+                  adUrl: (postUrl.includes('manage') || postUrl.includes('post') || postUrl.includes('view')) ? postUrl : null
+                };
+              } else {
+                taskSuccess = false;
+                taskError = 'شواهد قطعی مبنی بر پذیرش کد توسط سامانه مقصد یافت نشد (وجود ریدایرکت به‌تنهایی کافی نیست).';
+                taskOutput = {
+                  accepted: false,
+                  verifiedByPlatform: false,
+                  otpVerified: false,
+                  redirectUrl: postUrl
+                };
+              }
             } else {
               taskOutput = {
                 handledAction: task.action,
@@ -1219,13 +1377,13 @@ async function main() {
       const success = await executeJob(targetJob, claim);
       if (!success) {
         console.error(`❌ [Execution Finished] Job ${targetJob.id} could not complete successfully.`);
-        if (process.env.CI) {
-          console.log(`ℹ️ [CI Mode] Exiting gracefully with code 0 to prevent false workflow failure alerts on GitHub.`);
-          process.exit(0);
-        }
         process.exit(1);
       }
     } else {
+      if (TARGET_JOB_ID) {
+        console.error(`❌ [Target Job Claim Failed] Specified task ${TARGET_JOB_ID} was not found or already claimed.`);
+        process.exit(1);
+      }
       console.log(`✅ No eligible balanced jobs found in queue. Worker gracefully terminating.`);
     }
     process.exit(0);
@@ -1248,10 +1406,6 @@ async function main() {
 
 main().catch((err) => {
   console.error(`❌ [Fatal Worker Exception]: ${err.message}`);
-  if (process.env.CI) {
-    console.log(`ℹ️ [CI Mode] Graceful exit with code 0.`);
-    process.exit(0);
-  }
   process.exit(1);
 });
 

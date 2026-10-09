@@ -1,7 +1,7 @@
 {
   "name": "ashk24-automation",
   "private": true,
-  "version": "5.9.27",
+  "version": "5.9.30",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,10 @@
     "build:info": "node scripts/verify-bundle-manifest.cjs",
     "preview": "vite preview",
     "clean": "node scripts/purge-obsolete.cjs && rm -rf dist",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "node scripts/test-acceptance-scenarios.cjs",
+    "test:acceptance": "node scripts/test-acceptance-scenarios.cjs",
+    "test:e2e": "node scripts/test-e2e-workflow.cjs"
   },
   "dependencies": {
     "@google/genai": "^2.24.0",
