@@ -20,6 +20,7 @@ import {
 
 export type TabType =
   | 'ad_crawler'
+  | 'distributed_workflow'
   | 'company'
   | 'assets_config'
   | 'platforms'
@@ -56,10 +57,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const menuItems = [
     {
+      id: 'distributed_workflow' as TabType,
+      label: '★ گردش کار و رهگیری (Workflow & Trace)',
+      icon: Workflow,
+      badge: 'State Machine',
+      badgeColor: 'bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/30',
+    },
+    {
       id: 'ad_crawler' as TabType,
-      label: '★ پایش و ثبت مستقیم با OTP',
+      label: 'پایش و ثبت مستقیم با OTP',
       icon: Sparkles,
-      badge: 'موتور جدید v5.5',
+      badge: 'سریع',
       badgeColor: 'bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30',
     },
     {

@@ -945,5 +945,6 @@ export interface SmsRelayProbeResult {
 }
 
 export * from './browserIntelligence.js';
+export * from './workflowTrace.js';
 
 

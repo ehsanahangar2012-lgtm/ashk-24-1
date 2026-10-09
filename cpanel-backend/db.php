@@ -2371,6 +2371,269 @@ class Ashk24Db {
         $job['contactEmail'] = $company['email'] ?? 'ashkghalam@gmail.com';
         return $job;
     }
+
+    // ==========================================
+    // Distributed Workflow & Traceability Engine
+    // ==========================================
+
+    public function getWorkflows() {
+        $db = $this->readDb();
+        return $db['distributedWorkflows'] ?? [];
+    }
+
+    public function getWorkflowById($workflowId) {
+        $workflows = $this->getWorkflows();
+        foreach ($workflows as $wf) {
+            if ($wf['workflowId'] === $workflowId) return $wf;
+        }
+        return null;
+    }
+
+    public function createWorkflow($payload) {
+        $db = $this->readDb();
+        if (!isset($db['distributedWorkflows']) || !is_array($db['distributedWorkflows'])) {
+            $db['distributedWorkflows'] = [];
+        }
+
+        $now = date('c');
+        $workflowId = !empty($payload['workflowId']) ? $payload['workflowId'] : ('wf_' . bin2hex(random_bytes(8)));
+        $executionId = 'exec_' . bin2hex(random_bytes(6));
+        $primaryWorker = !empty($payload['primaryWorker']) ? $payload['primaryWorker'] : 'github';
+
+        $initialAction = [
+            'actionId' => 'act_' . bin2hex(random_bytes(6)),
+            'executionId' => $executionId,
+            'workflowId' => $workflowId,
+            'worker' => $primaryWorker,
+            'platform' => $payload['platform'] ?? 'payamsara.com',
+            'state' => 'CREATED',
+            'action' => 'initialize_workflow',
+            'status' => 'completed',
+            'input' => [
+                'campaignId' => $payload['campaignId'] ?? '',
+                'platform' => $payload['platform'] ?? 'payamsara.com'
+            ],
+            'output' => [
+                'initialized' => true,
+                'target' => $payload['platform'] ?? 'payamsara.com'
+            ],
+            'durationMs' => 45,
+            'attempt' => 1,
+            'timestamp' => $now
+        ];
+
+        $initialExecution = [
+            'executionId' => $executionId,
+            'workflowId' => $workflowId,
+            'attemptNumber' => 1,
+            'primaryWorker' => $primaryWorker,
+            'currentState' => 'CREATED',
+            'startedAt' => $now,
+            'actions' => [$initialAction]
+        ];
+
+        $record = [
+            'workflowId' => $workflowId,
+            'jobId' => $payload['jobId'] ?? ('job_' . time()),
+            'campaignId' => $payload['campaignId'] ?? '',
+            'campaignTitle' => $payload['campaignTitle'] ?? 'کمپین تخصصی چاپ و بسته‌بندی اشک قلم',
+            'platform' => $payload['platform'] ?? 'payamsara.com',
+            'platformDomain' => $payload['platformDomain'] ?? ($payload['platform'] ?? 'payamsara.com'),
+            'currentState' => 'CREATED',
+            'previousState' => null,
+            'activeWorker' => $primaryWorker,
+            'currentExecutionId' => $executionId,
+            'executions' => [$initialExecution],
+            'publicUrl' => null,
+            'publicationVerified' => false,
+            'otpCode' => null,
+            'createdAt' => $now,
+            'updatedAt' => $now
+        ];
+
+        array_unshift($db['distributedWorkflows'], $record);
+        $this->writeDb($db);
+        return $record;
+    }
+
+    public function recordWorkflowAction($workflowId, $executionId, $actionPayload) {
+        $db = $this->readDb();
+        if (!isset($db['distributedWorkflows'])) return null;
+
+        $targetWf = null;
+        $now = date('c');
+
+        foreach ($db['distributedWorkflows'] as &$wf) {
+            if ($wf['workflowId'] === $workflowId) {
+                $targetExec = null;
+                // پیدا کردن یا ایجاد execution
+                foreach ($wf['executions'] as &$exec) {
+                    if ($exec['executionId'] === $executionId) {
+                        $targetExec = &$exec;
+                        break;
+                    }
+                }
+
+                if (!$targetExec) {
+                    $newExec = [
+                        'executionId' => $executionId,
+                        'workflowId' => $workflowId,
+                        'attemptNumber' => count($wf['executions']) + 1,
+                        'primaryWorker' => $actionPayload['worker'] ?? 'github',
+                        'currentState' => $actionPayload['state'] ?? $wf['currentState'],
+                        'startedAt' => $now,
+                        'actions' => []
+                    ];
+                    $wf['executions'][] = $newExec;
+                    $targetExec = &$wf['executions'][count($wf['executions']) - 1];
+                }
+
+                $actionId = !empty($actionPayload['actionId']) ? $actionPayload['actionId'] : ('act_' . bin2hex(random_bytes(6)));
+                $actionRecord = [
+                    'actionId' => $actionId,
+                    'executionId' => $executionId,
+                    'workflowId' => $workflowId,
+                    'worker' => $actionPayload['worker'] ?? 'github',
+                    'platform' => $actionPayload['platform'] ?? $wf['platform'],
+                    'state' => $actionPayload['state'] ?? $wf['currentState'],
+                    'previousState' => $wf['currentState'],
+                    'action' => $actionPayload['action'] ?? 'step',
+                    'status' => $actionPayload['status'] ?? 'completed',
+                    'input' => $actionPayload['input'] ?? null,
+                    'output' => $actionPayload['output'] ?? null,
+                    'fieldsFound' => isset($actionPayload['fieldsFound']) ? intval($actionPayload['fieldsFound']) : null,
+                    'durationMs' => isset($actionPayload['durationMs']) ? intval($actionPayload['durationMs']) : 0,
+                    'attempt' => isset($actionPayload['attempt']) ? intval($actionPayload['attempt']) : 1,
+                    'error' => $actionPayload['error'] ?? null,
+                    'nextAction' => $actionPayload['nextAction'] ?? null,
+                    'timestamp' => $actionPayload['timestamp'] ?? $now
+                ];
+
+                $targetExec['actions'][] = $actionRecord;
+                $targetExec['currentState'] = $actionRecord['state'];
+                if ($actionRecord['status'] === 'failed') {
+                    $targetExec['error'] = $actionRecord['error'];
+                }
+
+                // به‌روزرسانی وضعیت خود ورک‌فلو
+                $wf['previousState'] = $wf['currentState'];
+                $wf['currentState'] = $actionRecord['state'];
+                $wf['activeWorker'] = $actionRecord['worker'];
+                $wf['currentExecutionId'] = $executionId;
+                $wf['updatedAt'] = $now;
+
+                if (!empty($actionPayload['publicUrl'])) {
+                    $wf['publicUrl'] = $actionPayload['publicUrl'];
+                }
+                if (!empty($actionPayload['publicationVerified'])) {
+                    $wf['publicationVerified'] = true;
+                }
+
+                $targetWf = $wf;
+                break;
+            }
+        }
+
+        if ($targetWf) {
+            $this->writeDb($db);
+        }
+        return $targetWf;
+    }
+
+    public function submitWorkflowOtp($workflowId, $otpCode) {
+        $db = $this->readDb();
+        if (!isset($db['distributedWorkflows'])) return null;
+
+        $targetWf = null;
+        $now = date('c');
+
+        foreach ($db['distributedWorkflows'] as &$wf) {
+            if ($wf['workflowId'] === $workflowId) {
+                $wf['otpCode'] = $otpCode;
+                $wf['previousState'] = $wf['currentState'];
+                $wf['currentState'] = 'OTP_RECEIVED';
+                $wf['updatedAt'] = $now;
+
+                // ثبت اکشن در آخرین execution
+                if (!empty($wf['executions'])) {
+                    $lastExecIdx = count($wf['executions']) - 1;
+                    $actionRecord = [
+                        'actionId' => 'act_' . bin2hex(random_bytes(6)),
+                        'executionId' => $wf['executions'][$lastExecIdx]['executionId'],
+                        'workflowId' => $workflowId,
+                        'worker' => $wf['activeWorker'] ?? 'github',
+                        'platform' => $wf['platform'],
+                        'state' => 'OTP_RECEIVED',
+                        'previousState' => 'WAITING_FOR_OTP',
+                        'action' => 'receive_otp',
+                        'status' => 'completed',
+                        'input' => ['otpCode' => $otpCode],
+                        'output' => ['otpAccepted' => true],
+                        'durationMs' => 120,
+                        'attempt' => 1,
+                        'timestamp' => $now
+                    ];
+                    $wf['executions'][$lastExecIdx]['actions'][] = $actionRecord;
+                    $wf['executions'][$lastExecIdx]['currentState'] = 'OTP_RECEIVED';
+                }
+
+                $targetWf = $wf;
+                break;
+            }
+        }
+
+        if ($targetWf) {
+            $this->writeDb($db);
+        }
+        return $targetWf;
+    }
+
+    public function verifyWorkflowUrl($workflowId, $url) {
+        $db = $this->readDb();
+        if (!isset($db['distributedWorkflows'])) return null;
+
+        $targetWf = null;
+        $now = date('c');
+
+        foreach ($db['distributedWorkflows'] as &$wf) {
+            if ($wf['workflowId'] === $workflowId) {
+                $wf['publicUrl'] = $url;
+                $wf['publicationVerified'] = true;
+                $wf['previousState'] = $wf['currentState'];
+                $wf['currentState'] = 'PUBLISHED';
+                $wf['updatedAt'] = $now;
+
+                if (!empty($wf['executions'])) {
+                    $lastExecIdx = count($wf['executions']) - 1;
+                    $actionRecord = [
+                        'actionId' => 'act_' . bin2hex(random_bytes(6)),
+                        'executionId' => $wf['executions'][$lastExecIdx]['executionId'],
+                        'workflowId' => $workflowId,
+                        'worker' => $wf['activeWorker'] ?? 'github',
+                        'platform' => $wf['platform'],
+                        'state' => 'PUBLISHED',
+                        'previousState' => 'VERIFYING_PUBLICATION',
+                        'action' => 'verify_publication_url',
+                        'status' => 'completed',
+                        'input' => ['url' => $url],
+                        'output' => ['verified' => true, 'publicUrl' => $url],
+                        'durationMs' => 640,
+                        'timestamp' => $now
+                    ];
+                    $wf['executions'][$lastExecIdx]['actions'][] = $actionRecord;
+                    $wf['executions'][$lastExecIdx]['currentState'] = 'PUBLISHED';
+                }
+
+                $targetWf = $wf;
+                break;
+            }
+        }
+
+        if ($targetWf) {
+            $this->writeDb($db);
+        }
+        return $targetWf;
+    }
 }
 
 

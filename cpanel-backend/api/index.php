@@ -1487,6 +1487,126 @@ try {
             }
             break;
 
+        // --- Distributed Workflow & Full Traceability Architecture (State Machine) ---
+
+        case ($route === 'workflows'):
+            if ($method === 'GET') {
+                $workflows = $db->getWorkflows();
+                echo json_encode([
+                    'success' => true,
+                    'count' => count($workflows),
+                    'workflows' => $workflows
+                ], JSON_UNESCAPED_UNICODE);
+            }
+            break;
+
+        case ($route === 'workflows/get'):
+            $wfId = $_GET['workflowId'] ?? ($body['workflowId'] ?? '');
+            $wf = $db->getWorkflowById($wfId);
+            if (!$wf) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'error' => 'گردش کار یافت نشد.'], JSON_UNESCAPED_UNICODE);
+                break;
+            }
+            echo json_encode(['success' => true, 'workflow' => $wf], JSON_UNESCAPED_UNICODE);
+            break;
+
+        case ($route === 'workflows/create'):
+            if ($method !== 'POST') { http_response_code(405); echo json_encode(['error' => 'Method Not Allowed']); break; }
+            $created = $db->createWorkflow($body);
+            echo json_encode([
+                'success' => true,
+                'message' => 'گردش کار عملیاتی جدید با موفقیت ایجاد شد.',
+                'workflow' => $created
+            ], JSON_UNESCAPED_UNICODE);
+            break;
+
+        case ($route === 'workflows/action'):
+            if ($method !== 'POST') { http_response_code(405); echo json_encode(['error' => 'Method Not Allowed']); break; }
+            $wfId = $body['workflowId'] ?? '';
+            $execId = $body['executionId'] ?? '';
+            if (empty($wfId) || empty($execId)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'workflowId و executionId الزامی هستند.'], JSON_UNESCAPED_UNICODE);
+                break;
+            }
+            $updatedWf = $db->recordWorkflowAction($wfId, $execId, $body);
+            if (!$updatedWf) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'error' => 'گردش کار برای ثبت اکشن یافت نشد.'], JSON_UNESCAPED_UNICODE);
+                break;
+            }
+            echo json_encode([
+                'success' => true,
+                'message' => 'رویداد با موفقیت در گردش کار ثبت و ذخیره گردید.',
+                'workflow' => $updatedWf
+            ], JSON_UNESCAPED_UNICODE);
+            break;
+
+        case ($route === 'workflows/submit-otp'):
+            if ($method !== 'POST') { http_response_code(405); echo json_encode(['error' => 'Method Not Allowed']); break; }
+            $wfId = $body['workflowId'] ?? '';
+            $otpCode = trim($body['otpCode'] ?? '');
+            if (empty($wfId) || empty($otpCode)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'workflowId و کد تایید OTP الزامی هستند.'], JSON_UNESCAPED_UNICODE);
+                break;
+            }
+            $updatedWf = $db->submitWorkflowOtp($wfId, $otpCode);
+            if (!$updatedWf) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'error' => 'گردش کار یافت نشد.'], JSON_UNESCAPED_UNICODE);
+                break;
+            }
+            echo json_encode([
+                'success' => true,
+                'message' => "کد تایید OTP ({$otpCode}) دریافت شد و گردش کار به مرحله بعدی هدایت گردید.",
+                'workflow' => $updatedWf
+            ], JSON_UNESCAPED_UNICODE);
+            break;
+
+        case ($route === 'workflows/verify-url'):
+            if ($method !== 'POST') { http_response_code(405); echo json_encode(['error' => 'Method Not Allowed']); break; }
+            $wfId = $body['workflowId'] ?? '';
+            $targetUrl = trim($body['url'] ?? '');
+            if (empty($wfId) || empty($targetUrl)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'workflowId و آدرس اینترنتی آگهی الزامی هستند.'], JSON_UNESCAPED_UNICODE);
+                break;
+            }
+
+            // راستی‌آزمایی مستقل و واقعی با cURL
+            $ch = curl_init($targetUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 12);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36');
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            $resBody = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $err = curl_error($ch);
+            curl_close($ch);
+
+            if ($httpCode >= 200 && $httpCode < 400) {
+                $updatedWf = $db->verifyWorkflowUrl($wfId, $targetUrl);
+                echo json_encode([
+                    'success' => true,
+                    'verified' => true,
+                    'httpStatus' => $httpCode,
+                    'message' => 'لینک آگهی با موفقیت در اینترنت راستی‌آزمایی و ثبت گردید.',
+                    'workflow' => $updatedWf
+                ], JSON_UNESCAPED_UNICODE);
+            } else {
+                http_response_code(422);
+                echo json_encode([
+                    'success' => false,
+                    'verified' => false,
+                    'httpStatus' => $httpCode,
+                    'error' => "لینک آگهی باز نشد یا خطای HTTP {$httpCode} بازگرداند: {$err}"
+                ], JSON_UNESCAPED_UNICODE);
+            }
+            break;
+
         case ($route === 'puppet/request-otp'):
             $platformId = $body['platformId'] ?? '';
             $domain = $body['domain'] ?? '';

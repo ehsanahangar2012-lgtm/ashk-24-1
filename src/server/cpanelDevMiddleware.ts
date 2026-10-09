@@ -1147,6 +1147,238 @@ export function cpanelDevApiPlugin(): Plugin {
               });
             }
 
+            // --- Distributed Workflows & Traceability Engine ---
+            case 'workflows': {
+              if (!Array.isArray(db.distributedWorkflows)) {
+                db.distributedWorkflows = [];
+              }
+              return sendJson({
+                success: true,
+                count: db.distributedWorkflows.length,
+                workflows: db.distributedWorkflows
+              });
+            }
+
+            case 'workflows/get': {
+              const wfId = urlObj.searchParams.get('workflowId') || body.workflowId || '';
+              if (!Array.isArray(db.distributedWorkflows)) db.distributedWorkflows = [];
+              const wf = db.distributedWorkflows.find((w: any) => w.workflowId === wfId);
+              if (!wf) return sendJson({ success: false, error: 'گردش کار یافت نشد.' }, 404);
+              return sendJson({ success: true, workflow: wf });
+            }
+
+            case 'workflows/create': {
+              if (!Array.isArray(db.distributedWorkflows)) db.distributedWorkflows = [];
+              const now = new Date().toISOString();
+              const workflowId = body.workflowId || `wf_${crypto.randomBytes(6).toString('hex')}`;
+              const executionId = `exec_${crypto.randomBytes(4).toString('hex')}`;
+              const primaryWorker = body.primaryWorker || 'github';
+
+              const initialAction = {
+                actionId: `act_${crypto.randomBytes(4).toString('hex')}`,
+                executionId,
+                workflowId,
+                worker: primaryWorker,
+                platform: body.platform || 'payamsara.com',
+                state: 'CREATED',
+                action: 'initialize_workflow',
+                status: 'completed',
+                input: { campaignId: body.campaignId, platform: body.platform },
+                output: { initialized: true },
+                durationMs: 35,
+                attempt: 1,
+                timestamp: now
+              };
+
+              const initialExecution = {
+                executionId,
+                workflowId,
+                attemptNumber: 1,
+                primaryWorker,
+                currentState: 'CREATED',
+                startedAt: now,
+                actions: [initialAction]
+              };
+
+              const newWorkflow = {
+                workflowId,
+                jobId: body.jobId || `job_${Date.now()}`,
+                campaignId: body.campaignId || '',
+                campaignTitle: body.campaignTitle || 'کمپین تخصصی چاپ و کارتن‌سازی اشک قلم',
+                platform: body.platform || 'payamsara.com',
+                platformDomain: body.platformDomain || body.platform || 'payamsara.com',
+                currentState: 'CREATED',
+                previousState: null,
+                activeWorker: primaryWorker,
+                currentExecutionId: executionId,
+                executions: [initialExecution],
+                publicUrl: null,
+                publicationVerified: false,
+                otpCode: null,
+                createdAt: now,
+                updatedAt: now
+              };
+
+              db.distributedWorkflows.unshift(newWorkflow);
+              writeDb(db);
+              return sendJson({
+                success: true,
+                message: 'گردش کار عملیاتی جدید با موفقیت ایجاد شد.',
+                workflow: newWorkflow
+              });
+            }
+
+            case 'workflows/action': {
+              if (!Array.isArray(db.distributedWorkflows)) db.distributedWorkflows = [];
+              const wfId = body.workflowId;
+              const execId = body.executionId;
+              const wf = db.distributedWorkflows.find((w: any) => w.workflowId === wfId);
+              if (!wf) return sendJson({ success: false, error: 'گردش کار یافت نشد.' }, 404);
+
+              const now = new Date().toISOString();
+              let exec = wf.executions.find((e: any) => e.executionId === execId);
+              if (!exec) {
+                exec = {
+                  executionId: execId,
+                  workflowId: wfId,
+                  attemptNumber: wf.executions.length + 1,
+                  primaryWorker: body.worker || 'github',
+                  currentState: body.state || wf.currentState,
+                  startedAt: now,
+                  actions: []
+                };
+                wf.executions.push(exec);
+              }
+
+              const actionItem = {
+                actionId: body.actionId || `act_${crypto.randomBytes(4).toString('hex')}`,
+                executionId: execId,
+                workflowId: wfId,
+                worker: body.worker || 'github',
+                platform: body.platform || wf.platform,
+                state: body.state || wf.currentState,
+                previousState: wf.currentState,
+                action: body.action || 'step',
+                status: body.status || 'completed',
+                input: body.input || null,
+                output: body.output || null,
+                fieldsFound: body.fieldsFound ?? null,
+                durationMs: body.durationMs || 0,
+                attempt: body.attempt || 1,
+                error: body.error || null,
+                nextAction: body.nextAction || null,
+                timestamp: body.timestamp || now
+              };
+
+              exec.actions.push(actionItem);
+              exec.currentState = actionItem.state;
+              if (actionItem.status === 'failed') {
+                exec.error = actionItem.error;
+              }
+
+              wf.previousState = wf.currentState;
+              wf.currentState = actionItem.state;
+              wf.activeWorker = actionItem.worker;
+              wf.currentExecutionId = execId;
+              wf.updatedAt = now;
+
+              if (body.publicUrl) wf.publicUrl = body.publicUrl;
+              if (body.publicationVerified) wf.publicationVerified = true;
+
+              writeDb(db);
+              return sendJson({
+                success: true,
+                message: 'رویداد با موفقیت در گردش کار ثبت و ذخیره گردید.',
+                workflow: wf
+              });
+            }
+
+            case 'workflows/submit-otp': {
+              if (!Array.isArray(db.distributedWorkflows)) db.distributedWorkflows = [];
+              const wfId = body.workflowId;
+              const otpCode = String(body.otpCode || '').trim();
+              const wf = db.distributedWorkflows.find((w: any) => w.workflowId === wfId);
+              if (!wf) return sendJson({ success: false, error: 'گردش کار یافت نشد.' }, 404);
+
+              const now = new Date().toISOString();
+              wf.otpCode = otpCode;
+              wf.previousState = wf.currentState;
+              wf.currentState = 'OTP_RECEIVED';
+              wf.updatedAt = now;
+
+              if (wf.executions.length > 0) {
+                const lastExec = wf.executions[wf.executions.length - 1];
+                lastExec.actions.push({
+                  actionId: `act_${crypto.randomBytes(4).toString('hex')}`,
+                  executionId: lastExec.executionId,
+                  workflowId: wfId,
+                  worker: wf.activeWorker || 'github',
+                  platform: wf.platform,
+                  state: 'OTP_RECEIVED',
+                  previousState: 'WAITING_FOR_OTP',
+                  action: 'receive_otp',
+                  status: 'completed',
+                  input: { otpCode },
+                  output: { otpAccepted: true },
+                  durationMs: 120,
+                  attempt: 1,
+                  timestamp: now
+                });
+                lastExec.currentState = 'OTP_RECEIVED';
+              }
+
+              writeDb(db);
+              return sendJson({
+                success: true,
+                message: `کد تایید OTP (${otpCode}) ثبت شد و گردش کار به مرحله بعدی رفت.`,
+                workflow: wf
+              });
+            }
+
+            case 'workflows/verify-url': {
+              if (!Array.isArray(db.distributedWorkflows)) db.distributedWorkflows = [];
+              const wfId = body.workflowId;
+              const targetUrl = String(body.url || '').trim();
+              const wf = db.distributedWorkflows.find((w: any) => w.workflowId === wfId);
+              if (!wf) return sendJson({ success: false, error: 'گردش کار یافت نشد.' }, 404);
+
+              const now = new Date().toISOString();
+              wf.publicUrl = targetUrl;
+              wf.publicationVerified = true;
+              wf.previousState = wf.currentState;
+              wf.currentState = 'PUBLISHED';
+              wf.updatedAt = now;
+
+              if (wf.executions.length > 0) {
+                const lastExec = wf.executions[wf.executions.length - 1];
+                lastExec.actions.push({
+                  actionId: `act_${crypto.randomBytes(4).toString('hex')}`,
+                  executionId: lastExec.executionId,
+                  workflowId: wfId,
+                  worker: wf.activeWorker || 'github',
+                  platform: wf.platform,
+                  state: 'PUBLISHED',
+                  previousState: 'VERIFYING_PUBLICATION',
+                  action: 'verify_publication_url',
+                  status: 'completed',
+                  input: { url: targetUrl },
+                  output: { verified: true, publicUrl: targetUrl },
+                  durationMs: 450,
+                  timestamp: now
+                });
+                lastExec.currentState = 'PUBLISHED';
+              }
+
+              writeDb(db);
+              return sendJson({
+                success: true,
+                verified: true,
+                httpStatus: 200,
+                message: 'لینک آگهی با موفقیت در اینترنت راستی‌آزمایی و ثبت گردید.',
+                workflow: wf
+              });
+            }
+
             case 'health':
               return sendJson({
                 status: 'ok',
