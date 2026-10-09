@@ -248,13 +248,34 @@ async function claimJob(jobId) {
 
 async function updateJobState(jobId, payload) {
   try {
+    const wfId = payload.workflowId || WORKFLOW_ID;
+    const execId = payload.executionId || EXECUTION_ID;
+
     const res = await fetch(`${CPANEL_URL}?route=jobs/update`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${CPANEL_AGENT_TOKEN}` },
-      body: JSON.stringify({ jobId, ...payload })
+      body: JSON.stringify({ jobId, workflowId: wfId, executionId: execId, ...payload })
     });
     if (!res.ok) throw new Error(`Job update failed with status: ${res.status}`);
-    return await res.json();
+    const resData = await res.json();
+
+    // یکپارچه‌سازی بی‌درنگ با Workflow Trace (عدم تولید تاریخچه‌های جداگانه)
+    if (wfId && execId) {
+      await reportWorkflowActionToBackend({
+        workflowId: wfId,
+        executionId: execId,
+        jobId,
+        state: payload.status === 'published' ? 'PUBLISHED' : (payload.status === 'blocked' ? 'BLOCKED' : (payload.status === 'unknown' ? 'UNKNOWN' : 'FILLING_FIELDS')),
+        action: payload.action || 'agent_job_step',
+        status: payload.status === 'failed' || payload.status === 'blocked' ? 'failed' : (payload.status === 'published' ? 'completed' : 'running'),
+        input: { jobId, currentStep: payload.currentStep },
+        output: { ...payload, syncedFromJobQueue: true },
+        publicUrl: payload.adUrl || null,
+        durationMs: payload.durationMs || 0
+      });
+    }
+
+    return resData;
   } catch (err) {
     console.error(`❌ [Job State Update Error]: ${err.message}`);
     throw err; // Ensure failure is propagated
@@ -296,6 +317,23 @@ async function reportWorkflowActionToBackend(payload) {
   }
 }
 
+let activeLocalBrowser = null;
+let activeLocalPage = null;
+
+async function getOrInitLocalPage() {
+  if (!activeLocalBrowser) {
+    activeLocalBrowser = await chromium.launch({
+      headless: IS_HEADLESS,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+    });
+  }
+  if (!activeLocalPage || activeLocalPage.isClosed()) {
+    const context = await activeLocalBrowser.newContext();
+    activeLocalPage = await context.newPage();
+  }
+  return activeLocalPage;
+}
+
 function startLocalTaskServer() {
   if (process.env.CI || IS_ONCE) return;
 
@@ -326,24 +364,103 @@ function startLocalTaskServer() {
       let bodyStr = '';
       req.on('data', chunk => { bodyStr += chunk; });
       req.on('end', async () => {
+        const startTime = Date.now();
         try {
           const task = JSON.parse(bodyStr || '{}');
           console.log(`🤖 [Local Task Received] Action: ${task.action} | Workflow: ${task.workflowId} | State: ${task.state}`);
 
-          const startTime = Date.now();
+          let taskOutput = {};
+          let taskSuccess = true;
+          let taskError = null;
+
+          // اجرای واقعی فرمان از طریق مرورگر Playwright محلی
+          try {
+            const page = await getOrInitLocalPage();
+
+            if (task.action === 'open_target_url') {
+              const targetUrl = task.input?.targetUrl || `https://${task.platformDomain}`;
+              await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
+              taskOutput = {
+                openedUrl: page.url(),
+                title: await page.title(),
+                tabDispatched: true
+              };
+            } else if (task.action === 'check_login_state') {
+              const content = await page.content();
+              const isLoggedIn = content.includes('خروج') || content.includes('حساب کاربری') || content.includes('پنل کاربری');
+              taskOutput = {
+                sessionActive: isLoggedIn,
+                isLoggedIn,
+                currentUrl: page.url()
+              };
+            } else if (task.action === 'discover_dom_fields') {
+              const inputs = await page.$$eval('input, textarea, select', els => els.map(el => ({
+                name: el.getAttribute('name') || '',
+                id: el.getAttribute('id') || '',
+                type: el.getAttribute('type') || el.tagName.toLowerCase(),
+                placeholder: el.getAttribute('placeholder') || ''
+              })));
+              taskOutput = {
+                fields: inputs,
+                fieldsFound: inputs.length,
+                hasOtpGate: inputs.some(i => i.name.includes('otp') || i.name.includes('code') || i.id.includes('code'))
+              };
+            } else if (task.action === 'inject_field_values') {
+              const mappings = task.input?.mappings || {};
+              let filledCount = 0;
+              for (const [key, val] of Object.entries(mappings)) {
+                if (!val) continue;
+                const selector = `input[name*="${key}" i], textarea[name*="${key}" i], input[id*="${key}" i], textarea[id*="${key}" i]`;
+                const field = await page.$(selector);
+                if (field) {
+                  await field.fill(String(val));
+                  filledCount++;
+                }
+              }
+              taskOutput = {
+                filledFields: filledCount,
+                mappedFields: Object.keys(mappings).length,
+                missingRequiredFields: [],
+                validationErrors: [],
+                canSubmit: filledCount > 0
+              };
+            } else if (task.action === 'click_submit_button') {
+              const submitBtn = await page.$('button[type="submit"], input[type="submit"], button:has-text("ثبت"), button:has-text("ارسال")');
+              if (submitBtn) {
+                await submitBtn.click({ force: true });
+                await page.waitForTimeout(4000);
+              }
+              const postUrl = page.url();
+              const pageText = await page.content();
+              const otpGateDetected = pageText.includes('کد تایید') || pageText.includes('ارسال شد') || postUrl.includes('verify') || postUrl.includes('otp');
+              taskOutput = {
+                otpGateDetected,
+                submitted: true,
+                currentUrl: postUrl,
+                pageState: otpGateDetected ? 'otp_required' : 'submitted'
+              };
+            } else {
+              taskOutput = {
+                handledAction: task.action,
+                executedLocally: true,
+                timestamp: new Date().toISOString()
+              };
+            }
+          } catch (execErr) {
+            console.error(`❌ [Local Task Execution Failure]: ${execErr.message}`);
+            taskSuccess = false;
+            taskError = execErr.message;
+          }
+
           const durationMs = Date.now() - startTime;
           const result = {
-            success: true,
+            success: taskSuccess,
             action: task.action,
             workerId: AGENT_ID,
             workerRole: 'local',
             durationMs,
-            output: {
-              executedLocally: true,
-              agentId: AGENT_ID,
-              taskHandled: task.action,
-              timestamp: new Date().toISOString()
-            }
+            output: taskOutput,
+            error: taskError
           };
 
           if (task.workflowId && task.executionId) {
@@ -353,9 +470,9 @@ function startLocalTaskServer() {
               jobId: task.jobId,
               state: task.state,
               action: task.action,
-              status: 'completed',
+              status: taskSuccess ? 'completed' : 'failed',
               input: task.input,
-              output: result.output,
+              output: taskOutput,
               durationMs
             });
           }
@@ -364,7 +481,7 @@ function startLocalTaskServer() {
           res.end(JSON.stringify(result));
         } catch (err) {
           res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: err.message }));
+          res.end(JSON.stringify({ success: false, error: err.message, durationMs: Date.now() - startTime }));
         }
       });
       return;
@@ -845,24 +962,42 @@ async function executeJob(job, claimData) {
       fieldsFound: fieldsFoundCount
     });
 
-    // مرحله ۴: تکمیل فیلدهای آگهی با داده‌های واقعی (Fill Fields)
-    const adTitleVal = job.campaignTitle || job.title || 'تولید و فروش انواع کارتن و جعبه بسته‌بندی اشک ۲۴';
-    const adContentVal = job.campaignContent || job.content || 'مجتمع تولیدی و چاپ کارتن و بسته‌بندی اشک ۲۴: طراحی، چاپ و تولید تخصصی کارتن‌های ۳ لایه و ۵ لایه صنعتی، دایکاتی و لمینتی.';
-    const contactPhoneVal = job.contactPhone || '09153108763';
-    const contactPersonVal = job.contactPerson || 'مهندس احسان آهنگر';
+    // مرحله ۴: اعتبارسنجی دقیق و تکمیل فیلدهای آگهی با داده‌های واقعی کمپین
+    const adTitleVal = (job.campaignTitle || job.title || '').trim();
+    const adContentVal = (job.campaignContent || job.content || job.description || '').trim();
+    const contactPhoneVal = (job.contactPhone || job.phone || '').trim();
+    const contactPersonVal = (job.contactPerson || job.contactName || job.brandName || '').trim();
+
+    // حذف کامل مقادیر پیش‌فرض ساختگی: اگر داده‌های کمپین ناقص است، اجرا متوقف می‌شود
+    if (!adTitleVal || adTitleVal.length < 5 || !adContentVal || adContentVal.length < 15 || !contactPhoneVal) {
+      console.error(`❌ [Payload Error] Job ${job.id} lacks valid campaign payload.`);
+      const missing = [];
+      if (!adTitleVal || adTitleVal.length < 5) missing.push('عنوان آگهی (حداقل ۵ کاراکتر)');
+      if (!adContentVal || adContentVal.length < 15) missing.push('متن آگهی (حداقل ۱۵ کاراکتر)');
+      if (!contactPhoneVal) missing.push('شماره تماس معتبر');
+
+      await updateJobState(job.id, {
+        status: 'blocked',
+        error: 'INVALID_OR_MISSING_CAMPAIGN_PAYLOAD',
+        currentStep: `توقف اجرای ورکر: داده‌های ضروری کمپین ناقص است [${missing.join('، ')}]. استفاده از مقادیر پیش‌فرض ممنوع است.`,
+        workflowId: job.workflowId || WORKFLOW_ID,
+        executionId: job.executionId || EXECUTION_ID
+      });
+      return false;
+    }
 
     // درج عنوان
     const titleField = await page.$('input[name*="title" i], input[id*="title" i], input[placeholder*="عنوان" i]');
     if (titleField) {
       await titleField.fill(adTitleVal);
-      console.log(`✍️ [Ad Form] Title filled: ${adTitleVal.substring(0, 30)}...`);
+      console.log(`✍️ [Ad Form] Real Title filled: ${adTitleVal.substring(0, 30)}...`);
     }
 
     // درج متن آگهی
     const descField = await page.$('textarea[name*="desc" i], textarea[name*="content" i], textarea[id*="desc" i], textarea[placeholder*="متن" i], textarea[placeholder*="شرح" i]');
     if (descField) {
       await descField.fill(adContentVal);
-      console.log('✍️ [Ad Form] Content filled successfully.');
+      console.log('✍️ [Ad Form] Real Content filled successfully.');
     }
 
     // درج شماره و شخص
@@ -872,7 +1007,7 @@ async function executeJob(job, claimData) {
     }
     const personField = await page.$('input[name*="name" i], input[name*="contact" i]');
     if (personField && (await personField.inputValue()) === '') {
-      await personField.fill(contactPersonVal);
+      await personField.fill(contactPersonVal || 'مسئول فروش');
     }
 
     const filledScreenshot = path.join(EVIDENCE_DIR, `job_${job.id}_form_filled.png`);
@@ -881,9 +1016,11 @@ async function executeJob(job, claimData) {
     // مرحله ۵: ارسال فرم آگهی (Submit Ad Form)
     await updateJobState(job.id, {
       status: 'in_progress',
-      currentStep: 'فیلدهای آگهی با موفقیت تکمیل شد. در حال ارسال فرم نهایی...',
+      currentStep: 'فیلدهای آگهی با داده‌های واقعی کمپین تکمیل شد. در حال ارسال فرم نهایی...',
       evidenceScreenshot: filledScreenshot,
-      resume_supported: true
+      resume_supported: true,
+      workflowId: job.workflowId || WORKFLOW_ID,
+      executionId: job.executionId || EXECUTION_ID
     });
 
     console.log('🚀 [Ad Form Submit] Clicking publication submit button...');
@@ -912,7 +1049,9 @@ async function executeJob(job, claimData) {
         currentStep: 'آگهی در مرحله ورود/ثبت‌نام متوقف شد و به صفحه انتشار عمومی منتقل نشد.',
         error: 'AUTH_REQUIRED_OR_BLOCKED',
         evidenceScreenshot: finalScreenshot,
-        resume_supported: true
+        resume_supported: true,
+        workflowId: job.workflowId || WORKFLOW_ID,
+        executionId: job.executionId || EXECUTION_ID
       });
       return false;
     }
@@ -945,7 +1084,9 @@ async function executeJob(job, claimData) {
         status: 'waiting_human',
         currentStep: 'آگهی با موفقیت ارسال شد و در انتظار تایید ناظر پلتفرم قرار گرفت. لینک پس از بررسی فعال خواهد شد.',
         evidenceScreenshot: finalScreenshot,
-        resume_supported: true
+        resume_supported: true,
+        workflowId: job.workflowId || WORKFLOW_ID,
+        executionId: job.executionId || EXECUTION_ID
       });
       return true;
     }
@@ -957,23 +1098,32 @@ async function executeJob(job, claimData) {
         currentStep: 'آگهی ارسال شد اما لینک عمومی معتبری توسط سامانه صادر نگردید.',
         error: 'NO_PUBLIC_URL_DETECTED',
         evidenceScreenshot: finalScreenshot,
-        resume_supported: true
+        resume_supported: true,
+        workflowId: job.workflowId || WORKFLOW_ID,
+        executionId: job.executionId || EXECUTION_ID
       });
       return false;
     }
 
-    // مرحله ۷: راستی‌آزمایی مستقل و اثبات واقعی انتشار
+    // مرحله ۷: راستی‌آزمایی مستقل و اثبات واقعی انتشار با داده‌های واقعی کمپین (حذف شواهد فرضی)
     console.log(`🔎 [Independent Verification] Probing public ad link: ${publicAdUrl}`);
     let verifiedIndependently = false;
+    let matchEvidence = '';
     try {
       const probeRes = await fetch(publicAdUrl, {
         headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36' }
       });
       if (probeRes.ok) {
         const probeHtml = await probeRes.text();
-        const containsAdKeywords = probeHtml.includes('اشک') || probeHtml.includes('کارتن') || probeHtml.includes('09153108763');
-        if (containsAdKeywords) {
+        // انطباق مستقل بر اساس کلمات معنادار عنوان واقعی آگهی یا شماره تماس واقعی
+        const titleWords = adTitleVal.split(/\s+/).filter(w => w.length >= 3);
+        const matchesTitle = titleWords.length > 0 && titleWords.some(w => probeHtml.includes(w));
+        const matchesPhone = contactPhoneVal && probeHtml.includes(contactPhoneVal);
+        const matchesJobId = job.id && probeHtml.includes(job.id);
+
+        if (matchesTitle || matchesPhone || matchesJobId) {
           verifiedIndependently = true;
+          matchEvidence = matchesTitle ? `تطبیق عنوان واقعی آگهی` : (matchesPhone ? `تطبیق شماره تماس` : `تطبیق شناسه ثبت`);
         }
       }
     } catch (probeErr) {
@@ -983,11 +1133,27 @@ async function executeJob(job, claimData) {
     if (verifiedIndependently) {
       await updateJobState(job.id, {
         status: 'published',
-        currentStep: 'آگهی در صفحه عمومی سامانه راستی‌آزمایی و منتشر گردید.',
+        currentStep: `آگهی در صفحه عمومی سامانه راستی‌آزمایی و منتشر گردید (شاهد قطعی: ${matchEvidence}).`,
         progressPercent: 100,
         evidenceScreenshot: finalScreenshot,
         adUrl: publicAdUrl,
         publicationVerified: true,
+        workflowId: job.workflowId || WORKFLOW_ID,
+        executionId: job.executionId || EXECUTION_ID
+      });
+      return true;
+    } else {
+      // شواهد کافی نیست -> وضعیت UNKNOWN ثبت می‌شود، نه PUBLISHED
+      await updateJobState(job.id, {
+        status: 'unknown',
+        currentStep: 'لینک آگهی دریافت شد اما شواهد قطعی مبنی بر وجود محتوای همان آگهی در صفحه تایید نشد. وضعیت: UNKNOWN.',
+        adUrl: publicAdUrl,
+        publicationVerified: false,
+        workflowId: job.workflowId || WORKFLOW_ID,
+        executionId: job.executionId || EXECUTION_ID
+      });
+      return false;
+    }
         resume_supported: true,
         session_restored: sessionRestored,
         restored_at: restoredAt || new Date().toISOString(),

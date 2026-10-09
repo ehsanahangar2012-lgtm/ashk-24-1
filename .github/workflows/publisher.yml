@@ -11,6 +11,18 @@ on:
         description: 'cPanel API URL (e.g. https://your-domain.com/cpanel-backend/api/index.php)'
         required: false
         default: ''
+      workflow_id:
+        description: 'Workflow ID for Traceability'
+        required: false
+        default: ''
+      execution_id:
+        description: 'Execution ID for Traceability'
+        required: false
+        default: ''
+      job_id:
+        description: 'Target Job ID'
+        required: false
+        default: ''
       headless:
         description: 'Run headless'
         required: true
@@ -45,8 +57,12 @@ jobs:
         env:
           CPANEL_URL: ${{ inputs.cpanel_url || secrets.CPANEL_URL || 'https://secret.ashkghalam.ir/cpanel-backend/api/index.php' }}
           CPANEL_AGENT_TOKEN: ${{ secrets.CPANEL_AGENT_TOKEN || 'secret_9153108763' }}
+          WORKFLOW_ID: ${{ inputs.workflow_id || '' }}
+          EXECUTION_ID: ${{ inputs.execution_id || '' }}
+          TARGET_JOB_ID: ${{ inputs.job_id || '' }}
           HEADLESS: ${{ inputs.headless || 'true' }}
           CI: "true"
         run: |
           cd local-agent
-          node index.js --once || true
+          node index.js --once
+

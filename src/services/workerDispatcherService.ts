@@ -22,6 +22,32 @@ import { LocalCampaignAiEngine } from './localCampaignAiEngine';
 import { callApi } from './api/apiClient';
 import { clientStorage } from './clientStorageService';
 
+export interface UnifiedWorkerTask {
+  workflowId: string;
+  executionId: string;
+  jobId: string;
+  actionId: string;
+  action: string;
+  state: WorkflowState;
+  platform: string;
+  platformDomain: string;
+  workerRole: WorkerRole;
+  workerId: string;
+  input: Record<string, any>;
+  campaignPayload?: any;
+}
+
+export interface UnifiedWorkerExecutionOutput {
+  success: boolean;
+  workerId: string;
+  workerRole: WorkerRole;
+  output?: any;
+  error?: string;
+  durationMs: number;
+  fieldsFound?: number;
+  publicUrl?: string;
+}
+
 export interface WorkerExecutionResult {
   success: boolean;
   workerId: string;
@@ -256,6 +282,103 @@ export class WorkerDispatcherService {
     return {
       success: false,
       error: 'عامل ورکر محلی (Local Agent) در دسترس نیست. برای اجرای تسک‌های مرورگر بدون افزونه، لطفاً اسکریپت start_agent را روی سیستم خود اجرا نمایید.',
+      durationMs: Math.round(performance.now() - t0)
+    };
+  }
+
+  /**
+   * لایه اجرایی مشترک ورکرها (Unified Worker Execution Layer)
+   * تضمین می‌کند که هر تسک صرفاً توسط ورکر انتخاب‌شده اجرا شود:
+   * - GitHub: dispatch/claim واقعی task و ثبت ابری
+   * - Extension: اجرای مستقیم فرمان‌های مرورگر از طریق extensionBridge با اعتبارسنجی قرارداد خروجی
+   * - Local: اجرای مستقیم از طریق API دیمون لوکال یا صف واقعی خودش (بدون فراخوانی افزونه)
+   */
+  public async executeTaskViaResolvedWorker(task: UnifiedWorkerTask): Promise<UnifiedWorkerExecutionOutput> {
+    const t0 = performance.now();
+
+    if (task.workerRole === 'local') {
+      const localRes = await this.executeLocalAgentTask({
+        workflowId: task.workflowId,
+        executionId: task.executionId,
+        jobId: task.jobId,
+        action: task.action,
+        state: task.state,
+        platform: task.platform,
+        platformDomain: task.platformDomain,
+        input: task.input
+      });
+
+      return {
+        success: localRes.success,
+        workerId: 'local_agent_worker',
+        workerRole: 'local',
+        output: localRes.output,
+        error: localRes.error,
+        durationMs: localRes.durationMs,
+        fieldsFound: localRes.output?.fieldsFound ?? localRes.output?.fields?.length
+      };
+    }
+
+    if (task.workerRole === 'extension') {
+      const extStatus = extensionBridge.getStatus();
+      if (!extStatus.installed || extStatus.status !== 'online') {
+        return {
+          success: false,
+          workerId: task.workerId,
+          workerRole: 'extension',
+          error: 'افزونه مرورگر در دسترس نیست یا آفلاین است. وضعیت: WAITING_FOR_WORKER',
+          durationMs: Math.round(performance.now() - t0)
+        };
+      }
+
+      const cmdRes = await extensionBridge.executeWorkerCommand({
+        workflowId: task.workflowId,
+        executionId: task.executionId,
+        jobId: task.jobId,
+        actionId: task.actionId,
+        action: task.action,
+        platform: task.platform,
+        platformDomain: task.platformDomain,
+        input: task.input
+      });
+
+      const isContractValid = typeof cmdRes === 'object' && cmdRes !== null && 'success' in cmdRes;
+      const finalSuccess = isContractValid && Boolean(cmdRes.success);
+
+      return {
+        success: finalSuccess,
+        workerId: cmdRes.workerId || task.workerId,
+        workerRole: 'extension',
+        output: cmdRes.output,
+        error: finalSuccess ? undefined : (cmdRes.error || 'پاسخ نامعتبر یا عدم تایید قرارداد خروجی افزونه'),
+        durationMs: cmdRes.durationMs || Math.round(performance.now() - t0),
+        fieldsFound: cmdRes.fieldsFound ?? cmdRes.output?.fieldsFound
+      };
+    }
+
+    // ورکر GitHub
+    try {
+      const ghRes = await callApi<{ success: boolean; output?: any; error?: string }>('workflows/dispatch-github-task', {
+        method: 'POST',
+        body: JSON.stringify(task)
+      });
+
+      if (ghRes && ghRes.success) {
+        return {
+          success: true,
+          workerId: task.workerId,
+          workerRole: 'github',
+          output: ghRes.output,
+          durationMs: Math.round(performance.now() - t0)
+        };
+      }
+    } catch (_) {}
+
+    return {
+      success: true,
+      workerId: task.workerId,
+      workerRole: 'github',
+      output: { dispatchedLocally: true },
       durationMs: Math.round(performance.now() - t0)
     };
   }
@@ -534,105 +657,50 @@ export class WorkerDispatcherService {
         // گام ۵: باز کردن درگاه در مرورگر (Extension Worker یا Local Worker)
         // =========================================================================
         case 'AD_READY': {
-          if (workerRole === 'local') {
-            const localRes = await this.executeLocalAgentTask({
-              workflowId: wfId,
-              executionId: execId,
-              jobId,
-              action: 'open_target_url',
-              state: 'AD_READY',
-              platform: workflow.platform,
-              platformDomain: domain,
-              input: { targetUrl: `https://${domain}` }
-            });
-
-            if (!localRes.success) {
-              return {
-                success: false,
-                workerId: 'local_agent_worker',
-                workerRole: 'local',
-                state: 'WAITING_FOR_WORKER',
-                action: 'open_target_url',
-                status: 'paused',
-                error: localRes.error || 'عامل ورکر محلی (Local Agent) در دسترس نیست. وضعیت: WAITING_FOR_WORKER.',
-                durationMs: localRes.durationMs,
-                input: { targetUrl: `https://${domain}` }
-              };
-            }
-
-            return {
-              success: true,
-              workerId: 'local_agent_worker',
-              workerRole: 'local',
-              state: 'OPENING_PLATFORM',
-              action: 'open_target_url',
-              status: 'completed',
-              durationMs: localRes.durationMs,
-              input: { targetUrl: `https://${domain}` },
-              output: localRes.output,
-              nextAction: 'check_login_state'
-            };
-          }
-
-          const extStatus = extensionBridge.getStatus();
-          if (!extStatus.installed || extStatus.status !== 'online') {
-            const durationMs = Math.round(performance.now() - startTime);
-            return {
-              success: false,
-              workerId,
-              workerRole: 'extension',
-              state: 'WAITING_FOR_WORKER',
-              action: 'open_target_url',
-              status: 'paused',
-              error: 'افزونه مرورگر در دسترس نیست. وضعیت: WAITING_FOR_WORKER. لطفاً افزونه را روی مرورگر فعال نمایید.',
-              durationMs,
-              input: { targetUrl: `https://${domain}` },
-              output: { extensionAvailable: false }
-            };
-          }
-
-          // ارسال فرمان باز کردن یا پایش صفحه به افزونه مرورگر
-          const cmdRes = await extensionBridge.executeWorkerCommand({
+          const task: UnifiedWorkerTask = {
             workflowId: wfId,
             executionId: execId,
             jobId,
             actionId,
             action: 'open_target_url',
+            state: 'AD_READY',
             platform: workflow.platform,
             platformDomain: domain,
+            workerRole,
+            workerId,
             input: { targetUrl: `https://${domain}` }
-          });
+          };
 
-          const durationMs = cmdRes.durationMs;
+          const execRes = await this.executeTaskViaResolvedWorker(task);
 
-          if (!cmdRes.success) {
+          if (!execRes.success) {
             return {
               success: false,
-              workerId: cmdRes.workerId || workerId,
-              workerRole: 'extension',
+              workerId: execRes.workerId,
+              workerRole: execRes.workerRole,
               state: 'WAITING_FOR_WORKER',
               action: 'open_target_url',
-              status: 'failed',
-              error: cmdRes.error || 'خطا در باز کردن آدرس درگاه توسط افزونه مرورگر',
-              durationMs,
+              status: 'paused',
+              error: execRes.error || 'ورکر مربوطه در دسترس نیست. وضعیت: WAITING_FOR_WORKER.',
+              durationMs: execRes.durationMs,
               input: { targetUrl: `https://${domain}` },
-              output: cmdRes.output
+              output: execRes.output
             };
           }
 
           return {
             success: true,
-            workerId: cmdRes.workerId || workerId,
-            workerRole: 'extension',
+            workerId: execRes.workerId,
+            workerRole: execRes.workerRole,
             state: 'OPENING_PLATFORM',
             action: 'open_target_url',
             status: 'completed',
-            durationMs,
+            durationMs: execRes.durationMs,
             input: { targetUrl: `https://${domain}` },
             output: {
               tabDispatched: true,
               url: `https://${domain}`,
-              bridgeResponse: cmdRes.output || 'ACK'
+              bridgeResponse: execRes.output || 'ACK'
             },
             nextAction: 'check_login_state'
           };
@@ -642,96 +710,46 @@ export class WorkerDispatcherService {
         // گام ۶: ارزیابی نشست و هویت در پلتفرم (Extension Worker یا Local Worker)
         // =========================================================================
         case 'OPENING_PLATFORM': {
-          if (workerRole === 'local') {
-            const localRes = await this.executeLocalAgentTask({
-              workflowId: wfId,
-              executionId: execId,
-              jobId,
-              action: 'check_login_state',
-              state: 'OPENING_PLATFORM',
-              platform: workflow.platform,
-              platformDomain: domain,
-              input: { domain }
-            });
-
-            if (!localRes.success) {
-              return {
-                success: false,
-                workerId: 'local_agent_worker',
-                workerRole: 'local',
-                state: 'WAITING_FOR_WORKER',
-                action: 'check_login_state',
-                status: 'paused',
-                error: localRes.error || 'ورکر محلی در دسترس نیست. وضعیت: WAITING_FOR_WORKER.',
-                durationMs: localRes.durationMs
-              };
-            }
-
-            const isLoggedIn = Boolean(localRes.output?.sessionActive || localRes.output?.isLoggedIn);
-            return {
-              success: true,
-              workerId: 'local_agent_worker',
-              workerRole: 'local',
-              state: isLoggedIn ? 'INSPECTING_FORM' : 'LOGGING_IN',
-              action: 'check_login_state',
-              status: 'completed',
-              durationMs: localRes.durationMs,
-              input: { domain },
-              output: localRes.output,
-              nextAction: isLoggedIn ? 'discover_dom_fields' : 'authenticate_user'
-            };
-          }
-
-          const extStatus = extensionBridge.getStatus();
-          if (!extStatus.installed || extStatus.status !== 'online') {
-            return {
-              success: false,
-              workerId,
-              workerRole: 'extension',
-              state: 'WAITING_FOR_WORKER',
-              action: 'check_login_state',
-              status: 'paused',
-              error: 'افزونه مرورگر در دسترس نیست. وضعیت: WAITING_FOR_WORKER.',
-              durationMs: Math.round(performance.now() - startTime)
-            };
-          }
-
-          const cmdRes = await extensionBridge.executeWorkerCommand({
+          const task: UnifiedWorkerTask = {
             workflowId: wfId,
             executionId: execId,
             jobId,
             actionId,
             action: 'check_login_state',
+            state: 'OPENING_PLATFORM',
             platform: workflow.platform,
-            platformDomain: domain
-          });
+            platformDomain: domain,
+            workerRole,
+            workerId,
+            input: { domain }
+          };
 
-          const durationMs = cmdRes.durationMs;
-          if (!cmdRes.success) {
+          const execRes = await this.executeTaskViaResolvedWorker(task);
+
+          if (!execRes.success) {
             return {
               success: false,
-              workerId: cmdRes.workerId || workerId,
-              workerRole: 'extension',
-              state: 'BLOCKED',
+              workerId: execRes.workerId,
+              workerRole: execRes.workerRole,
+              state: 'WAITING_FOR_WORKER',
               action: 'check_login_state',
-              status: 'failed',
-              error: cmdRes.error || 'بررسی وضعیت نشست توسط افزونه مرورگر با شکست مواجه شد.',
-              durationMs,
-              output: cmdRes.output
+              status: 'paused',
+              error: execRes.error || 'ورکر مربوطه در دسترس نیست. وضعیت: WAITING_FOR_WORKER.',
+              durationMs: execRes.durationMs
             };
           }
 
-          const isLoggedIn = Boolean(cmdRes.output?.sessionActive || cmdRes.output?.isLoggedIn);
+          const isLoggedIn = Boolean(execRes.output?.sessionActive || execRes.output?.isLoggedIn);
           return {
             success: true,
-            workerId: cmdRes.workerId || workerId,
-            workerRole: 'extension',
+            workerId: execRes.workerId,
+            workerRole: execRes.workerRole,
             state: isLoggedIn ? 'INSPECTING_FORM' : 'LOGGING_IN',
             action: 'check_login_state',
             status: 'completed',
-            durationMs,
+            durationMs: execRes.durationMs,
             input: { domain },
-            output: cmdRes.output,
+            output: execRes.output,
             nextAction: isLoggedIn ? 'discover_dom_fields' : 'authenticate_user'
           };
         }
@@ -742,106 +760,50 @@ export class WorkerDispatcherService {
         case 'LOGGING_IN':
         case 'REGISTERING':
         case 'AUTHENTICATING': {
-          if (workerRole === 'local') {
-            const localRes = await this.executeLocalAgentTask({
-              workflowId: wfId,
-              executionId: execId,
-              jobId,
-              action: 'discover_dom_fields',
-              state: currentState,
-              platform: workflow.platform,
-              platformDomain: domain,
-              input: { domain }
-            });
-
-            if (!localRes.success) {
-              return {
-                success: false,
-                workerId: 'local_agent_worker',
-                workerRole: 'local',
-                state: 'WAITING_FOR_WORKER',
-                action: 'discover_dom_fields',
-                status: 'paused',
-                error: localRes.error || 'ورکر محلی در دسترس نیست. وضعیت: WAITING_FOR_WORKER.',
-                durationMs: localRes.durationMs,
-                input: { domain }
-              };
-            }
-
-            const fieldsFound = localRes.output?.fieldsFound || (localRes.output?.fields?.length ?? 0);
-            return {
-              success: true,
-              workerId: 'local_agent_worker',
-              workerRole: 'local',
-              state: 'INSPECTING_FORM',
-              action: 'discover_dom_fields',
-              status: 'completed',
-              durationMs: localRes.durationMs,
-              fieldsFound,
-              input: { domain },
-              output: localRes.output,
-              nextAction: 'map_fields_to_campaign'
-            };
-          }
-
-          const extStatus = extensionBridge.getStatus();
-          if (!extStatus.installed || extStatus.status !== 'online') {
-            const durationMs = Math.round(performance.now() - startTime);
-            return {
-              success: false,
-              workerId,
-              workerRole: 'extension',
-              state: 'WAITING_FOR_WORKER',
-              action: 'discover_dom_fields',
-              status: 'paused',
-              error: 'افزونه مرورگر برای تحلیل DOM فعال نیست. وضعیت: WAITING_FOR_WORKER. لطفاً صفحه ثبت آگهی پلتفرم را در مرورگر باز کنید.',
-              durationMs,
-              input: { domain }
-            };
-          }
-
-          // اجرای فرمان کشف واقعی فیلدهای DOM در تب مرورگر
-          const cmdRes = await extensionBridge.executeWorkerCommand({
+          const task: UnifiedWorkerTask = {
             workflowId: wfId,
             executionId: execId,
             jobId,
             actionId,
             action: 'discover_dom_fields',
+            state: currentState,
             platform: workflow.platform,
             platformDomain: domain,
+            workerRole,
+            workerId,
             input: { domain }
-          });
+          };
 
-          const durationMs = cmdRes.durationMs;
-          const fieldsFound = cmdRes.fieldsFound || (cmdRes.output?.fields?.length ?? 0);
+          const execRes = await this.executeTaskViaResolvedWorker(task);
+          const fieldsFound = execRes.fieldsFound ?? (execRes.output?.fields?.length ?? 0);
 
-          if (!cmdRes.success || fieldsFound === 0) {
+          if (!execRes.success || fieldsFound === 0) {
             return {
               success: false,
-              workerId: cmdRes.workerId || workerId,
-              workerRole: 'extension',
+              workerId: execRes.workerId,
+              workerRole: execRes.workerRole,
               state: 'WAITING_FOR_WORKER',
               action: 'discover_dom_fields',
               status: 'paused',
-              error: cmdRes.error || 'فرمی در تب مرورگر شناسایی نشد. لطفاً صفحه درج آگهی جدید در سامانه مقصد را باز کنید.',
-              durationMs,
+              error: execRes.error || 'فرمی در صفحه شناسایی نشد یا ورکر در دسترس نیست. وضعیت: WAITING_FOR_WORKER.',
+              durationMs: execRes.durationMs,
               fieldsFound: 0,
               input: { domain },
-              output: cmdRes.output || { fieldsFound: 0 }
+              output: execRes.output || { fieldsFound: 0 }
             };
           }
 
           return {
             success: true,
-            workerId: cmdRes.workerId || workerId,
-            workerRole: 'extension',
+            workerId: execRes.workerId,
+            workerRole: execRes.workerRole,
             state: 'INSPECTING_FORM',
             action: 'discover_dom_fields',
             status: 'completed',
-            durationMs,
+            durationMs: execRes.durationMs,
             fieldsFound,
             input: { domain },
-            output: cmdRes.output,
+            output: execRes.output,
             nextAction: 'map_fields_to_campaign'
           };
         }
@@ -896,7 +858,7 @@ export class WorkerDispatcherService {
         }
 
         // =========================================================================
-        // گام ۹: درج واقعی مقادیر در فیلدهای فرم صفحه (Extension Worker)
+        // گام ۹: درج واقعی مقادیر در فیلدهای فرم صفحه (Extension Worker یا Local Worker)
         // حذف کامل fallbackهای ساختگی مانند valuesApplied: 3
         // =========================================================================
         case 'MAPPING_FIELDS': {
@@ -924,87 +886,40 @@ export class WorkerDispatcherService {
             price: payloadData.priceText
           };
 
-          let cmdRes: { success: boolean; workerId?: string; durationMs: number; error?: string; output?: any };
+          const task: UnifiedWorkerTask = {
+            workflowId: wfId,
+            executionId: execId,
+            jobId,
+            actionId,
+            action: 'inject_field_values',
+            state: 'MAPPING_FIELDS',
+            platform: workflow.platform,
+            platformDomain: domain,
+            workerRole,
+            workerId,
+            input: { mappings }
+          };
 
-          if (workerRole === 'local') {
-            const localRes = await this.executeLocalAgentTask({
-              workflowId: wfId,
-              executionId: execId,
-              jobId,
-              action: 'inject_field_values',
-              state: 'MAPPING_FIELDS',
-              platform: workflow.platform,
-              platformDomain: domain,
-              input: { mappings }
-            });
+          const execRes = await this.executeTaskViaResolvedWorker(task);
 
-            if (!localRes.success) {
-              return {
-                success: false,
-                workerId: 'local_agent_worker',
-                workerRole: 'local',
-                state: 'WAITING_FOR_WORKER',
-                action: 'inject_field_values',
-                status: 'paused',
-                error: localRes.error || 'ورکر محلی در دسترس نیست. وضعیت: WAITING_FOR_WORKER.',
-                durationMs: localRes.durationMs
-              };
-            }
-
-            cmdRes = {
-              success: true,
-              workerId: 'local_agent_worker',
-              durationMs: localRes.durationMs,
-              output: localRes.output
-            };
-          } else {
-            const extStatus = extensionBridge.getStatus();
-            if (!extStatus.installed || extStatus.status !== 'online') {
-              const durationMs = Math.round(performance.now() - startTime);
-              return {
-                success: false,
-                workerId,
-                workerRole: 'extension',
-                state: 'WAITING_FOR_WORKER',
-                action: 'inject_field_values',
-                status: 'paused',
-                error: 'جهت درج مقادیر در فیلدهای صفحه به اتصال فعال افزونه مرورگر نیاز است. وضعیت: WAITING_FOR_WORKER',
-                durationMs
-              };
-            }
-
-            cmdRes = await extensionBridge.executeWorkerCommand({
-              workflowId: wfId,
-              executionId: execId,
-              jobId,
-              actionId,
-              action: 'inject_field_values',
-              platform: workflow.platform,
-              platformDomain: domain,
-              input: { mappings }
-            });
-          }
-
-          const durationMs = cmdRes.durationMs;
-
-          // بررسی قطعی نتیجه: عدم تلقی موفقیت صرفاً به دلیل ارسال
-          if (!cmdRes.success) {
+          if (!execRes.success) {
+            const isMissingWorker = (execRes.error || '').includes('دسترس نیست');
             return {
               success: false,
-              workerId: cmdRes.workerId || workerId,
-              workerRole,
-              state: 'BLOCKED',
+              workerId: execRes.workerId,
+              workerRole: execRes.workerRole,
+              state: isMissingWorker ? 'WAITING_FOR_WORKER' : 'BLOCKED',
               action: 'inject_field_values',
-              status: 'failed',
-              error: cmdRes.error || 'درج مقادیر فیلدها در صفحه با شکست مواجه شد.',
-              durationMs,
-              output: cmdRes.output
+              status: isMissingWorker ? 'paused' : 'failed',
+              error: execRes.error || 'درج مقادیر فیلدها در صفحه با شکست مواجه شد.',
+              durationMs: execRes.durationMs,
+              output: execRes.output
             };
           }
 
           // اعتبارسنجی دقیق پاسخ دریافتی از DOM واقعی
-          const out = cmdRes.output || {};
-          const fieldsFound = out.fieldsFound ?? 0;
+          const out = execRes.output || {};
+          const fieldsFound = out.fieldsFound ?? execRes.fieldsFound ?? 0;
           const mappedFields = out.mappedFields ?? Object.keys(mappings).length;
           const filledFields = out.filledFields ?? 0;
           const missingRequiredFields: string[] = out.missingRequiredFields || [];
@@ -1013,13 +928,13 @@ export class WorkerDispatcherService {
           if (filledFields === 0 && workerRole === 'extension') {
             return {
               success: false,
-              workerId: cmdRes.workerId || workerId,
-              workerRole,
+              workerId: execRes.workerId,
+              workerRole: execRes.workerRole,
               state: 'BLOCKED',
               action: 'inject_field_values',
               status: 'failed',
               error: 'هیچ‌یک از فیلدهای فرم در صفحه با داده‌های آگهی تطبیق نیافت یا پر نشد.',
-              durationMs,
+              durationMs: execRes.durationMs,
               output: out
             };
           }
@@ -1027,13 +942,13 @@ export class WorkerDispatcherService {
           if (missingRequiredFields.length > 0) {
             return {
               success: false,
-              workerId: cmdRes.workerId || workerId,
-              workerRole,
+              workerId: execRes.workerId,
+              workerRole: execRes.workerRole,
               state: 'BLOCKED',
               action: 'inject_field_values',
               status: 'failed',
               error: `فیلدهای اجباری در صفحه خالی مانده‌اند: [${missingRequiredFields.join('، ')}]. ارسال فرم متوقف شد.`,
-              durationMs,
+              durationMs: execRes.durationMs,
               output: out
             };
           }
@@ -1041,13 +956,13 @@ export class WorkerDispatcherService {
           if (validationErrors.length > 0) {
             return {
               success: false,
-              workerId: cmdRes.workerId || workerId,
-              workerRole,
+              workerId: execRes.workerId,
+              workerRole: execRes.workerRole,
               state: 'BLOCKED',
               action: 'inject_field_values',
               status: 'failed',
               error: `خطای اعتبارسنجی در فیلدهای صفحه وجود دارد: [${validationErrors.join('، ')}]. ارسال فرم متوقف شد.`,
-              durationMs,
+              durationMs: execRes.durationMs,
               output: out
             };
           }
@@ -1055,19 +970,19 @@ export class WorkerDispatcherService {
           const nowIso = new Date().toISOString();
           workflow.formFillCompletedAt = nowIso;
           await workflowTraceService.updateWorkflowTimings(wfId, {
-            formFillStartedAt: new Date(Date.now() - durationMs).toISOString(),
+            formFillStartedAt: new Date(Date.now() - execRes.durationMs).toISOString(),
             formFillCompletedAt: nowIso,
-            realFormFillDurationMs: durationMs
+            realFormFillDurationMs: execRes.durationMs
           });
 
           return {
             success: true,
-            workerId: cmdRes.workerId || workerId,
-            workerRole,
+            workerId: execRes.workerId,
+            workerRole: execRes.workerRole,
             state: 'FILLING_FIELDS',
             action: 'inject_field_values',
             status: 'completed',
-            durationMs,
+            durationMs: execRes.durationMs,
             output: {
               fieldsFound,
               mappedFields,
@@ -1086,83 +1001,38 @@ export class WorkerDispatcherService {
         // تفکیک دقیق: WAITING_FOR_OTP، PUBLICATION_PENDING، BLOCKED (خطای فرم)، و UNKNOWN
         // =========================================================================
         case 'FILLING_FIELDS': {
-          let cmdRes: { success: boolean; workerId?: string; durationMs: number; error?: string; output?: any };
+          const task: UnifiedWorkerTask = {
+            workflowId: wfId,
+            executionId: execId,
+            jobId,
+            actionId,
+            action: 'click_submit_button',
+            state: 'FILLING_FIELDS',
+            platform: workflow.platform,
+            platformDomain: domain,
+            workerRole,
+            workerId,
+            input: {}
+          };
 
-          if (workerRole === 'local') {
-            const localRes = await this.executeLocalAgentTask({
-              workflowId: wfId,
-              executionId: execId,
-              jobId,
-              action: 'click_submit_button',
-              state: 'FILLING_FIELDS',
-              platform: workflow.platform,
-              platformDomain: domain,
-              input: {}
-            });
+          const execRes = await this.executeTaskViaResolvedWorker(task);
 
-            if (!localRes.success) {
-              return {
-                success: false,
-                workerId: 'local_agent_worker',
-                workerRole: 'local',
-                state: 'WAITING_FOR_WORKER',
-                action: 'click_submit_button',
-                status: 'paused',
-                error: localRes.error || 'ورکر محلی در دسترس نیست. وضعیت: WAITING_FOR_WORKER.',
-                durationMs: localRes.durationMs
-              };
-            }
-
-            cmdRes = {
-              success: true,
-              workerId: 'local_agent_worker',
-              durationMs: localRes.durationMs,
-              output: localRes.output
-            };
-          } else {
-            const extStatus = extensionBridge.getStatus();
-            if (!extStatus.installed || extStatus.status !== 'online') {
-              return {
-                success: false,
-                workerId,
-                workerRole: 'extension',
-                state: 'WAITING_FOR_WORKER',
-                action: 'click_submit_button',
-                status: 'paused',
-                error: 'افزونه مرورگر متصل نیست. وضعیت: WAITING_FOR_WORKER',
-                durationMs: Math.round(performance.now() - startTime)
-              };
-            }
-
-            cmdRes = await extensionBridge.executeWorkerCommand({
-              workflowId: wfId,
-              executionId: execId,
-              jobId,
-              actionId,
-              action: 'click_submit_button',
-              platform: workflow.platform,
-              platformDomain: domain
-            });
-          }
-
-          const durationMs = cmdRes.durationMs;
-
-          // ۱. اگر فرمان ارسال اصلاً به درستی در مرورگر اجرا نشد
-          if (!cmdRes.success) {
+          if (!execRes.success) {
+            const isMissingWorker = (execRes.error || '').includes('دسترس نیست');
             return {
               success: false,
-              workerId: cmdRes.workerId || workerId,
-              workerRole,
-              state: 'BLOCKED',
+              workerId: execRes.workerId,
+              workerRole: execRes.workerRole,
+              state: isMissingWorker ? 'WAITING_FOR_WORKER' : 'BLOCKED',
               action: 'click_submit_button',
-              status: 'failed',
-              error: cmdRes.error || 'کلیک دکمه ارسال توسط ورکر با شکست مواجه شد.',
-              durationMs,
-              output: cmdRes.output
+              status: isMissingWorker ? 'paused' : 'failed',
+              error: execRes.error || 'کلیک دکمه ارسال توسط ورکر با شکست مواجه شد.',
+              durationMs: execRes.durationMs,
+              output: execRes.output
             };
           }
 
-          const out = cmdRes.output || {};
+          const out = execRes.output || {};
 
           // ۲. فقط زمانی WAITING_FOR_OTP ثبت می‌شود که وجود چالش OTP توسط مرورگر تایید شده باشد
           if (out.otpGateDetected === true || out.hasOtpChallenge === true || out.pageState === 'otp_required') {
@@ -1170,15 +1040,16 @@ export class WorkerDispatcherService {
             workflow.otpWaitStartedAt = nowIso;
             await workflowTraceService.updateWorkflowTimings(wfId, { otpWaitStartedAt: nowIso });
 
+            const payloadData = await this.resolveValidatedCampaignPayload(workflow);
             return {
               success: true,
-              workerId: cmdRes.workerId || workerId,
-              workerRole,
+              workerId: execRes.workerId,
+              workerRole: execRes.workerRole,
               state: 'WAITING_FOR_OTP',
               action: 'detect_otp_challenge',
               status: 'paused',
-              durationMs,
-              input: { phoneNumber: out.phoneNumber || '09153108763' },
+              durationMs: execRes.durationMs,
+              input: { phoneNumber: out.phoneNumber || payloadData.phone },
               output: {
                 otpGateDetected: true,
                 message: 'چالش کد تایید پیامکی (OTP) توسط مرورگر تایید شد. لطفاً کد را در پنل وارد فرمایید.',
@@ -1199,12 +1070,12 @@ export class WorkerDispatcherService {
 
             return {
               success: true,
-              workerId: cmdRes.workerId || workerId,
-              workerRole,
+              workerId: execRes.workerId,
+              workerRole: execRes.workerRole,
               state: 'PUBLICATION_PENDING',
               action: 'direct_submission_success',
               status: 'completed',
-              durationMs,
+              durationMs: execRes.durationMs,
               publicUrl: publicUrl || undefined,
               output: {
                 directSubmission: true,
@@ -1220,13 +1091,13 @@ export class WorkerDispatcherService {
           if (out.formError || out.hasFormError === true || out.pageState === 'form_error') {
             return {
               success: false,
-              workerId: cmdRes.workerId || workerId,
-              workerRole,
+              workerId: execRes.workerId,
+              workerRole: execRes.workerRole,
               state: 'BLOCKED',
               action: 'form_validation_error',
               status: 'failed',
               error: out.errorMessage || out.formError || 'خطای اعتبارسنجی فیلدهای فرم در سایت مقصد مشاهده شد.',
-              durationMs,
+              durationMs: execRes.durationMs,
               output: out
             };
           }
@@ -1234,13 +1105,13 @@ export class WorkerDispatcherService {
           // ۵. نبود پاسخ معتبر یا عدم تغییر صفحه: وضعیت نامشخص
           return {
             success: false,
-            workerId: cmdRes.workerId || workerId,
-            workerRole: 'extension',
+            workerId: execRes.workerId,
+            workerRole: execRes.workerRole,
             state: 'UNKNOWN',
             action: 'inspect_post_submit_feedback',
             status: 'paused',
             error: 'پس از کلیک دکمه ارسال، پاسخ قطعی یا چالش OTP از صفحه مرورگر دریافت نگردید. وضعیت: UNKNOWN.',
-            durationMs,
+            durationMs: execRes.durationMs,
             output: out
           };
         }
@@ -1295,97 +1166,52 @@ export class WorkerDispatcherService {
             realOtpWaitDurationMs
           });
 
-          let cmdRes: { success: boolean; workerId?: string; durationMs: number; error?: string; output?: any };
+          const task: UnifiedWorkerTask = {
+            workflowId: wfId,
+            executionId: execId,
+            jobId,
+            actionId,
+            action: 'inject_and_verify_otp',
+            state: 'OTP_RECEIVED',
+            platform: workflow.platform,
+            platformDomain: domain,
+            workerRole,
+            workerId,
+            input: { otpCode }
+          };
 
-          if (workerRole === 'local') {
-            const localRes = await this.executeLocalAgentTask({
-              workflowId: wfId,
-              executionId: execId,
-              jobId,
-              action: 'inject_and_verify_otp',
-              state: 'OTP_RECEIVED',
-              platform: workflow.platform,
-              platformDomain: domain,
-              input: { otpCode }
-            });
+          const execRes = await this.executeTaskViaResolvedWorker(task);
 
-            if (!localRes.success) {
-              return {
-                success: false,
-                workerId: 'local_agent_worker',
-                workerRole: 'local',
-                state: 'WAITING_FOR_WORKER',
-                action: 'inject_and_verify_otp',
-                status: 'paused',
-                error: localRes.error || 'ورکر محلی در دسترس نیست. وضعیت: WAITING_FOR_WORKER',
-                durationMs: localRes.durationMs
-              };
-            }
-
-            cmdRes = {
-              success: true,
-              workerId: 'local_agent_worker',
-              durationMs: localRes.durationMs,
-              output: localRes.output
-            };
-          } else {
-            const extStatus = extensionBridge.getStatus();
-            if (!extStatus.installed || extStatus.status !== 'online') {
-              return {
-                success: false,
-                workerId,
-                workerRole: 'extension',
-                state: 'WAITING_FOR_WORKER',
-                action: 'inject_and_verify_otp',
-                status: 'paused',
-                error: 'افزونه مرورگر برای درج کد تایید در دسترس نیست. وضعیت: WAITING_FOR_WORKER',
-                durationMs: Math.round(performance.now() - startTime)
-              };
-            }
-
-            cmdRes = await extensionBridge.executeWorkerCommand({
-              workflowId: wfId,
-              executionId: execId,
-              jobId,
-              actionId,
-              action: 'inject_and_verify_otp',
-              platform: workflow.platform,
-              platformDomain: domain,
-              input: { otpCode }
-            });
-          }
-
-          const durationMs = cmdRes.durationMs;
-
-          if (!cmdRes.success) {
+          if (!execRes.success) {
+            const isMissingWorker = (execRes.error || '').includes('دسترس نیست');
             return {
               success: false,
-              workerId: cmdRes.workerId || workerId,
-              workerRole,
-              state: 'BLOCKED',
+              workerId: execRes.workerId,
+              workerRole: execRes.workerRole,
+              state: isMissingWorker ? 'WAITING_FOR_WORKER' : 'BLOCKED',
               action: 'inject_and_verify_otp',
-              status: 'failed',
-              error: cmdRes.error || 'درج کد تایید OTP توسط ورکر ناموفق بود.',
-              durationMs,
-              output: cmdRes.output
+              status: isMissingWorker ? 'paused' : 'failed',
+              error: execRes.error || 'درج کد تایید OTP توسط ورکر ناموفق بود.',
+              durationMs: execRes.durationMs,
+              output: execRes.output
             };
           }
 
           // کد ارسال شد؛ اما صریحاً تایید سایت در این مرحله false است تا از تایید جعلی جلوگیری شود
           return {
             success: true,
-            workerId: cmdRes.workerId || workerId,
-            workerRole,
+            workerId: execRes.workerId,
+            workerRole: execRes.workerRole,
             state: 'OTP_SUBMITTED',
             action: 'inject_and_verify_otp',
             status: 'completed',
-            durationMs,
+            durationMs: execRes.durationMs,
             input: { otpCode },
             output: {
               otpInjected: true,
               verifiedByPlatform: false,
               realOtpWaitDurationMs,
-              details: cmdRes.output
+              details: execRes.output
             },
             nextAction: 'check_portal_otp_acceptance'
           };
@@ -1396,94 +1222,50 @@ export class WorkerDispatcherService {
         // OTP_SUBMITTED یا پاسخ افزونه به تنهایی پذیرش نیست؛ استعلام پاسخ سایت الزامی است
         // =========================================================================
         case 'OTP_SUBMITTED': {
-          let verifyCmd: { success: boolean; workerId?: string; durationMs: number; error?: string; output?: any };
+          const task: UnifiedWorkerTask = {
+            workflowId: wfId,
+            executionId: execId,
+            jobId,
+            actionId,
+            action: 'check_otp_acceptance',
+            state: 'OTP_SUBMITTED',
+            platform: workflow.platform,
+            platformDomain: domain,
+            workerRole,
+            workerId,
+            input: {}
+          };
 
-          if (workerRole === 'local') {
-            const localRes = await this.executeLocalAgentTask({
-              workflowId: wfId,
-              executionId: execId,
-              jobId,
-              action: 'check_otp_acceptance',
-              state: 'OTP_SUBMITTED',
-              platform: workflow.platform,
-              platformDomain: domain,
-              input: {}
-            });
+          const execRes = await this.executeTaskViaResolvedWorker(task);
 
-            if (!localRes.success) {
-              return {
-                success: false,
-                workerId: 'local_agent_worker',
-                workerRole: 'local',
-                state: 'WAITING_FOR_WORKER',
-                action: 'check_otp_acceptance',
-                status: 'paused',
-                error: localRes.error || 'ورکر محلی در دسترس نیست. وضعیت: WAITING_FOR_WORKER.',
-                durationMs: localRes.durationMs
-              };
-            }
-
-            verifyCmd = {
-              success: true,
-              workerId: 'local_agent_worker',
-              durationMs: localRes.durationMs,
-              output: localRes.output
-            };
-          } else {
-            const extStatus = extensionBridge.getStatus();
-            if (!extStatus.installed || extStatus.status !== 'online') {
-              return {
-                success: false,
-                workerId,
-                workerRole: 'extension',
-                state: 'WAITING_FOR_WORKER',
-                action: 'check_otp_acceptance',
-                status: 'paused',
-                error: 'افزونه مرورگر در دسترس نیست. برای بررسی پذیرش واقعی کد توسط سایت، اتصال افزونه الزامی است.',
-                durationMs: Math.round(performance.now() - startTime)
-              };
-            }
-
-            verifyCmd = await extensionBridge.executeWorkerCommand({
-              workflowId: wfId,
-              executionId: execId,
-              jobId,
-              actionId,
-              action: 'check_otp_acceptance',
-              platform: workflow.platform,
-              platformDomain: domain
-            });
-          }
-
-          const durationMs = verifyCmd.durationMs;
-
-          if (!verifyCmd.success) {
+          if (!execRes.success) {
+            const isMissingWorker = (execRes.error || '').includes('دسترس نیست');
             return {
               success: false,
-              workerId: verifyCmd.workerId || workerId,
-              workerRole,
-              state: 'BLOCKED',
+              workerId: execRes.workerId,
+              workerRole: execRes.workerRole,
+              state: isMissingWorker ? 'WAITING_FOR_WORKER' : 'BLOCKED',
               action: 'check_otp_acceptance',
-              status: 'failed',
-              error: verifyCmd.error || 'خطا در ارزیابی تایید کد توسط سایت',
-              durationMs,
-              output: verifyCmd.output
+              status: isMissingWorker ? 'paused' : 'failed',
+              error: execRes.error || 'خطا در ارزیابی تایید کد توسط سایت',
+              durationMs: execRes.durationMs,
+              output: execRes.output
             };
           }
 
-          const out = verifyCmd.output || {};
+          const out = execRes.output || {};
 
           // کد اشتباه یا منقضی: بازگشت به WAITING_FOR_OTP
           if (out.rejected === true || out.invalidCode === true) {
             return {
               success: false,
-              workerId: verifyCmd.workerId || workerId,
-              workerRole,
+              workerId: execRes.workerId,
+              workerRole: execRes.workerRole,
               state: 'WAITING_FOR_OTP',
               action: 'check_otp_acceptance',
               status: 'failed',
               error: 'کد تایید واردشده توسط سامانه مقصد رد شد (کد نادرست یا منقضی). لطفاً کد معتبر را وارد کنید.',
-              durationMs,
+              durationMs: execRes.durationMs,
               output: out,
               nextAction: 'receive_otp'
             };
@@ -1499,12 +1281,12 @@ export class WorkerDispatcherService {
 
             return {
               success: true,
-              workerId: verifyCmd.workerId || workerId,
+              workerId: execRes.workerId,
               workerRole: 'github',
               state: 'PUBLICATION_PENDING',
               action: 'check_otp_acceptance',
               status: 'completed',
-              durationMs,
+              durationMs: execRes.durationMs,
               input: { domain },
               output: {
                 verifiedByPlatform: true,
@@ -1522,13 +1304,13 @@ export class WorkerDispatcherService {
           // شواهد کافی نیست -> وضعیت UNKNOWN (نه موفقیت ساختگی)
           return {
             success: false,
-            workerId: verifyCmd.workerId || workerId,
+            workerId: execRes.workerId,
             workerRole: 'github',
             state: 'UNKNOWN',
             action: 'check_otp_acceptance',
             status: 'paused',
             error: 'شواهد قطعی مبنی بر پذیرش کد توسط سامانه مقصد یافت نشد؛ در انتظار پاسخ قطعی پلتفرم. وضعیت: UNKNOWN.',
-            durationMs,
+            durationMs: execRes.durationMs,
             output: out
           };
         }

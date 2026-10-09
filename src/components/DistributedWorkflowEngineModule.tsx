@@ -39,6 +39,8 @@ import { formatToPersianJalaliDateTime, toPersianDigits } from '../utils/persian
 import { SmartHelpButton } from './SmartHelpModal';
 import { extensionBridge, ExtensionWorkerStatus } from '../utils/extensionBridge';
 import { callApi } from '../services/api/apiClient';
+import { clientStorage } from '../services/clientStorageService';
+import { Campaign } from '../types/ashk24';
 
 interface Props {
   defaultPlatform?: string;
@@ -57,6 +59,9 @@ const SUPPORTED_REAL_PLATFORMS = [
 
 export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
   const [workflows, setWorkflows] = useState<WorkflowRecord[]>([]);
+  const [availableCampaigns, setAvailableCampaigns] = useState<Campaign[]>([]);
+  const [selectedCampaignIdForNewWf, setSelectedCampaignIdForNewWf] = useState<string>('');
+  const [campaignModalError, setCampaignModalError] = useState<string | null>(null);
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(null);
   const [selectedActionDetails, setSelectedActionDetails] = useState<WorkflowAction | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -69,6 +74,21 @@ export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
   const [expandedExecutions, setExpandedExecutions] = useState<Record<string, boolean>>({});
 
   const activeWorkflow = workflows.find((w) => w.workflowId === selectedWorkflowId) || workflows[0] || null;
+
+  const loadCampaigns = async () => {
+    try {
+      const list = await clientStorage.getCampaigns();
+      setAvailableCampaigns(list);
+      if (list.length > 0) {
+        setSelectedCampaignIdForNewWf((prev) => {
+          if (prev && list.some((c) => c.id === prev)) return prev;
+          return list[0].id;
+        });
+      }
+    } catch (e) {
+      console.error('Failed to load campaigns:', e);
+    }
+  };
 
   const loadWorkflows = async () => {
     try {
@@ -89,6 +109,7 @@ export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
 
   useEffect(() => {
     loadWorkflows();
+    loadCampaigns();
     const interval = setInterval(loadWorkflows, 4000);
     const unsub = extensionBridge.subscribe((status) => setExtStatus(status));
     return () => {
@@ -99,11 +120,31 @@ export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
 
   const handleCreateNewWorkflow = async () => {
     setLoading(true);
+    setCampaignModalError(null);
     try {
+      if (availableCampaigns.length === 0) {
+        setCampaignModalError('کمپینی در سیستم یافت نشد. لطفاً ابتدا در بخش مدیریت کمپین‌ها، حداقل یک کمپین با عنوان و شرح معتبر ثبت فرمایید.');
+        return;
+      }
+
+      const selectedCampaign = availableCampaigns.find((c) => c.id === selectedCampaignIdForNewWf) || availableCampaigns[0];
+      const title = (selectedCampaign.title || selectedCampaign.productName || '').trim();
+      const rawDesc = (selectedCampaign.productDescription || (selectedCampaign as any).description || '').trim();
+
+      if (!title || title.length < 5) {
+        setCampaignModalError('عنوان کمپین انتخاب‌شده نامعتبر است (حداقل ۵ کاراکتر الزامی است).');
+        return;
+      }
+
+      if (!rawDesc || rawDesc.length < 15) {
+        setCampaignModalError('شرح و متن کمپین انتخاب‌شده کافی نیست (حداقل ۱۵ کاراکتر الزامی است).');
+        return;
+      }
+
       const targetPlat = SUPPORTED_REAL_PLATFORMS.find((p) => p.domain === newPlatformDomain) || SUPPORTED_REAL_PLATFORMS[0];
       const created = await workflowTraceService.createWorkflow({
-        campaignId: 'cmp_prod_' + Date.now(),
-        campaignTitle: `تولید و توزیع کارتن و بسته‌بندی اشک قلم (${targetPlat.name})`,
+        campaignId: selectedCampaign.id,
+        campaignTitle: title,
         platform: targetPlat.name,
         platformDomain: targetPlat.domain,
         primaryWorker: 'github'
@@ -127,6 +168,25 @@ export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
     setLoading(true);
 
     try {
+      // اعتبارسنجی اولیه کمپین قبل از اجرای گام
+      const payloadCheck = await workerDispatcherService.resolveValidatedCampaignPayload(activeWorkflow);
+      if (!payloadCheck.valid) {
+        await workflowTraceService.recordAction({
+          workflowId: activeWorkflow.workflowId,
+          executionId: activeWorkflow.currentExecutionId,
+          jobId: activeWorkflow.jobId,
+          worker: 'github',
+          platform: activeWorkflow.platform,
+          state: 'BLOCKED',
+          action: 'validate_campaign_payload',
+          status: 'failed',
+          error: `توقف گردش کار به علت نقص داده‌های ضروری کمپین: [${payloadCheck.missingFields.join('، ')}]`,
+          output: { validationPassed: false, missingFields: payloadCheck.missingFields }
+        });
+        await loadWorkflows();
+        return;
+      }
+
       const result = await workerDispatcherService.executeNextStep(activeWorkflow);
 
       // ثبت رویداد واقعی با زمان اندازه‌گیری شده و مقادیر برگشتی واقعی ورکر
@@ -868,18 +928,83 @@ export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
       {/* مودال ایجاد گردش کار جدید */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 text-right space-y-4 shadow-2xl">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 text-right space-y-4 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h3 className="font-bold text-slate-100">ایجاد گردش کار جدید</h3>
+              <h3 className="font-bold text-slate-100 flex items-center gap-2">
+                <Workflow className="w-5 h-5 text-indigo-400" />
+                ایجاد گردش کار انتشار واقعی
+              </h3>
               <button
-                onClick={() => setShowCreateModal(false)}
+                onClick={() => { setShowCreateModal(false); setCampaignModalError(null); }}
                 className="text-slate-400 hover:text-slate-200 text-sm cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <div className="space-y-3">
+            {campaignModalError && (
+              <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-300 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>{campaignModalError}</span>
+              </div>
+            )}
+
+            {/* انتخاب کمپین واقعی */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
+                <span>انتخاب کمپین هدف (منبع داده واقعی):</span>
+                <span className="text-[10px] text-slate-400 font-mono">
+                  {toPersianDigits(availableCampaigns.length)} کمپین موجود
+                </span>
+              </label>
+
+              {availableCampaigns.length === 0 ? (
+                <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-300">
+                  هیچ کمپین تبلیغاتی در سیستم یافت نشد. استفاده از عنوان یا داده‌های فرضی اکیداً ممنوع است. لطفاً ابتدا در بخش مدیریت کمپین‌ها، کمپین خود را ثبت فرمایید.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <select
+                    value={selectedCampaignIdForNewWf}
+                    onChange={(e) => {
+                      setSelectedCampaignIdForNewWf(e.target.value);
+                      setCampaignModalError(null);
+                    }}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
+                  >
+                    {availableCampaigns.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.title || c.productName || c.id}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* خلاصه کمپین انتخابی */}
+                  {(() => {
+                    const c = availableCampaigns.find((item) => item.id === selectedCampaignIdForNewWf) || availableCampaigns[0];
+                    if (!c) return null;
+                    const desc = c.productDescription || (c as any).description || '';
+                    return (
+                      <div className="p-3 bg-slate-800/40 border border-slate-800 rounded-xl text-xs space-y-1">
+                        <div className="text-slate-300 font-medium line-clamp-1">
+                          عنوان: {c.title || c.productName}
+                        </div>
+                        <div className="text-slate-400 line-clamp-2 text-[11px]">
+                          شرح: {desc || 'فاقد شرح'}
+                        </div>
+                        <div className="text-[10px] text-indigo-400 flex items-center gap-3 pt-1 border-t border-slate-800/60">
+                          <span>دسته: {c.sector || 'عمومی'}</span>
+                          <span>شناسه: {c.id}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
+
+            {/* انتخاب پلتفرم */}
+            <div className="space-y-2">
               <label className="text-xs font-semibold text-slate-300 block">انتخاب پلتفرم هدف:</label>
               <select
                 value={newPlatformDomain}
@@ -895,19 +1020,19 @@ export const DistributedWorkflowEngineModule: React.FC<Props> = () => {
             </div>
 
             <div className="p-3 bg-slate-800/40 border border-slate-800 rounded-xl text-xs text-slate-400">
-              پس از ایجاد، مراحل کشف، تولید آگهی، بررسی فرم، پر کردن و ارسال با اولویت‌بندی ورکرها آغاز می‌شود.
+              این گردش کار مستقیماً با داده‌های واقعی کمپین فوق و با هماهنگی سه‌گانه ورکرها (GitHub -&gt; Extension -&gt; Local) اجرا خواهد شد.
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
-                onClick={() => setShowCreateModal(false)}
+                onClick={() => { setShowCreateModal(false); setCampaignModalError(null); }}
                 className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium cursor-pointer"
               >
                 انصراف
               </button>
               <button
                 onClick={handleCreateNewWorkflow}
-                disabled={loading}
+                disabled={loading || availableCampaigns.length === 0}
                 className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold cursor-pointer disabled:opacity-50"
               >
                 ایجاد و راه‌اندازی
