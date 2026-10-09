@@ -6,6 +6,7 @@ import crypto from 'crypto';
 import querystring from 'querystring';
 import { GoogleGenAI } from '@google/genai';
 import { platformAdapterRegistry } from '../services/platformAdapters.js';
+import { verifyPublicationEvidence } from '../services/unifiedVerificationService.js';
 
 let geminiClient: GoogleGenAI | null = null;
 function getGeminiClient(): GoogleGenAI | null {
@@ -1339,44 +1340,95 @@ export function cpanelDevApiPlugin(): Plugin {
               if (!Array.isArray(db.distributedWorkflows)) db.distributedWorkflows = [];
               const wfId = body.workflowId;
               const targetUrl = String(body.url || '').trim();
+              const expectedTitle = String(body.expectedTitle || '').trim();
               const wf = db.distributedWorkflows.find((w: any) => w.workflowId === wfId);
               if (!wf) return sendJson({ success: false, error: 'گردش کار یافت نشد.' }, 404);
 
               const now = new Date().toISOString();
-              wf.publicUrl = targetUrl;
-              wf.publicationVerified = true;
-              wf.previousState = wf.currentState;
-              wf.currentState = 'PUBLISHED';
-              wf.updatedAt = now;
+              const campaignTitle = expectedTitle || wf.campaignTitle || '';
 
-              if (wf.executions.length > 0) {
-                const lastExec = wf.executions[wf.executions.length - 1];
-                lastExec.actions.push({
-                  actionId: `act_${crypto.randomBytes(4).toString('hex')}`,
-                  executionId: lastExec.executionId,
-                  workflowId: wfId,
-                  worker: wf.activeWorker || 'github',
-                  platform: wf.platform,
-                  state: 'PUBLISHED',
-                  previousState: 'VERIFYING_PUBLICATION',
-                  action: 'verify_publication_url',
-                  status: 'completed',
-                  input: { url: targetUrl },
-                  output: { verified: true, publicUrl: targetUrl },
-                  durationMs: 450,
-                  timestamp: now
-                });
-                lastExec.currentState = 'PUBLISHED';
-              }
-
-              writeDb(db);
-              return sendJson({
-                success: true,
-                verified: true,
-                httpStatus: 200,
-                message: 'لینک آگهی با موفقیت در اینترنت راستی‌آزمایی و ثبت گردید.',
-                workflow: wf
+              // راستی‌آزمایی واقعی از طریق موتور مشترک Verification
+              const verifyRes = await verifyPublicationEvidence({
+                url: targetUrl,
+                expectedTitle: campaignTitle,
+                expectedJobId: wf.jobId,
+                expectedCampaignId: wf.campaignId
               });
+
+              if (verifyRes.verified && verifyRes.matchedTitle) {
+                wf.publicUrl = targetUrl;
+                wf.publicationVerified = true;
+                wf.previousState = wf.currentState;
+                wf.currentState = 'PUBLISHED';
+                wf.updatedAt = now;
+
+                if (wf.executions.length > 0) {
+                  const lastExec = wf.executions[wf.executions.length - 1];
+                  lastExec.actions.push({
+                    actionId: `act_${crypto.randomBytes(4).toString('hex')}`,
+                    executionId: lastExec.executionId,
+                    workflowId: wfId,
+                    worker: wf.activeWorker || 'github',
+                    platform: wf.platform,
+                    state: 'PUBLISHED',
+                    previousState: 'VERIFYING_PUBLICATION',
+                    action: 'verify_publication_url',
+                    status: 'completed',
+                    input: { url: targetUrl, expectedTitle: campaignTitle },
+                    output: { verified: true, contentMatched: true, publicUrl: targetUrl, httpStatus: verifyRes.httpStatus },
+                    durationMs: 450,
+                    timestamp: now
+                  });
+                  lastExec.currentState = 'PUBLISHED';
+                }
+
+                writeDb(db);
+                return sendJson({
+                  success: true,
+                  verified: true,
+                  contentMatched: true,
+                  httpStatus: verifyRes.httpStatus,
+                  message: 'لینک آگهی با موفقیت در اینترنت راستی‌آزمایی و ثبت گردید.',
+                  workflow: wf
+                });
+              } else {
+                // شواهد کافی نیست یا آدرس نامعتبر است -> وضعیت UNKNOWN
+                wf.previousState = wf.currentState;
+                wf.currentState = 'UNKNOWN';
+                wf.publicationVerified = false;
+                wf.updatedAt = now;
+
+                if (wf.executions.length > 0) {
+                  const lastExec = wf.executions[wf.executions.length - 1];
+                  lastExec.actions.push({
+                    actionId: `act_${crypto.randomBytes(4).toString('hex')}`,
+                    executionId: lastExec.executionId,
+                    workflowId: wfId,
+                    worker: wf.activeWorker || 'github',
+                    platform: wf.platform,
+                    state: 'UNKNOWN',
+                    previousState: 'VERIFYING_PUBLICATION',
+                    action: 'verify_publication_url',
+                    status: 'failed',
+                    error: verifyRes.error || 'آگهی در صفحه عمومی تایید نشد یا محتوای مشخص آگهی در صفحه احراز نگردید.',
+                    input: { url: targetUrl, expectedTitle: campaignTitle },
+                    output: { verified: false, contentMatched: false, httpStatus: verifyRes.httpStatus },
+                    durationMs: 450,
+                    timestamp: now
+                  });
+                  lastExec.currentState = 'UNKNOWN';
+                }
+
+                writeDb(db);
+                return sendJson({
+                  success: false,
+                  verified: false,
+                  contentMatched: false,
+                  httpStatus: verifyRes.httpStatus,
+                  error: verifyRes.error || 'آگهی در صفحه عمومی تایید نشد یا محتوای مشخص آگهی در صفحه احراز نگردید. وضعیت: UNKNOWN.',
+                  workflow: wf
+                }, 422);
+              }
             }
 
             case 'health':

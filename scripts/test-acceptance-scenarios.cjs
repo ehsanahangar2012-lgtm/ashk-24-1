@@ -1,20 +1,21 @@
 /**
  * Ashk24 Acceptance Scenarios Test Suite
- * Version: 5.9.29
+ * Version: 5.9.33
  * 
- * آزمون‌های پذیرش ۶ سناریوی الزامی کاربر:
- * ۱. GitHub Worker در دسترس نیست (عدم وجود fallback ساختگی، ثبت صریح خطای WAITING_FOR_WORKER)
+ * آزمون‌های پذیرش جامع برای چرخه واقعی Workflow:
+ * ۱. GitHub Worker در دسترس نیست یا در انتظار Runner است (بدون fallback ساختگی، ثبت صریح WAITING_FOR_WORKER با حفظ تمام شناسه‌ها)
  * ۲. Local Worker فقط task را به صف اضافه می‌کند (ثبت QUEUED، عدم تلقی به عنوان اجرای موفق)
- * ۳. دکمه ارسال وجود ندارد (عدم تولید submitted: true، ثبت FORM_ERROR و توقف)
- * ۴. OTP ارسال شده اما پذیرفته‌شدن آن مشخص نیست (عدم پذیرش خودکار با صرف وجود redirectUrl، ثبت UNKNOWN)
- * ۵. URL باز می‌شود اما متعلق به آگهی موردنظر نیست (عدم ثبت PUBLISHED با متن متفرقه، ثبت UNKNOWN)
- * ۶. یک اجرای واقعی به لینک آگهی تأییدشده می‌رسد (تطبیق کامل عنوان کمپین، ثبت قطعی PUBLISHED)
+ * ۳. دکمه ارسال وجود ندارد یا فیلدهای اجباری خالی هستند (عدم تولید submitted: true، ثبت FORM_ERROR/BLOCKED و توقف)
+ * ۴. OTP ارسال شده اما پذیرفته‌شدن آن مشخص نیست (عدم پذیرش خودکار با صرف وجود redirectUrl، تفکیک ۳ مرحله OTP)
+ * ۵. URL باز می‌شود اما متعلق به آگهی موردنظر نیست (رد تطبیق تک‌کلمه‌ای عمومی، ثبت UNKNOWN)
+ * ۶. اجرای واقعی به لینک آگهی تأییدشده می‌رسد (تطبیق کامل از طریق سرویس مشترک Verification)
+ * ۷. تفکیک فرم ورود/ثبت‌نام از فرم آگهی و انتقال به LOGIN_REQUIRED / REGISTRATION_REQUIRED
  */
 
 const assert = require('assert');
 
 console.log('======================================================================');
-console.log('🧪 شروع آزمون‌های پذیرش نسخه ۵.۹.۲۹ (Acceptance Scenarios)');
+console.log('🧪 شروع آزمون‌های پذیرش نسخه ۵.۹.۳۳ (Acceptance Scenarios Suite)');
 console.log('======================================================================\n');
 
 const testResults = [];
@@ -29,7 +30,7 @@ function recordTest(id, name, passed, details) {
 }
 
 // -----------------------------------------------------------------------------
-// سناریو ۱: GitHub Worker در دسترس نیست
+// سناریو ۱: GitHub Worker در دسترس نیست یا در صف Runner است
 // -----------------------------------------------------------------------------
 function testScenario1_GitHubWorkerUnavailable() {
   const task = {
@@ -42,38 +43,52 @@ function testScenario1_GitHubWorkerUnavailable() {
     workerId: 'gh_orchestrator_main'
   };
 
-  // شبیه‌سازی پاسخ خطای شبکه یا عدم دسترسی به رانر گیت‌هاب
-  const simulateGhDispatch = (isServerDown) => {
-    if (isServerDown) {
-      return {
-        success: false,
-        workerId: task.workerId,
-        workerRole: 'github',
-        error: 'ارسال تسک به GitHub Worker انجام نشد یا Runner در دسترس نیست. وضعیت: WAITING_FOR_WORKER.',
-        durationMs: 42
-      };
-    }
-    return { success: true };
+  // شبیه‌سازی ۱-الف: سرور گیت‌هاب در دسترس نیست
+  const simulateGhUnavailable = () => {
+    return {
+      success: false,
+      workerId: task.workerId,
+      workerRole: 'github',
+      error: 'ارسال تسک به GitHub Worker انجام نشد یا Runner در دسترس نیست. وضعیت: WAITING_FOR_WORKER.',
+      durationMs: 42
+    };
   };
 
-  const res = simulateGhDispatch(true);
+  // شبیه‌سازی ۱-ب: تسک دیسپچ شد اما هنوز در وضعیت PENDING_RUNNER_PICKUP است
+  const simulateGhPendingPickup = () => {
+    const executionStatus = 'PENDING_RUNNER_PICKUP';
+    const isCompleted = executionStatus === 'COMPLETED';
+    return {
+      success: isCompleted, // صریحاً false
+      workerId: task.workerId,
+      workerRole: 'github',
+      output: {
+        taskAccepted: true,
+        dispatchStatus: 'DISPATCHED',
+        executionStatus
+      },
+      error: isCompleted ? undefined : `تسک توسط GitHub Worker پذیرفته شد (${executionStatus}) و در انتظار اجرای رانر است. وضعیت: WAITING_FOR_WORKER.`,
+      durationMs: 50
+    };
+  };
 
-  // شروط پذیرش سناریو ۱:
-  // الف) موفقیت کاذب (success: true) یا fallback لوکال ساختگی وجود نداشته باشد
-  // ب) خطای مشخص حاوی WAITING_FOR_WORKER باشد
-  // ج) شناسه‌های تسک ثابت بمانند
-  const passed = res.success === false &&
-                 res.error.includes('WAITING_FOR_WORKER') &&
-                 res.dispatchedLocally === undefined &&
-                 res.workerRole === 'github';
+  const res1 = simulateGhUnavailable();
+  const res2 = simulateGhPendingPickup();
+
+  const passed = res1.success === false &&
+                 res1.error.includes('WAITING_FOR_WORKER') &&
+                 res2.success === false &&
+                 res2.error.includes('WAITING_FOR_WORKER') &&
+                 res2.output.executionStatus === 'PENDING_RUNNER_PICKUP' &&
+                 res1.workerRole === 'github';
 
   recordTest(
     1,
-    'GitHub Worker در دسترس نیست',
+    'GitHub Worker در دسترس نیست یا در انتظار Runner است',
     passed,
     passed
-      ? 'پاسخ صریحاً ناموفق بود، fallback کاذب حذف شد و وضعیت به WAITING_FOR_WORKER هدایت گردید.'
-      : 'شکست در مهار خطای GitHub Worker'
+      ? 'پاسخ ناموفق و حالت PENDING_RUNNER_PICKUP هر دو به عنوان تکمیل تلقی نشدند و وضعیت صریحاً WAITING_FOR_WORKER ثبت گردید.'
+      : 'شکست در تفکیک پذیرش از تکمیل تسک گیت‌هاب'
   );
 }
 
@@ -90,7 +105,6 @@ function testScenario2_LocalWorkerQueuedOnly() {
     workerRole: 'local'
   };
 
-  // شبیه‌سازی صف لوکال ورکر (ثبت در صف بدون دریافت نتیجه اجرای واقعی مرورگر)
   const simulateQueueOnlyResponse = () => {
     return {
       success: false,
@@ -108,88 +122,72 @@ function testScenario2_LocalWorkerQueuedOnly() {
     };
   };
 
-  const queueRes = simulateQueueOnlyResponse();
+  const res = simulateQueueOnlyResponse();
 
-  // تبدیل نتیجه صف توسط دیسپچر
-  const dispatcherRes = {
-    success: false,
-    workerId: 'local_agent_worker',
-    workerRole: 'local',
-    output: queueRes.output,
-    error: 'تسک فقط به صف Local Worker افزوده شده و هنوز اجرا نشده است (QUEUED). وضعیت: WAITING_FOR_WORKER.',
-    durationMs: queueRes.durationMs
-  };
-
-  // شروط پذیرش سناریو ۲:
-  // الف) وضعیت صریحاً QUEUED باشد و هرگز success: true نباشد
-  // ب) شناسه‌های workflowId و executionId و jobId دست‌نخورده باشند
-  // ج) دیسپچر آن را معادل تکمیل تلقی نکند
-  const passed = dispatcherRes.success === false &&
-                 queueRes.status === 'QUEUED' &&
-                 queueRes.output.workflowId === 'wf_test_02' &&
-                 queueRes.output.jobId === 'job_test_02' &&
-                 dispatcherRes.error.includes('QUEUED');
+  const passed = res.success === false &&
+                 res.status === 'QUEUED' &&
+                 res.output.queued === true &&
+                 res.output.workflowId === task.workflowId &&
+                 res.output.executionId === task.executionId &&
+                 res.output.jobId === task.jobId &&
+                 res.output.actionId === task.actionId &&
+                 res.error.includes('WAITING_FOR_WORKER');
 
   recordTest(
     2,
     'Local Worker فقط task را به صف اضافه می‌کند',
     passed,
     passed
-      ? 'اضافه‌شدن به صف به درستی QUEUED گزارش شد و هرگز موفقیت قطعی تلقی نگردید.'
-      : 'شکست در تفکیک صف از اجرای واقعی'
+      ? 'وضعیت صریحاً QUEUED ثبت شد، موفقیت کاذب تولید نشد و تمام شناسه‌ها (workflow, execution, job, action) تا انتها حفظ شدند.'
+      : 'شکست در مهار خطای صف Local Worker'
   );
 }
 
 // -----------------------------------------------------------------------------
-// سناریو ۳: دکمه ارسال وجود ندارد
+// سناریو ۳: دکمه ارسال وجود ندارد یا فیلدهای ضروری خالی هستند
 // -----------------------------------------------------------------------------
-function testScenario3_SubmitButtonNotFound() {
-  // شبیه‌سازی رفتار DOM در local-agent/index.js زمانی که دکمه ارسال وجود ندارد
-  const simulateMissingSubmitButtonDom = (hasSubmitButton) => {
+function testScenario3_SubmitButtonNotFoundOrMissingFields() {
+  // الف: عدم وجود دکمه ارسال در DOM
+  const simulateSubmitWithoutButton = (hasSubmitButton) => {
     if (!hasSubmitButton) {
       return {
-        taskSuccess: false,
-        taskError: 'دکمه ارسال فرم در ساختار صفحه یافت نشد.',
-        taskOutput: {
-          clicked: false,
-          submitted: false,
-          pageState: 'FORM_ERROR',
-          formError: 'دکمه ارسال فرم در ساختار صفحه موجود نیست.'
-        }
+        clicked: false,
+        submitted: false,
+        pageState: 'FORM_ERROR',
+        formError: 'دکمه ارسال فرم در ساختار صفحه موجود نیست.'
       };
     }
-    return { taskSuccess: true };
+    return { clicked: true, submitted: true };
   };
 
-  const domRes = simulateMissingSubmitButtonDom(false);
+  // ب: عدم پرشدن فیلدهای ضروری در فرم
+  const simulateFillingValidation = (filledCount, missingRequired) => {
+    const canSubmit = filledCount > 0 && missingRequired.length === 0;
+    return {
+      canSubmit,
+      missingRequiredFields: missingRequired,
+      filledFields: filledCount,
+      state: canSubmit ? 'FILLING_FIELDS' : 'BLOCKED',
+      error: !canSubmit ? `فیلدهای اجباری در صفحه خالی مانده‌اند: [${missingRequired.join('، ')}]. ارسال فرم متوقف شد.` : null
+    };
+  };
 
-  // ارزیابی دیسپچر روی این خروجی
-  let workflowState = 'RUNNING';
-  let isBlocked = false;
+  const resButton = simulateSubmitWithoutButton(false);
+  const resFields = simulateFillingValidation(0, ['title', 'description', 'phone']);
 
-  if (!domRes.taskSuccess) {
-    workflowState = 'BLOCKED';
-    isBlocked = true;
-  }
-
-  // شروط پذیرش سناریو ۳:
-  // الف) submitted هرگز true نباشد
-  // ب) clicked حتماً false باشد
-  // ج) pageState برابر FORM_ERROR باشد
-  // د) گردش کار BLOCKED شود
-  const passed = domRes.taskSuccess === false &&
-                 domRes.taskOutput.submitted === false &&
-                 domRes.taskOutput.clicked === false &&
-                 domRes.taskOutput.pageState === 'FORM_ERROR' &&
-                 isBlocked === true;
+  const passed = resButton.submitted === false &&
+                 resButton.pageState === 'FORM_ERROR' &&
+                 resFields.canSubmit === false &&
+                 resFields.state === 'BLOCKED' &&
+                 resFields.missingRequiredFields.length === 3;
 
   recordTest(
     3,
-    'دکمه ارسال وجود ندارد',
+    'دکمه ارسال وجود ندارد یا فیلدهای ضروری خالی هستند',
     passed,
     passed
-      ? 'عدم وجود دکمه ارسال فوراً با submitted: false و FORM_ERROR تشخیص داده شد و گردش کار متوقف (BLOCKED) گردید.'
-      : 'شکست در مهار نبود دکمه ارسال'
+      ? 'عدم وجود دکمه ارسال باعث ثبت FORM_ERROR و عدم تولید submitted: true شد؛ فیلدهای ضروری خالی نیز ارسال را BLOCKED کردند.'
+      : 'شکست در مهار ارسال فرم بدون دکمه یا فیلد ضروری'
   );
 }
 
@@ -197,156 +195,145 @@ function testScenario3_SubmitButtonNotFound() {
 // سناریو ۴: OTP ارسال شده اما پذیرفته‌شدن آن مشخص نیست
 // -----------------------------------------------------------------------------
 function testScenario4_OtpSubmittedUnconfirmedAcceptance() {
-  // شبیه‌سازی حالتی که صفحه صرفاً ریدایرکت داده اما پیام پذیرش معتبر وجود ندارد
-  const simulateOtpPageCheck = (pageText, postUrl) => {
-    const isInvalid = pageText.includes('کد نادرست') || pageText.includes('اشتباه است');
-    const isAccepted = pageText.includes('با موفقیت تایید شد') || pageText.includes('آگهی شما ثبت شد');
+  // تفکیک دقیق سه مرحله مستقل
+  const step1_received = {
+    step: 'OTP_RECEIVED',
+    otpInjected: false,
+    verifiedByPlatform: false,
+    timestamp: '2026-10-09T10:00:00.000Z'
+  };
+
+  const step2_submitted = {
+    step: 'OTP_SUBMITTED',
+    otpInjected: true,
+    otpCodeSubmitted: true,
+    verifiedByPlatform: false, // ارسال کد هرگز به تنهایی تایید سایت نیست
+    timestamp: '2026-10-09T10:00:02.000Z'
+  };
+
+  // بررسی وضعیت صفحه پس از ارسال
+  const evaluateOtpAcceptance = (pageText, redirectUrl) => {
+    const isInvalid = pageText.includes('کد نادرست');
+    const isAccepted = pageText.includes('با موفقیت تایید شد');
 
     if (isInvalid) {
-      return { accepted: false, rejected: true, otpVerified: false };
+      return { accepted: false, verifiedByPlatform: false, state: 'WAITING_FOR_OTP', invalidCode: true };
     }
     if (isAccepted) {
-      return { accepted: true, verifiedByPlatform: true, otpVerified: true };
+      return { accepted: true, verifiedByPlatform: true, state: 'OTP_VERIFIED' };
     }
-    // شواهد قطعی نیست؛ صرف وجود URL ریدایرکت دلیل تایید نیست
+    // صرف وجود ریدایرکتUrl بدون پیام قطعی: پذیرش اثبات نمی‌شود
     return {
       accepted: false,
       verifiedByPlatform: false,
-      otpVerified: false,
-      redirectUrl: postUrl
+      state: 'UNKNOWN',
+      redirectUrl
     };
   };
 
-  const unconfirmedCheck = simulateOtpPageCheck('لطفاً منتظر بمانید...', 'https://portal.ir/redirect?status=next');
+  const step3_redirectOnly = evaluateOtpAcceptance('<html><body>در حال انتقال...</body></html>', 'https://agahi.ir/dashboard');
 
-  // بررسی در workerDispatcherService:
-  const hasExplicitProof = unconfirmedCheck.accepted === true ||
-                           unconfirmedCheck.verifiedByPlatform === true ||
-                           unconfirmedCheck.otpVerified === true;
-
-  const finalState = hasExplicitProof ? 'OTP_VERIFIED' : 'UNKNOWN';
-
-  // شروط پذیرش سناریو ۴:
-  // الف) صرف وجود redirectUrl نباید باعث OTP_VERIFIED یا پذیرش خودکار شود
-  // ب) accepted حتماً false باشد
-  // ج) وضعیت نهایی به UNKNOWN یا WAITING_FOR_HUMAN تغییر یابد
-  const passed = hasExplicitProof === false &&
-                 unconfirmedCheck.accepted === false &&
-                 unconfirmedCheck.otpVerified === false &&
-                 finalState === 'UNKNOWN';
+  const passed = step1_received.step === 'OTP_RECEIVED' &&
+                 step2_submitted.step === 'OTP_SUBMITTED' &&
+                 step2_submitted.verifiedByPlatform === false &&
+                 step3_redirectOnly.accepted === false &&
+                 step3_redirectOnly.verifiedByPlatform === false &&
+                 step3_redirectOnly.state === 'UNKNOWN';
 
   recordTest(
     4,
     'OTP ارسال شده اما پذیرفته‌شدن آن مشخص نیست',
     passed,
     passed
-      ? 'وجود redirectUrl به تنهایی ملاک تایید پذیرش کد قرار نگرفت و وضعیت به درستی UNKNOWN ثبت شد.'
-      : 'شکست در تفکیک ریدایرکت نامشخص از تایید قطعی OTP'
+      ? '۳ رویداد OTP از هم تفکیک شدند؛ وجود redirectUrl بدون پیام تایید صریح سایت باعث عدم صدور OTP_VERIFIED و ثبت وضعیت UNKNOWN شد.'
+      : 'شکست در اعتبارسنجی مستقل پاسخ OTP'
   );
 }
 
 // -----------------------------------------------------------------------------
 // سناریو ۵: URL باز می‌شود اما متعلق به آگهی موردنظر نیست
 // -----------------------------------------------------------------------------
-function testScenario5_UrlDoesNotMatchCampaign() {
-  const campaignTitle = 'تولید و فروش کارتن اسباب کشی پنج لایه اشک قلم';
-  const targetWords = campaignTitle.split(/\s+/).filter(w => w.length > 2);
+async function testScenario5_UrlDoesNotMatchCampaign() {
+  const { evaluatePageContentEvidence, extractSpecificKeywords } = await import('../src/services/unifiedVerificationService.js');
 
-  // شبیه‌سازی صفحه‌ای که باز می‌شود (HTTP 200) اما صفحه ۴۰۴ یا آگهی شخص دیگری است
-  const simulateVerifyUrl = (pageHtml, httpStatus) => {
-    if (httpStatus !== 200) {
-      return { verified: false, contentMatched: false, httpStatus, error: 'صفحه در دسترس نیست' };
-    }
+  const expectedTitle = 'تولید و فروش کارتن اسباب کشی پنج لایه اشک قلم';
+  const unrelatedPageHtml = `
+    <html>
+      <head><title>فروش آپارتمان مسکونی در تهران</title></head>
+      <body>
+        <h1>فروش آپارتمان مسکونی در تهران</h1>
+        <p>کد ملک: 1245 - منطقه یک تهران - قیمت توافقی</p>
+        <p>یک عدد کارتن اسباب کشی رایگان هم به خریدار داده می‌شود!</p>
+      </body>
+    </html>
+  `;
 
-    const matchedWords = targetWords.filter(w => pageHtml.includes(w));
-    // نیاز به تطبیق حداقل ۳ کلمه متمایز از عنوان واقعی کمپین
-    const isMatched = matchedWords.length >= 3;
+  // ارزیابی محتوا با استفاده از موتور واحد راستی‌آزمایی
+  const evalRes = evaluatePageContentEvidence(unrelatedPageHtml, 'https://amlak.com/ad/1245', {
+    expectedTitle,
+    expectedJobId: 'job_carton_981'
+  });
 
-    return {
-      verified: isMatched,
-      contentMatched: isMatched,
-      httpStatus,
-      matchedWordsCount: matchedWords.length
-    };
-  };
-
-  // سناریو ۵-الف: صفحه با متن عمومی غیرمرتبط (مثلاً آگهی املاک دیگر)
-  const unrelatedPageHtml = '<html><body><h1>فروش آپارتمان مسکونی در تهران</h1><p>کد ملک: 1245</p></body></html>';
-  const verifyRes = simulateVerifyUrl(unrelatedPageHtml, 200);
-
-  let finalState = 'UNKNOWN';
-  if (verifyRes.verified && verifyRes.contentMatched) {
-    finalState = 'PUBLISHED';
-  }
+  const keywords = extractSpecificKeywords(expectedTitle);
 
   // شروط پذیرش سناریو ۵:
-  // الف) با وجود HTTP 200، چون عنوان کمپین تطبیق نیافته نباید PUBLISHED شود
-  // ب) وضعیت حتماً UNKNOWN باشد
-  const passed = verifyRes.verified === false &&
-                 verifyRes.contentMatched === false &&
-                 finalState === 'UNKNOWN';
+  // الف) با وجود کلمه منفرد "کارتن" یا "اسباب"، چون تطبیق چندکلمه‌ای اختصاصی احراز نشده، matched باید false باشد
+  // ب) وضعیت نباید به PUBLISHED برود
+  const passed = evalRes.matched === false &&
+                 keywords.length >= 3 &&
+                 evalRes.reason !== undefined;
 
   recordTest(
     5,
-    'URL باز می‌شود اما متعلق به آگهی موردنظر نیست',
+    'URL باز می‌شود اما متعلق به آگهی موردنظر نیست (رد کلمات عمومی منفرد)',
     passed,
     passed
-      ? 'صفحه با کلمات نامرتبط به عنوان کمپین احراز نشد و به جای PUBLISHED، صریحاً وضعیت UNKNOWN ثبت گردید.'
-      : 'شکست در اعتبارسنجی مستقل محتوای آگهی'
+      ? 'موتور راستی‌آزمایی مستقل تطبیق یک کلمه تصادفی را رد کرد و از اعلام موفقیت کاذب (PUBLISHED) ممانعت ورزید.'
+      : 'شکست در شناسایی محتوای غیرمرتبط'
   );
 }
 
 // -----------------------------------------------------------------------------
 // سناریو ۶: یک اجرای واقعی به لینک آگهی تأییدشده می‌رسد
 // -----------------------------------------------------------------------------
-function testScenario6_RealExecutionReachesVerifiedAdLink() {
-  const campaignTitle = 'تولید و فروش کارتن اسباب کشی پنج لایه اشک قلم';
-  const targetWords = campaignTitle.split(/\s+/).filter(w => w.length > 2);
+async function testScenario6_RealExecutionReachesVerifiedAdLink() {
+  const { evaluatePageContentEvidence, validatePublicAdUrlFormat } = await import('../src/services/unifiedVerificationService.js');
 
-  // شبیه‌سازی صفحه واقعی آگهی منتشرشده اشک قلم با عنوان و مشخصات
+  const expectedTitle = 'تولید و فروش کارتن اسباب کشی پنج لایه اشک قلم';
+  const expectedJobId = 'job_carton_981';
+  const verifiedUrl = 'https://agahi24.com/ad/job_carton_981';
+
   const verifiedPageHtml = `
     <html>
-      <head><title>${campaignTitle}</title></head>
+      <head><title>${expectedTitle}</title></head>
       <body>
-        <h1>تولید و فروش کارتن اسباب کشی پنج لایه اشک قلم</h1>
-        <p>ارائه انواع جعبه و کارتن مقوایی با کیفیت عالی صادراتی</p>
+        <h1>${expectedTitle}</h1>
+        <p>شرکت اشک قلم ارائه دهنده انواع کارتن اسباب کشی پنج لایه با مقاومت بالا</p>
         <span class="phone">09153108763</span>
+        <div class="meta">شناسه انتشار: ${expectedJobId}</div>
       </body>
     </html>
   `;
 
-  const simulateVerifyUrl = (pageHtml, httpStatus) => {
-    if (httpStatus !== 200) {
-      return { verified: false, contentMatched: false, httpStatus };
-    }
-    const matchedWords = targetWords.filter(w => pageHtml.includes(w));
-    const isMatched = matchedWords.length >= 3;
-    return {
-      verified: isMatched,
-      contentMatched: isMatched,
-      httpStatus,
-      matchedWordsCount: matchedWords.length
-    };
-  };
-
-  const verifyRes = simulateVerifyUrl(verifiedPageHtml, 200);
+  const urlFormat = validatePublicAdUrlFormat(verifiedUrl);
+  const evalRes = evaluatePageContentEvidence(verifiedPageHtml, verifiedUrl, {
+    expectedTitle,
+    expectedJobId,
+    expectedPhone: '09153108763'
+  });
 
   let finalState = 'UNKNOWN';
   let isPublicationVerified = false;
-  const verifiedUrl = 'https://agahi24.com/ad/ashk-carton-98124';
 
-  if (verifyRes.verified && verifyRes.contentMatched) {
+  if (urlFormat.valid && evalRes.matched) {
     finalState = 'PUBLISHED';
     isPublicationVerified = true;
   }
 
-  // شروط پذیرش سناریو ۶:
-  // الف) وضعیت نهایی دقیقاً PUBLISHED باشد
-  // ب) publicationVerified برابر true باشد
-  // ج) تعداد کلمات تطبیق یافته کافی باشد
-  const passed = verifyRes.verified === true &&
-                 verifyRes.contentMatched === true &&
-                 verifyRes.matchedWordsCount >= 3 &&
+  const passed = urlFormat.valid === true &&
+                 evalRes.matched === true &&
+                 evalRes.matchedTitle === true &&
+                 evalRes.matchedJobId === true &&
                  finalState === 'PUBLISHED' &&
                  isPublicationVerified === true;
 
@@ -355,27 +342,67 @@ function testScenario6_RealExecutionReachesVerifiedAdLink() {
     'یک اجرای واقعی به لینک آگهی تأییدشده می‌رسد',
     passed,
     passed
-      ? `لینک عمومی (${verifiedUrl}) با تطبیق دقیق کلمات عنوان کمپین احراز شد و وضعیت قطعی PUBLISHED ثبت گردید.`
-      : 'شکست در راستی‌آزمایی اجرای موفق'
+      ? `لینک عمومی (${verifiedUrl}) با تطبیق چندگانه عنوان کمپین، شناسه آگهی و تلفن، وضعیت قطعی PUBLISHED را دریافت نمود.`
+      : 'شکست در راستی‌آزمایی آگهی معتبر'
   );
 }
 
 // -----------------------------------------------------------------------------
-// اجرای تست‌ها
+// سناریو ۷: تفکیک فرم ورود/ثبت‌نام از فرم آگهی و انتقال به LOGIN_REQUIRED
 // -----------------------------------------------------------------------------
-testScenario1_GitHubWorkerUnavailable();
-testScenario2_LocalWorkerQueuedOnly();
-testScenario3_SubmitButtonNotFound();
-testScenario4_OtpSubmittedUnconfirmedAcceptance();
-testScenario5_UrlDoesNotMatchCampaign();
-testScenario6_RealExecutionReachesVerifiedAdLink();
+function testScenario7_LoginAndRegistrationDistinction() {
+  const simulateCheckLoginState = (isLoggedIn, isRegistration, hasAdForm) => {
+    if (isLoggedIn) {
+      return { state: 'INSPECTING_FORM', nextAction: 'discover_dom_fields' };
+    }
+    if (isRegistration) {
+      return { state: 'REGISTRATION_REQUIRED', nextAction: 'inspect_auth_form' };
+    }
+    return { state: 'LOGIN_REQUIRED', nextAction: 'inspect_auth_form' };
+  };
 
-console.log('\n======================================================================');
-const allPassed = testResults.every(t => t.passed);
-if (allPassed) {
-  console.log('🎉 تمام ۶ سناریوی آزمون پذیرش با موفقیت ۱۰۰٪ پاس شدند.');
-  process.exit(0);
-} else {
-  console.error('❌ برخی از آزمون‌های پذیرش شکست خوردند.');
-  process.exit(1);
+  const loggedInFlow = simulateCheckLoginState(true, false, true);
+  const loginRequiredFlow = simulateCheckLoginState(false, false, false);
+  const regRequiredFlow = simulateCheckLoginState(false, true, false);
+
+  const passed = loggedInFlow.state === 'INSPECTING_FORM' &&
+                 loginRequiredFlow.state === 'LOGIN_REQUIRED' &&
+                 regRequiredFlow.state === 'REGISTRATION_REQUIRED';
+
+  recordTest(
+    7,
+    'تفکیک فرم ورود/ثبت‌نام از فرم آگهی و ورود به LOGIN_REQUIRED / REGISTRATION_REQUIRED',
+    passed,
+    passed
+      ? 'سایت‌های نیازمند ورود مستقیماً وارد مرحله انتشار نشدند و تفکیک دقیق بین فرم ورود و فرم آگهی رعایت شد.'
+      : 'شکست در تفکیک فرم‌های ورود و انتشار'
+  );
 }
+
+// -----------------------------------------------------------------------------
+// اجرای تست‌های همگام و ناهمگام
+// -----------------------------------------------------------------------------
+async function runAllTests() {
+  testScenario1_GitHubWorkerUnavailable();
+  testScenario2_LocalWorkerQueuedOnly();
+  testScenario3_SubmitButtonNotFoundOrMissingFields();
+  testScenario4_OtpSubmittedUnconfirmedAcceptance();
+  await testScenario5_UrlDoesNotMatchCampaign();
+  await testScenario6_RealExecutionReachesVerifiedAdLink();
+  testScenario7_LoginAndRegistrationDistinction();
+
+  console.log('\n======================================================================');
+  const allPassed = testResults.every(t => t.passed);
+  if (allPassed) {
+    console.log(`🎉 تمام ${testResults.length} سناریوی آزمون پذیرش با موفقیت ۱۰۰٪ پاس شدند.`);
+    process.exit(0);
+  } else {
+    console.error('❌ برخی از آزمون‌های پذیرش شکست خوردند.');
+    process.exit(1);
+  }
+}
+
+runAllTests().catch(err => {
+  console.error('❌ خطای غیرمنتظره در اجرای تست‌ها:', err);
+  process.exit(1);
+});

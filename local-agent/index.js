@@ -11,6 +11,7 @@ import http from 'http';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import SessionManager, { saveSession, restoreSession, deleteSession, validateSession } from './session_manager.js';
+import { verifyPublicationEvidence, evaluatePageContentEvidence, validatePublicAdUrlFormat } from '../src/services/unifiedVerificationService.js';
 
 // Ignore self-signed / untrusted SSL certificate errors common in cPanel environments
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -387,29 +388,136 @@ function startLocalTaskServer() {
               };
             } else if (task.action === 'check_login_state') {
               const content = await page.content();
-              const isLoggedIn = content.includes('خروج') || content.includes('حساب کاربری') || content.includes('پنل کاربری');
+              const currentUrl = page.url();
+              const lowerContent = content.toLowerCase();
+
+              // بررسی نشانه‌های قطعی ورود به حساب
+              const hasLogoutBtn = await page.$('a[href*="logout"], button[id*="logout"], a:has-text("خروج"), button:has-text("خروج")');
+              const hasUserProfile = await page.$('.user-profile, .user-menu, .dashboard, [aria-label*="پروفایل"], a[href*="profile"], a[href*="panel"]');
+              const isLoggedIn = Boolean(hasLogoutBtn || hasUserProfile || content.includes('خروج از حساب') || content.includes('پنل کاربری') || content.includes('ناحیه کاربری'));
+
+              // بررسی نیاز به ثبت‌نام یا ورود
+              const isRegistrationPage = currentUrl.includes('register') || currentUrl.includes('signup') || content.includes('ثبت‌نام') || content.includes('ایجاد حساب');
+              const hasLoginForm = Boolean(await page.$('form[action*="login"], form[id*="login"], input[name*="user"], input[name*="pass"], input[name*="mobile"]'));
+
+              // تفکیک نوع فرم: فرم احراز هویت در برابر فرم ثبت آگهی
+              const hasAdFields = Boolean(await page.$('input[name*="title" i], textarea[name*="desc" i], input[name*="price" i], select[name*="cat" i]'));
+              const detectedFormType = hasAdFields ? 'ad' : (hasLoginForm || isRegistrationPage ? 'auth' : 'unknown');
+
               taskOutput = {
                 sessionActive: isLoggedIn,
                 isLoggedIn,
-                currentUrl: page.url()
+                loginRequired: !isLoggedIn,
+                registrationRequired: !isLoggedIn && isRegistrationPage,
+                detectedFormType,
+                currentUrl
               };
+            } else if (task.action === 'inspect_auth_form' || task.action === 'authenticate_user') {
+              const content = await page.content();
+              const currentUrl = page.url();
+              const lowerContent = content.toLowerCase();
+
+              // بررسی آیا چالش کپچا یا اقدام انسانی وجود دارد
+              const hasCaptcha = Boolean(await page.$('.g-recaptcha, iframe[src*="captcha"], #captcha, input[name*="captcha" i]'));
+              if (hasCaptcha) {
+                taskSuccess = false;
+                taskError = 'چالش کپچا یا اعتبارسنجی امنیتی نیازمند اقدام دستی کاربر است.';
+                taskOutput = {
+                  needsHumanIntervention: true,
+                  pageState: 'WAITING_FOR_HUMAN',
+                  reason: 'captcha_detected',
+                  currentUrl
+                };
+              } else {
+                // بررسی فیلدهای ورود
+                const phoneInput = await page.$('input[name*="mobile" i], input[name*="phone" i], input[type="tel"], input[id*="mobile" i]');
+                const phoneVal = task.input?.phoneNumber || task.input?.phone || '';
+                if (phoneInput && phoneVal) {
+                  await phoneInput.fill(String(phoneVal));
+                  const loginSubmit = await page.$('button[type="submit"], button:has-text("ورود"), button:has-text("ادامه"), button:has-text("ارسال کد")');
+                  if (loginSubmit) {
+                    await loginSubmit.click({ force: true });
+                    await page.waitForTimeout(2500);
+                  }
+                }
+
+                // ارزیابی مجدد صفحه پس از اقدام ورود
+                const postPageText = await page.content();
+                const postUrl = page.url();
+                const otpInput = await page.$('input[name*="otp" i], input[name*="code" i], input[id*="code" i]');
+                const isOtpRequired = Boolean(otpInput || postPageText.includes('کد تایید') || postPageText.includes('رمز یکبار مصرف'));
+                const isNowLoggedIn = postPageText.includes('خروج') || postPageText.includes('پنل کاربری') || postUrl.includes('panel') || postUrl.includes('dashboard');
+
+                if (isNowLoggedIn) {
+                  taskSuccess = true;
+                  taskOutput = {
+                    loginVerified: true,
+                    sessionActive: true,
+                    isLoggedIn: true,
+                    pageState: 'LOGGED_IN',
+                    currentUrl: postUrl
+                  };
+                } else if (isOtpRequired) {
+                  taskSuccess = true;
+                  taskOutput = {
+                    otpRequired: true,
+                    otpGateDetected: true,
+                    pageState: 'OTP_REQUIRED',
+                    currentUrl: postUrl
+                  };
+                } else {
+                  taskSuccess = false;
+                  taskError = 'ورود به سامانه تکمیل نشد یا نیازمند اقدام انسانی است.';
+                  taskOutput = {
+                    loginVerified: false,
+                    needsHumanIntervention: true,
+                    pageState: 'WAITING_FOR_HUMAN',
+                    currentUrl: postUrl
+                  };
+                }
+              }
             } else if (task.action === 'discover_dom_fields') {
-              const inputs = await page.$$eval('input, textarea, select', els => els.map(el => ({
-                name: el.getAttribute('name') || '',
-                id: el.getAttribute('id') || '',
-                type: el.getAttribute('type') || el.tagName.toLowerCase(),
-                placeholder: el.getAttribute('placeholder') || ''
-              })));
+              // استخراج جامع ویژگی‌های فیلدهای فرم صفحه از DOM واقعی
+              const inputs = await page.$$eval('input, textarea, select', els => els.map(el => {
+                let labelText = '';
+                if (el.labels && el.labels.length > 0) {
+                  labelText = el.labels[0].innerText || '';
+                } else if (el.id) {
+                  const lbl = document.querySelector(`label[for="${el.id}"]`);
+                  if (lbl) labelText = lbl.innerText || '';
+                }
+                if (!labelText) {
+                  const parentLabel = el.closest('label');
+                  if (parentLabel) labelText = parentLabel.innerText || '';
+                }
+
+                return {
+                  name: el.getAttribute('name') || '',
+                  id: el.getAttribute('id') || '',
+                  type: el.getAttribute('type') || el.tagName.toLowerCase(),
+                  placeholder: el.getAttribute('placeholder') || '',
+                  ariaLabel: el.getAttribute('aria-label') || '',
+                  labelText: labelText.trim(),
+                  required: el.hasAttribute('required'),
+                  tagName: el.tagName.toLowerCase()
+                };
+              }));
+
+              const hasOtp = inputs.some(i =>
+                i.name.includes('otp') || i.name.includes('code') || i.id.includes('code') || i.labelText.includes('کد تایید')
+              );
+
               taskOutput = {
                 fields: inputs,
                 fieldsFound: inputs.length,
-                hasOtpGate: inputs.some(i => i.name.includes('otp') || i.name.includes('code') || i.id.includes('code'))
+                hasOtpGate: hasOtp,
+                formType: inputs.some(i => i.name.includes('title') || i.labelText.includes('عنوان')) ? 'ad_creation' : 'auth'
               };
             } else if (task.action === 'inject_field_values') {
               const mappings = task.input?.mappings || {};
               const requiredKeys = ['title', 'description', 'phone'];
 
-              // ارزیابی تعداد کل فیلدهای ورودی در فرم صفحه
+              // استخراج فیلدهای واقعی DOM
               const allInputs = await page.$$('input, textarea, select');
               const fieldsFound = allInputs.length;
 
@@ -424,8 +532,33 @@ function startLocalTaskServer() {
                   }
                   continue;
                 }
-                const selector = `input[name*="${key}" i], textarea[name*="${key}" i], input[id*="${key}" i], textarea[id*="${key}" i]`;
-                const field = await page.$(selector);
+
+                // انتخابگرهای هوشمند بر مبنای name، id، placeholder و برچسب label
+                const selectorList = [
+                  `input[name*="${key}" i]`,
+                  `textarea[name*="${key}" i]`,
+                  `input[id*="${key}" i]`,
+                  `textarea[id*="${key}" i]`,
+                  `input[placeholder*="${key}" i]`,
+                  `textarea[placeholder*="${key}" i]`,
+                  `[aria-label*="${key}" i]`
+                ];
+
+                // تطبیق با کلمات فارسی کلیدی
+                if (key === 'title') {
+                  selectorList.push('input[name*="عنوان" i]', 'input[id*="عنوان" i]', 'input[placeholder*="عنوان" i]');
+                } else if (key === 'description') {
+                  selectorList.push('textarea[name*="توضیح" i]', 'textarea[id*="توضیح" i]', 'textarea[placeholder*="توضیح" i]');
+                } else if (key === 'phone') {
+                  selectorList.push('input[name*="موبایل" i]', 'input[name*="تلفن" i]', 'input[type="tel"]');
+                }
+
+                let field = null;
+                for (const sel of selectorList) {
+                  field = await page.$(sel);
+                  if (field) break;
+                }
+
                 if (field) {
                   try {
                     await field.fill(String(val));
@@ -528,6 +661,7 @@ function startLocalTaskServer() {
                     formError: clickErr.message
                   };
                 }
+              }
             } else if (task.action === 'inject_and_verify_otp') {
               const otpCode = task.input?.otpCode;
               if (!otpCode) {
@@ -597,6 +731,27 @@ function startLocalTaskServer() {
                   redirectUrl: postUrl
                 };
               }
+            } else if (task.action === 'verify_publication_url') {
+              const targetUrl = task.input?.url || page.url();
+              const expectedTitle = task.input?.expectedTitle || '';
+              const expectedJobId = task.input?.expectedJobId || task.jobId || '';
+
+              const verifyResult = await verifyPublicationEvidence({
+                url: targetUrl,
+                expectedTitle,
+                expectedJobId
+              });
+
+              taskSuccess = verifyResult.verified;
+              taskError = verifyResult.error;
+              taskOutput = {
+                verified: verifyResult.verified,
+                httpStatus: verifyResult.httpStatus,
+                matchedTitle: verifyResult.matchedTitle,
+                matchedId: verifyResult.matchedId,
+                matchedKeywords: verifyResult.matchedKeywords,
+                publicUrl: verifyResult.url
+              };
             } else {
               taskOutput = {
                 handledAction: task.action,

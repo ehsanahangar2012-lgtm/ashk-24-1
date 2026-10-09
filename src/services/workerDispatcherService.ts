@@ -184,6 +184,8 @@ export class WorkerDispatcherService {
       'AUTHENTICATING',
       'REGISTERING',
       'LOGGING_IN',
+      'LOGIN_REQUIRED',
+      'REGISTRATION_REQUIRED',
       'INSPECTING_FORM',
       'MAPPING_FIELDS',
       'FILLING_FIELDS',
@@ -209,6 +211,8 @@ export class WorkerDispatcherService {
       'AUTHENTICATING',
       'REGISTERING',
       'LOGGING_IN',
+      'LOGIN_REQUIRED',
+      'REGISTRATION_REQUIRED',
       'INSPECTING_FORM',
       'MAPPING_FIELDS',
       'FILLING_FIELDS',
@@ -415,17 +419,21 @@ export class WorkerDispatcherService {
       });
 
       if (ghRes && ghRes.success) {
-        // تفکیک دقیق پذیرش تسک، آغاز اجرا و تکمیل
+        // تفکیک دقیق پذیرش تسک، آغاز اجرا و تکمیل (PENDING_RUNNER_PICKUP به معنی موفقیت عملیات نیست)
+        const executionStatus = ghRes.executionStatus || 'PENDING_RUNNER_PICKUP';
+        const isCompleted = executionStatus === 'COMPLETED';
+
         return {
-          success: true,
+          success: isCompleted,
           workerId: task.workerId,
           workerRole: 'github',
           output: {
             taskAccepted: ghRes.accepted !== false,
             dispatchStatus: ghRes.status || 'DISPATCHED',
-            executionStatus: ghRes.executionStatus || 'PENDING_RUNNER_PICKUP',
+            executionStatus,
             serverOutput: ghRes.output
           },
+          error: isCompleted ? undefined : `تسک توسط GitHub Worker پذیرفته شد (${executionStatus}) و در انتظار اجرای رانر است. وضعیت: WAITING_FOR_WORKER.`,
           durationMs: Math.round(performance.now() - t0)
         };
       } else {
@@ -805,71 +813,161 @@ export class WorkerDispatcherService {
           }
 
           const isLoggedIn = Boolean(execRes.output?.sessionActive || execRes.output?.isLoggedIn);
+          if (isLoggedIn) {
+            return {
+              success: true,
+              workerId: execRes.workerId,
+              workerRole: execRes.workerRole,
+              state: 'INSPECTING_FORM',
+              action: 'check_login_state',
+              status: 'completed',
+              durationMs: execRes.durationMs,
+              input: { domain },
+              output: execRes.output,
+              nextAction: 'discover_dom_fields'
+            };
+          }
+
+          // اگر ورود یا ثبت‌نام لازم است، وارد وضعیت صریح شو
+          const isReg = Boolean(execRes.output?.registrationRequired);
+          const nextAuthState: WorkflowState = isReg ? 'REGISTRATION_REQUIRED' : 'LOGIN_REQUIRED';
+
           return {
             success: true,
             workerId: execRes.workerId,
             workerRole: execRes.workerRole,
-            state: isLoggedIn ? 'INSPECTING_FORM' : 'LOGGING_IN',
+            state: nextAuthState,
             action: 'check_login_state',
             status: 'completed',
             durationMs: execRes.durationMs,
             input: { domain },
-            output: execRes.output,
-            nextAction: isLoggedIn ? 'discover_dom_fields' : 'authenticate_user'
+            output: {
+              ...execRes.output,
+              loginRequired: !isReg,
+              registrationRequired: isReg,
+              message: isReg ? 'پلتفرم نیازمند ثبت‌نام کاربر است.' : 'پلتفرم نیازمند ورود به حساب کاربری است.'
+            },
+            nextAction: isReg ? 'inspect_auth_form' : 'inspect_auth_form'
           };
         }
 
         // =========================================================================
-        // گام ۷: پیمایش و استخراج واقعی فیلدهای فرم در صفحه مرورگر (Extension یا Local)
+        // گام ۷: ورود و ثبت‌نام در پلتفرم (تفکیک فرم احراز هویت از فرم آگهی)
         // =========================================================================
+        case 'LOGIN_REQUIRED':
+        case 'REGISTRATION_REQUIRED':
         case 'LOGGING_IN':
         case 'REGISTERING':
         case 'AUTHENTICATING': {
+          const payloadData = await this.resolveValidatedCampaignPayload(workflow);
           const task: UnifiedWorkerTask = {
             workflowId: wfId,
             executionId: execId,
             jobId,
             actionId,
-            action: 'discover_dom_fields',
+            action: 'inspect_auth_form',
             state: currentState,
             platform: workflow.platform,
             platformDomain: domain,
             workerRole,
             workerId,
-            input: { domain }
+            input: {
+              domain,
+              phoneNumber: payloadData.phone,
+              requiresRegistration: currentState === 'REGISTRATION_REQUIRED' || currentState === 'REGISTERING'
+            }
           };
 
           const execRes = await this.executeTaskViaResolvedWorker(task);
-          const fieldsFound = execRes.fieldsFound ?? (execRes.output?.fields?.length ?? 0);
 
-          if (!execRes.success || fieldsFound === 0) {
+          if (!execRes.success) {
+            const isMissingWorker = (execRes.error || '').includes('دسترس نیست');
             return {
               success: false,
               workerId: execRes.workerId,
               workerRole: execRes.workerRole,
-              state: 'WAITING_FOR_WORKER',
-              action: 'discover_dom_fields',
-              status: 'paused',
-              error: execRes.error || 'فرمی در صفحه شناسایی نشد یا ورکر در دسترس نیست. وضعیت: WAITING_FOR_WORKER.',
+              state: isMissingWorker ? 'WAITING_FOR_WORKER' : 'BLOCKED',
+              action: 'inspect_auth_form',
+              status: isMissingWorker ? 'paused' : 'failed',
+              error: execRes.error || 'خطا در احراز هویت و ارزیابی فرم ورود.',
               durationMs: execRes.durationMs,
-              fieldsFound: 0,
+              output: execRes.output
+            };
+          }
+
+          const out = execRes.output || {};
+
+          // ۱. اگر اقدام دستی کاربر (مانند کپچا) لازم است:
+          if (out.needsHumanIntervention || out.pageState === 'WAITING_FOR_HUMAN') {
+            return {
+              success: false,
+              workerId: execRes.workerId,
+              workerRole: execRes.workerRole,
+              state: 'WAITING_FOR_HUMAN',
+              action: 'inspect_auth_form',
+              status: 'paused',
+              error: out.reason || 'ورود به سامانه نیازمند اقدام دستی کاربر است.',
+              durationMs: execRes.durationMs,
+              output: out
+            };
+          }
+
+          // ۲. اگر چالش OTP در حین ورود تشخیص داده شد:
+          if (out.otpRequired || out.otpGateDetected || out.pageState === 'OTP_REQUIRED') {
+            const nowIso = new Date().toISOString();
+            workflow.otpWaitStartedAt = nowIso;
+            await workflowTraceService.updateWorkflowTimings(wfId, { otpWaitStartedAt: nowIso });
+
+            return {
+              success: true,
+              workerId: execRes.workerId,
+              workerRole: execRes.workerRole,
+              state: 'WAITING_FOR_OTP',
+              action: 'detect_login_otp_challenge',
+              status: 'paused',
+              durationMs: execRes.durationMs,
+              input: { phoneNumber: payloadData.phone },
+              output: {
+                otpGateDetected: true,
+                message: 'کد تایید ورود برای شماره تلفن ارسال گردید. لطفاً کد را وارد فرمایید.',
+                waitStartedAt: nowIso,
+                details: out
+              },
+              nextAction: 'receive_otp'
+            };
+          }
+
+          // ۳. اگر ورود با وضعیت واقعی صفحه تایید شد، هدایت به فرم انتشار آگهی:
+          const isVerifiedLogin = Boolean(out.loginVerified || out.sessionActive || out.isLoggedIn);
+          if (isVerifiedLogin) {
+            return {
+              success: true,
+              workerId: execRes.workerId,
+              workerRole: execRes.workerRole,
+              state: 'INSPECTING_FORM',
+              action: 'verify_login_success',
+              status: 'completed',
+              durationMs: execRes.durationMs,
               input: { domain },
-              output: execRes.output || { fieldsFound: 0 }
+              output: {
+                loginVerified: true,
+                sessionActive: true,
+                message: 'ورود به سامانه با وضعیت واقعی صفحه احراز گردید. هدایت به فرم ثبت آگهی...'
+              },
+              nextAction: 'discover_dom_fields'
             };
           }
 
           return {
-            success: true,
+            success: false,
             workerId: execRes.workerId,
             workerRole: execRes.workerRole,
-            state: 'INSPECTING_FORM',
-            action: 'discover_dom_fields',
-            status: 'completed',
+            state: currentState,
+            action: 'inspect_auth_form',
+            status: 'paused',
+            error: 'ورود به حساب کاربری احراز نگردید و فرم انتشار بدون ورود قابل دسترس نیست.',
             durationMs: execRes.durationMs,
-            fieldsFound,
-            input: { domain },
-            output: execRes.output,
-            nextAction: 'map_fields_to_campaign'
+            output: out
           };
         }
 
@@ -990,7 +1088,7 @@ export class WorkerDispatcherService {
           const missingRequiredFields: string[] = out.missingRequiredFields || [];
           const validationErrors: string[] = out.validationErrors || [];
 
-          if (filledFields === 0 && workerRole === 'extension') {
+          if (filledFields === 0) {
             return {
               success: false,
               workerId: execRes.workerId,
@@ -1471,7 +1569,8 @@ export class WorkerDispatcherService {
               body: JSON.stringify({
                 workflowId: wfId,
                 url: urlToVerify,
-                expectedTitle
+                expectedTitle,
+                expectedJobId: workflow.jobId
               })
             }
           );

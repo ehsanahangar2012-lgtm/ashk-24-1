@@ -13,6 +13,8 @@ export type WorkflowState =
   | 'AUTHENTICATING'
   | 'REGISTERING'
   | 'LOGGING_IN'
+  | 'LOGIN_REQUIRED'
+  | 'REGISTRATION_REQUIRED'
   | 'INSPECTING_FORM'
   | 'MAPPING_FIELDS'
   | 'FILLING_FIELDS'
@@ -114,6 +116,8 @@ export const WORKFLOW_STATES_ORDER: WorkflowState[] = [
   'AUTHENTICATING',
   'REGISTERING',
   'LOGGING_IN',
+  'LOGIN_REQUIRED',
+  'REGISTRATION_REQUIRED',
   'INSPECTING_FORM',
   'MAPPING_FIELDS',
   'FILLING_FIELDS',
@@ -138,6 +142,8 @@ export const WORKFLOW_STATE_LABELS: Record<WorkflowState, { fa: string; color: s
   AUTHENTICATING: { fa: 'بررسی نشست و ورود', color: 'text-amber-400 bg-amber-500/10 border-amber-500/30', stepNumber: 7 },
   REGISTERING: { fa: 'در حال ثبت‌نام خودکار', color: 'text-amber-400 bg-amber-500/10 border-amber-500/30', stepNumber: 8 },
   LOGGING_IN: { fa: 'در حال ورود به سامانه', color: 'text-amber-400 bg-amber-500/10 border-amber-500/30', stepNumber: 9 },
+  LOGIN_REQUIRED: { fa: 'نیازمند ورود به حساب', color: 'text-amber-500 bg-amber-500/20 border-amber-500/40', stepNumber: 9 },
+  REGISTRATION_REQUIRED: { fa: 'نیازمند ثبت‌نام در سامانه', color: 'text-orange-500 bg-orange-500/20 border-orange-500/40', stepNumber: 9 },
   INSPECTING_FORM: { fa: 'پیمایش و شناسایی فرم DOM', color: 'text-purple-400 bg-purple-500/10 border-purple-500/30', stepNumber: 10 },
   MAPPING_FIELDS: { fa: 'انطباق فیلدهای هوشمند', color: 'text-purple-300 bg-purple-500/10 border-purple-500/30', stepNumber: 11 },
   FILLING_FIELDS: { fa: 'در حال درج مقادیر در فرم', color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30', stepNumber: 12 },
