@@ -671,68 +671,218 @@ async function executeJob(job, claimData) {
       });
     }
 
-    // Submit and Verification Evidence Capture
-    console.log('📝 [Form Finalization] Checking for actual ad submission & verification evidence...');
+    // مرحله ۲: هدایت به فرم درج آگهی پس از ورود / احراز هویت
+    const AD_FORM_MAP = {
+      plat_agahi24: 'https://agahi24.com/post-new-ad',
+      plat_niazpardaz: 'https://www.niazpardaz.com/add-ad',
+      plat_istgah: 'https://www.istgah.com/insert_ad',
+      plat_payamsara: 'https://www.payamsara.com/post_ad',
+      plat_parscenter: 'https://parscenter.com/Product/Create',
+      plat_shahrema: 'https://shahrema.com/add-ad',
+      plat_locopoc: 'https://www.locopoc.com/add-ad',
+      plat_divar: 'https://divar.ir/new',
+      plat_sheypoor: 'https://www.sheypoor.com/new-ad'
+    };
+
+    let adFormUrl = AD_FORM_MAP[platformKey];
+    const currentUrlNow = page.url();
+    const isStillOnAuth = currentUrlNow.includes('register') || currentUrlNow.includes('login') || currentUrlNow.includes('auth');
+
+    if (isStillOnAuth && adFormUrl) {
+      console.log(`🧭 [Form Navigation] Moving from auth page to ad form: ${adFormUrl}`);
+      await updateJobState(job.id, {
+        status: 'in_progress',
+        currentStep: 'احراز هویت تایید شد. در حال پیمایش به فرم درج آگهی...',
+        resume_supported: true
+      });
+      try {
+        await page.goto(adFormUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
+        await page.waitForTimeout(2500);
+      } catch (navErr) {
+        console.warn(`⚠️ [Ad Form Navigation Warning]: ${navErr.message}`);
+      }
+    }
+
+    // مرحله ۳: تحلیل فیلدهای فرم آگهی (Inspecting Form & Mapping Fields)
+    console.log('🔍 [DOM Inspection] Scanning for ad form fields (title, content, phone, person)...');
+    const formFields = await page.$$('input, textarea, select');
+    const fieldsFoundCount = formFields.length;
+
+    await updateJobState(job.id, {
+      status: 'in_progress',
+      currentStep: `فرم آگهی شناسایی شد (${fieldsFoundCount} فیلد ورودی). در حال تطبیق و پر کردن مقادیر واقعی...`,
+      resume_supported: true,
+      fieldsFound: fieldsFoundCount
+    });
+
+    // مرحله ۴: تکمیل فیلدهای آگهی با داده‌های واقعی (Fill Fields)
+    const adTitleVal = job.campaignTitle || job.title || 'تولید و فروش انواع کارتن و جعبه بسته‌بندی اشک ۲۴';
+    const adContentVal = job.campaignContent || job.content || 'مجتمع تولیدی و چاپ کارتن و بسته‌بندی اشک ۲۴: طراحی، چاپ و تولید تخصصی کارتن‌های ۳ لایه و ۵ لایه صنعتی، دایکاتی و لمینتی.';
+    const contactPhoneVal = job.contactPhone || '09153108763';
+    const contactPersonVal = job.contactPerson || 'مهندس احسان آهنگر';
+
+    // درج عنوان
+    const titleField = await page.$('input[name*="title" i], input[id*="title" i], input[placeholder*="عنوان" i]');
+    if (titleField) {
+      await titleField.fill(adTitleVal);
+      console.log(`✍️ [Ad Form] Title filled: ${adTitleVal.substring(0, 30)}...`);
+    }
+
+    // درج متن آگهی
+    const descField = await page.$('textarea[name*="desc" i], textarea[name*="content" i], textarea[id*="desc" i], textarea[placeholder*="متن" i], textarea[placeholder*="شرح" i]');
+    if (descField) {
+      await descField.fill(adContentVal);
+      console.log('✍️ [Ad Form] Content filled successfully.');
+    }
+
+    // درج شماره و شخص
+    const phoneField = await page.$('input[name*="phone" i], input[name*="mobile" i], input[id*="mobile" i]');
+    if (phoneField && (await phoneField.inputValue()) === '') {
+      await phoneField.fill(contactPhoneVal);
+    }
+    const personField = await page.$('input[name*="name" i], input[name*="contact" i]');
+    if (personField && (await personField.inputValue()) === '') {
+      await personField.fill(contactPersonVal);
+    }
+
+    const filledScreenshot = path.join(EVIDENCE_DIR, `job_${job.id}_form_filled.png`);
+    await page.screenshot({ path: filledScreenshot });
+
+    // مرحله ۵: ارسال فرم آگهی (Submit Ad Form)
+    await updateJobState(job.id, {
+      status: 'in_progress',
+      currentStep: 'فیلدهای آگهی با موفقیت تکمیل شد. در حال ارسال فرم نهایی...',
+      evidenceScreenshot: filledScreenshot,
+      resume_supported: true
+    });
+
+    console.log('🚀 [Ad Form Submit] Clicking publication submit button...');
+    let adSubmitBtn = await page.$('button[type="submit"], input[type="submit"], button:has-text("ثبت آگهی"), button:has-text("ارسال آگهی"), button:has-text("ذخیره")');
+    if (adSubmitBtn) {
+      await adSubmitBtn.click({ force: true });
+      await page.waitForTimeout(5000);
+    }
+
+    // مرحله ۶: استخراج نتیجه واقعی انتشار و تفکیک از صفحات ثبت‌نام
+    const postSubmitUrl = page.url();
     const finalScreenshot = path.join(EVIDENCE_DIR, `job_${job.id}_submitted.png`);
     await page.screenshot({ path: finalScreenshot });
 
-    const verificationUrl = page.url();
-    const isSuccess = httpStatus >= 200 && httpStatus < 400;
+    const lowerPostUrl = postSubmitUrl.toLowerCase();
+    const isStillAuthOrRegister = lowerPostUrl.includes('register') ||
+                                  lowerPostUrl.includes('login') ||
+                                  lowerPostUrl.includes('auth') ||
+                                  lowerPostUrl.includes('download') ||
+                                  lowerPostUrl.includes('user/register');
 
-    // Zero-Fake: Determine if we actually have a public URL for the ad
-    const isRealAgahi24 = verificationUrl.includes('agahi24.com');
-    const isRealPayamsara = verificationUrl.includes('payamsara.com');
-    const isRealIstgah = verificationUrl.includes('istgah.com');
-    const isRealBaskool = verificationUrl.includes('baskool.com');
-    const isRealParsCenter = verificationUrl.includes('parscenter.com');
-    const isRealShahrMa = verificationUrl.includes('shahr.ma') || verificationUrl.includes('shahrema.com');
-    const hasPublicAdUrl = isRealAgahi24 || isRealPayamsara || isRealIstgah || isRealBaskool || isRealParsCenter || isRealShahrMa || (verificationUrl && verificationUrl.length > 15);
-
-    if (!hasPublicAdUrl) {
-      console.log('⚠️ [Zero-Fake] No public Ad URL detected. Real execution evidence is missing.');
+    if (isStillAuthOrRegister) {
+      console.warn(`⚠️ [URL Guard] Current URL is still an auth/registration URL (${postSubmitUrl}). Not treating as publication URL.`);
       await updateJobState(job.id, {
-        status: 'failed',
-        currentStep: 'انتشار نهایی متوقف شد: فرم آگهی به درستی تکمیل نشد یا لینک آگهی عمومی دریافت نگردید.',
-        error: 'FAILED_REAL_EXECUTION',
-        progressPercent: 90,
+        status: 'blocked',
+        currentStep: 'آگهی در مرحله ورود/ثبت‌نام متوقف شد و به صفحه انتشار عمومی منتقل نشد.',
+        error: 'AUTH_REQUIRED_OR_BLOCKED',
         evidenceScreenshot: finalScreenshot,
+        resume_supported: true
+      });
+      return false;
+    }
+
+    // بررسی وجود لینک عمومی در صفحه
+    let publicAdUrl = null;
+    const viewAdLink = await page.$('a:has-text("مشاهده آگهی"), a:has-text("صفحه آگهی"), a[href*="/ad/"], a[href*="/post/"], a[href*="/item/"]');
+    if (viewAdLink) {
+      publicAdUrl = await viewAdLink.getAttribute('href');
+      if (publicAdUrl && !publicAdUrl.startsWith('http')) {
+        const base = new URL(postSubmitUrl).origin;
+        publicAdUrl = base + (publicAdUrl.startsWith('/') ? '' : '/') + publicAdUrl;
+      }
+    }
+
+    if (!publicAdUrl && (lowerPostUrl.includes('/ad/') || lowerPostUrl.includes('/post/') || lowerPostUrl.includes('/item/') || lowerPostUrl.includes('/detail/'))) {
+      publicAdUrl = postSubmitUrl;
+    }
+
+    // اگر آگهی در صف تایید یا بررسی است (فاقد لینک فوری عمومی)
+    const pageContent = await page.content();
+    const isUnderReview = pageContent.includes('در انتظار تایید') ||
+                          pageContent.includes('پس از تایید مدیریت') ||
+                          pageContent.includes('در حال بررسی') ||
+                          pageContent.includes('با موفقیت ثبت شد');
+
+    if (!publicAdUrl && isUnderReview) {
+      console.log('ℹ️ [Moderation Queue] Ad submitted successfully, currently pending platform review.');
+      await updateJobState(job.id, {
+        status: 'waiting_human',
+        currentStep: 'آگهی با موفقیت ارسال شد و در انتظار تایید ناظر پلتفرم قرار گرفت. لینک پس از بررسی فعال خواهد شد.',
+        evidenceScreenshot: finalScreenshot,
+        resume_supported: true
+      });
+      return true;
+    }
+
+    if (!publicAdUrl) {
+      console.warn('⚠️ [No Public URL] Platform did not return an observable public ad link.');
+      await updateJobState(job.id, {
+        status: 'unknown',
+        currentStep: 'آگهی ارسال شد اما لینک عمومی معتبری توسط سامانه صادر نگردید.',
+        error: 'NO_PUBLIC_URL_DETECTED',
+        evidenceScreenshot: finalScreenshot,
+        resume_supported: true
+      });
+      return false;
+    }
+
+    // مرحله ۷: راستی‌آزمایی مستقل و اثبات واقعی انتشار
+    console.log(`🔎 [Independent Verification] Probing public ad link: ${publicAdUrl}`);
+    let verifiedIndependently = false;
+    try {
+      const probeRes = await fetch(publicAdUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36' }
+      });
+      if (probeRes.ok) {
+        const probeHtml = await probeRes.text();
+        const containsAdKeywords = probeHtml.includes('اشک') || probeHtml.includes('کارتن') || probeHtml.includes('09153108763');
+        if (containsAdKeywords) {
+          verifiedIndependently = true;
+        }
+      }
+    } catch (probeErr) {
+      console.warn(`⚠️ [Probe Error]: ${probeErr.message}`);
+    }
+
+    if (verifiedIndependently) {
+      await updateJobState(job.id, {
+        status: 'published',
+        currentStep: 'آگهی در صفحه عمومی سامانه راستی‌آزمایی و منتشر گردید.',
+        progressPercent: 100,
+        evidenceScreenshot: finalScreenshot,
+        adUrl: publicAdUrl,
+        publicationVerified: true,
         resume_supported: true,
         session_restored: sessionRestored,
         restored_at: restoredAt || new Date().toISOString(),
         independentVerification: {
           timestamp: new Date().toISOString(),
-          targetUrl: verificationUrl,
-          httpStatus,
-          isAccessible: isSuccess,
-          verifiedBy: 'Ashk24_LocalAgent_SessionManager',
-          evidenceCaptured: false
+          targetUrl: publicAdUrl,
+          httpStatus: 200,
+          isAccessible: true,
+          verifiedBy: 'Ashk24_Independent_Verifier',
+          evidenceCaptured: true
         }
       });
-      return false; // Real execution did not succeed
+      console.log(`✅ [Job Handled] Execution completed and independently verified: ${publicAdUrl}`);
+      return true;
+    } else {
+      await updateJobState(job.id, {
+        status: 'waiting_human',
+        currentStep: 'لینک آگهی شناسایی شد اما محتوای آن در صفحه عمومی احراز نگردید (در انتظار فعال‌سازی سرور مقصد).',
+        evidenceScreenshot: finalScreenshot,
+        adUrl: publicAdUrl,
+        publicationVerified: false,
+        resume_supported: true
+      });
+      return false;
     }
-
-    // If we DO have real evidence
-    await updateJobState(job.id, {
-      status: 'published',
-      currentStep: 'ماموریت با موفقیت به پایان رسید و راستی‌آزمایی تایید گردید.',
-      progressPercent: 100,
-      evidenceScreenshot: finalScreenshot,
-      adUrl: verificationUrl,
-      resume_supported: true,
-      session_restored: sessionRestored,
-      restored_at: restoredAt || new Date().toISOString(),
-      independentVerification: {
-        timestamp: new Date().toISOString(),
-        targetUrl: verificationUrl,
-        httpStatus,
-        isAccessible: isSuccess,
-        verifiedBy: 'Ashk24_LocalAgent_SessionManager',
-        evidenceCaptured: true
-      }
-    });
-
-    console.log(`✅ [Job Handled] Execution completed successfully in ${Date.now() - startTime}ms.`);
-    return true;
   } catch (err) {
     console.error(`❌ [Execution Error]: ${err.message}`);
     await updateJobState(job.id, {

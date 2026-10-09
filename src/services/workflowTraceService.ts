@@ -249,7 +249,7 @@ export class WorkflowTraceService {
   }
 
   /**
-   * ارسال کد تایید OTP
+   * دریافت و ثبت کد تایید OTP (بدون ادعای ساختگی تایید تا زمان پذیرش توسط پلتفرم)
    */
   public async submitOtp(workflowId: string, otpCode: string): Promise<WorkflowRecord> {
     try {
@@ -266,51 +266,77 @@ export class WorkflowTraceService {
     const wf = await this.getWorkflowById(workflowId);
     if (!wf) throw new Error('گردش کار یافت نشد.');
 
+    // ثبت کد دریافتی بدون اعلام موفقیت تا زمان تزریق و تایید واقعی توسط پلتفرم
     return this.recordAction({
       workflowId,
       executionId: wf.currentExecutionId,
+      jobId: wf.jobId,
+      workerId: 'user_or_sms_bridge',
       worker: wf.activeWorker,
       platform: wf.platform,
       state: 'OTP_RECEIVED',
       action: 'receive_otp',
       status: 'completed',
       input: { otpCode },
-      output: { otpVerified: true },
-      durationMs: 150
+      output: { received: true, verifiedByPlatform: false },
+      durationMs: 50,
+      nextAction: 'inject_and_verify_otp'
     });
   }
 
   /**
-   * راستی‌آزمایی لینک واقعی منتشرشده
+   * راستی‌آزمایی مستقل لینک واقعی منتشرشده (فقط پس از اثبات واقعی، وضعیت PUBLISHED ثبت می‌شود)
    */
   public async verifyPublicationUrl(workflowId: string, url: string): Promise<WorkflowRecord> {
     try {
-      const res = await callApi<{ success: boolean; verified: boolean; workflow: WorkflowRecord }>('workflows/verify-url', {
+      const res = await callApi<{ success: boolean; verified: boolean; httpStatus: number; workflow?: WorkflowRecord }>('workflows/verify-url', {
         method: 'POST',
         body: JSON.stringify({ workflowId, url })
       });
-      if (res && res.success && res.workflow) {
+      if (res && res.success && res.verified && res.workflow) {
         this.syncLocalWorkflow(res.workflow);
         return res.workflow;
+      }
+      if (res && !res.verified) {
+        // شواهد کافی نیست
+        const wf = await this.getWorkflowById(workflowId);
+        if (!wf) throw new Error('گردش کار یافت نشد.');
+        return this.recordAction({
+          workflowId,
+          executionId: wf.currentExecutionId,
+          jobId: wf.jobId,
+          workerId: 'gh_orchestrator_main',
+          worker: 'github',
+          platform: wf.platform,
+          state: 'BLOCKED',
+          action: 'verify_publication_url',
+          status: 'failed',
+          input: { url },
+          output: { verified: false, reason: 'لینک عمومی توسط ارکستراتور تایید نشد یا محتوای آگهی احراز نگردید.' },
+          error: 'لینک آگهی در دسترس نیست یا در صف بررسی ناظر پلتفرم قرار دارد.',
+          durationMs: 250
+        });
       }
     } catch (_) {}
 
     const wf = await this.getWorkflowById(workflowId);
     if (!wf) throw new Error('گردش کار یافت نشد.');
 
+    // در حالت قطعی یا نبود شواهد، هرگز PUBLISHED ثبت نمی‌شود؛ صریحاً BLOCKED / UNKNOWN ثبت می‌گردد
     return this.recordAction({
       workflowId,
       executionId: wf.currentExecutionId,
+      jobId: wf.jobId,
+      workerId: 'gh_orchestrator_main',
       worker: wf.activeWorker,
       platform: wf.platform,
-      state: 'PUBLISHED',
+      state: 'BLOCKED',
       action: 'verify_publication_url',
-      status: 'completed',
+      status: 'failed',
       input: { url },
-      output: { verified: true, publicUrl: url },
-      publicUrl: url,
-      publicationVerified: true,
-      durationMs: 400
+      output: { verified: false, reason: 'عدم امکان راستی‌آزمایی مستقل به دلیل قطعی ارتباط یا نبود ورکر تاییدکننده' },
+      error: 'راستی‌آزمایی مستقل انجام نشد؛ وضعیت به عنوان مسدود در انتظار شواهد باقی می‌ماند.',
+      durationMs: 120
     });
   }
 

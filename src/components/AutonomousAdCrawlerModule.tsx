@@ -223,15 +223,15 @@ export const AutonomousAdCrawlerModule: React.FC<AutonomousAdCrawlerModuleProps>
     return [];
   });
 
-  // Mapped Detected Fields for the selected site
+  // Mapped Detected Fields for the selected site (بدون برچسب ساختگی تا زمان کاوش زنده DOM)
   const [detectedFields, setDetectedFields] = useState<DetectedFieldInspection[]>([
     {
       id: 'f_title',
       name: 'عنوان آگهی (Title)',
       type: 'input[text]',
       selector: 'input[name*="title"], input[id*="title"], input[placeholder*="عنوان"]',
-      matchedValue: adTitle,
-      status: 'matched',
+      matchedValue: '',
+      status: 'waiting_input',
       isKeyField: true,
     },
     {
@@ -239,8 +239,8 @@ export const AutonomousAdCrawlerModule: React.FC<AutonomousAdCrawlerModuleProps>
       name: 'شرح و متن آگهی (Content/Description)',
       type: 'textarea / contenteditable',
       selector: 'textarea[name*="desc"], textarea[name*="content"], div[contenteditable="true"]',
-      matchedValue: adContent.slice(0, 50) + '...',
-      status: 'matched',
+      matchedValue: '',
+      status: 'waiting_input',
       isKeyField: true,
     },
     {
@@ -248,8 +248,8 @@ export const AutonomousAdCrawlerModule: React.FC<AutonomousAdCrawlerModuleProps>
       name: 'شماره تلفن همراه (Mobile Contact)',
       type: 'input[tel] / input[name*="mobile"]',
       selector: 'input[type="tel"], input[name*="mobile"], input[name*="phone"]',
-      matchedValue: contactPhone,
-      status: 'matched',
+      matchedValue: '',
+      status: 'waiting_input',
       isKeyField: true,
     },
     {
@@ -257,8 +257,8 @@ export const AutonomousAdCrawlerModule: React.FC<AutonomousAdCrawlerModuleProps>
       name: 'نام رابط / آگهی‌دهنده (Contact Person)',
       type: 'input[name*="name"], input[name*="contact"]',
       selector: 'input[name*="name"], input[name*="contact"]',
-      matchedValue: contactPerson,
-      status: 'matched',
+      matchedValue: '',
+      status: 'waiting_input',
       isKeyField: false,
     },
     {
@@ -266,8 +266,8 @@ export const AutonomousAdCrawlerModule: React.FC<AutonomousAdCrawlerModuleProps>
       name: 'استان موقعیت (Province)',
       type: 'select[name*="province"] / input',
       selector: 'select[name*="province"], select[name*="state"], select[id*="province"]',
-      matchedValue: province,
-      status: 'matched',
+      matchedValue: '',
+      status: 'waiting_input',
       isKeyField: true,
     },
     {
@@ -275,8 +275,8 @@ export const AutonomousAdCrawlerModule: React.FC<AutonomousAdCrawlerModuleProps>
       name: 'شهر موقعیت (City)',
       type: 'select[name*="city"] / input',
       selector: 'select[name*="city"], select[id*="city"]',
-      matchedValue: city,
-      status: 'matched',
+      matchedValue: '',
+      status: 'waiting_input',
       isKeyField: true,
     },
     {
@@ -284,8 +284,8 @@ export const AutonomousAdCrawlerModule: React.FC<AutonomousAdCrawlerModuleProps>
       name: 'دسته‌بندی موضوعی (Taxonomy Category)',
       type: 'select / category card selector',
       selector: 'select[name*="cat"], select[name*="group"], div[class*="category"]',
-      matchedValue: category,
-      status: 'matched',
+      matchedValue: '',
+      status: 'waiting_input',
       isKeyField: true,
     },
     {
@@ -293,8 +293,8 @@ export const AutonomousAdCrawlerModule: React.FC<AutonomousAdCrawlerModuleProps>
       name: 'پذیرش قوانین و مقررات (Terms Agreement)',
       type: 'input[checkbox]',
       selector: 'input[type="checkbox"][name*="rule"], input[type="checkbox"][name*="term"]',
-      matchedValue: 'تایید خودکار (Checked: true)',
-      status: 'matched',
+      matchedValue: '',
+      status: 'waiting_input',
       isKeyField: false,
     },
     {
@@ -302,7 +302,7 @@ export const AutonomousAdCrawlerModule: React.FC<AutonomousAdCrawlerModuleProps>
       name: 'درگاه کد تایید پیامکی (OTP Sensor)',
       type: 'input[tel] / split multi-box (4-6 رقم)',
       selector: 'input[name*="otp"], input[name*="code"], input[maxlength="1"]',
-      matchedValue: 'شنود زنده پیامک‌های دریافتی سرور cPanel و ورودی دستی',
+      matchedValue: '',
       status: 'waiting_input',
       isKeyField: true,
     },
@@ -347,19 +347,28 @@ export const AutonomousAdCrawlerModule: React.FC<AutonomousAdCrawlerModuleProps>
       }
 
       if (data.type === 'ASHK_AD_PUBLISHED_SUCCESS') {
-        appendLog(`✓ آگهی در پلتفرم با موفقیت ثبت گردید: ${data.adUrl || data.trackingCode || 'ثبت موفق'}`);
+        const hasAuthenticAdUrl = Boolean(data.adUrl && data.adUrl !== targetUrl && (data.adUrl.includes('/ad/') || data.adUrl.includes('/post/') || data.adUrl.includes('/item/')));
+        const trackingCode = data.trackingCode ? String(data.trackingCode) : undefined;
+        const status = hasAuthenticAdUrl ? 'published' : 'under_moderation';
+
+        appendLog(
+          hasAuthenticAdUrl
+            ? `✓ آگهی در پلتفرم با موفقیت منتشر و آدرس عمومی دریافت شد: ${data.adUrl}`
+            : `✓ آگهی ارسال شد و در صف تایید ناظر پلتفرم قرار گرفت.`
+        );
+
         setCurrentStep(5);
         setIsAutofilling(false);
         setIsWaitingOtp(false);
 
         const newRecord: PublishedRecord = {
-          id: 'pub_' + Date.now(),
+          id: data.publicationId || ('pub_' + Date.now()),
           platformName: selectedPreset.name,
           targetUrl: targetUrl,
-          adUrl: data.adUrl || targetUrl,
-          trackingCode: data.trackingCode || 'TRK-' + Math.floor(100000 + Math.random() * 900000),
+          adUrl: hasAuthenticAdUrl ? data.adUrl : undefined,
+          trackingCode: trackingCode,
           dateJalali: getCurrentJalaliDate(),
-          status: 'published',
+          status: status,
           campaignTitle: adTitle,
         };
 
@@ -566,30 +575,74 @@ export const AutonomousAdCrawlerModule: React.FC<AutonomousAdCrawlerModuleProps>
     setExtensionConnected(true);
   };
 
-  // Launch Page Crawl & Field Discovery
+  // Launch Page Crawl & Field Discovery (کاوش واقعی DOM بدون تاخیر ثابت یا خروجی ساختگی)
   const handleStartScan = async () => {
     setIsScanning(true);
     appendLog(`آغاز تحلیل هوشمند فیلدهای صفحه مقصد: ${targetUrl}`);
     setCurrentStep(1);
 
-    await new Promise((r) => setTimeout(r, 400));
-    setDetectedFields((prev) =>
-      prev.map((f) => ({
-        ...f,
-        status: 'matched',
-        matchedValue:
-          f.id === 'f_title'
-            ? adTitle
-            : f.id === 'f_desc'
-            ? adContent.slice(0, 45) + '...'
-            : f.id === 'f_mobile'
-            ? contactPhone
-            : f.matchedValue,
-      }))
-    );
-    appendLog(`✓ فیلدهای الزامی فرم شناسایی و با اطلاعات کسب‌وکار تطبیق یافت.`);
-    setIsScanning(false);
-    setCurrentStep(2);
+    const bridge = ExtensionBridgeManager.getInstance();
+    const status = bridge.getStatus();
+
+    if (!status.installed && !extensionConnected) {
+      // اگر افزونه یا ورکر در دسترس نیست، صریحاً WAITING_FOR_WORKER اعلام می‌شود و نتیجه ساختگی تولید نمی‌گردد
+      appendLog('⚠️ ورکر مرورگر (افزونه) متصل نیست. وضعیت: WAITING_FOR_WORKER. برای تحلیل واقعی DOM مرورگر، افزونه باید فعال باشد.');
+      setIsScanning(false);
+      return;
+    }
+
+    try {
+      const cmdRes = await bridge.executeWorkerCommand({
+        workflowId: 'crawl_' + selectedPreset.id,
+        executionId: 'exec_' + Math.random().toString(36).substring(2, 8),
+        jobId: 'job_scan_' + selectedPreset.id,
+        actionId: 'act_' + Math.random().toString(36).substring(2, 8),
+        action: 'inspect_form',
+        platform: selectedPreset.id,
+        platformDomain: targetUrl,
+        input: { targetUrl }
+      });
+
+      if (cmdRes.success && cmdRes.output && Array.isArray(cmdRes.output.fieldDetails) && cmdRes.output.fieldDetails.length > 0) {
+        const found = cmdRes.output.fieldDetails;
+        appendLog(`✓ تحلیل واقعی DOM: ${toPersianDigits(found.length)} فیلد واقعی در صفحه شناسایی شد.`);
+
+        setDetectedFields((prev) =>
+          prev.map((f) => {
+            const hasMatchedDom = found.some((df: any) =>
+              (df.name && f.selector.includes(df.name)) ||
+              (df.placeholder && f.name.includes(df.placeholder)) ||
+              (f.id === 'f_title' && (df.name?.includes('title') || df.placeholder?.includes('عنوان'))) ||
+              (f.id === 'f_desc' && (df.name?.includes('desc') || df.type === 'textarea')) ||
+              (f.id === 'f_mobile' && (df.type === 'tel' || df.name?.includes('phone') || df.name?.includes('mobile')))
+            );
+
+            if (hasMatchedDom) {
+              return {
+                ...f,
+                status: 'matched',
+                matchedValue:
+                  f.id === 'f_title'
+                    ? adTitle
+                    : f.id === 'f_desc'
+                    ? adContent.slice(0, 45) + '...'
+                    : f.id === 'f_mobile'
+                    ? contactPhone
+                    : contactPerson
+              };
+            }
+            return f;
+          })
+        );
+        setCurrentStep(2);
+      } else {
+        appendLog(`⚠️ ورکر مرورگر فرم بازی در این صفحه شناسایی نکرد (${cmdRes.error || 'نیازمند ناوبری به صفحه فرم'}).`);
+      }
+    } catch (scanErr: any) {
+      appendLog(`خطای ارتباط با ورکر مرورگر: ${scanErr?.message || 'پاسخی دریافت نشد'}`);
+    } finally {
+      setIsScanning(false);
+    }
   };
 
   // Execute Full Autonomous Autofill & Publication Flow

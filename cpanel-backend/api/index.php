@@ -1575,7 +1575,26 @@ try {
                 break;
             }
 
-            // راستی‌آزمایی مستقل و واقعی با cURL
+            // راستی‌آزمایی مستقل و واقعی با cURL (رد صفحات ورود و بررسی وجود محتوا)
+            $lowerUrl = strtolower($targetUrl);
+            $isAuthOrRegister = (strpos($lowerUrl, 'register') !== false ||
+                                 strpos($lowerUrl, 'login') !== false ||
+                                 strpos($lowerUrl, 'auth') !== false ||
+                                 strpos($lowerUrl, 'download') !== false ||
+                                 strpos($lowerUrl, 'signin') !== false ||
+                                 strpos($lowerUrl, 'signup') !== false);
+
+            if ($isAuthOrRegister) {
+                http_response_code(422);
+                echo json_encode([
+                    'success' => false,
+                    'verified' => false,
+                    'httpStatus' => 200,
+                    'error' => 'آدرس ارائه‌شده مربوط به صفحه ورود یا ثبت‌نام است و لینک عمومی آگهی نیست.'
+                ], JSON_UNESCAPED_UNICODE);
+                break;
+            }
+
             $ch = curl_init($targetUrl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
@@ -1587,7 +1606,9 @@ try {
             $err = curl_error($ch);
             curl_close($ch);
 
-            if ($httpCode >= 200 && $httpCode < 400) {
+            $hasValidContent = !empty($resBody) && strlen($resBody) > 250 && stripos($resBody, '404 Not Found') === false && stripos($resBody, 'صفحه مورد نظر یافت نشد') === false;
+
+            if ($httpCode >= 200 && $httpCode < 400 && $hasValidContent) {
                 $updatedWf = $db->verifyWorkflowUrl($wfId, $targetUrl);
                 echo json_encode([
                     'success' => true,
@@ -1602,7 +1623,7 @@ try {
                     'success' => false,
                     'verified' => false,
                     'httpStatus' => $httpCode,
-                    'error' => "لینک آگهی باز نشد یا خطای HTTP {$httpCode} بازگرداند: {$err}"
+                    'error' => "لینک آگهی باز نشد یا محتوای معتبر در صفحه یافت نشد (HTTP {$httpCode}): {$err}"
                 ], JSON_UNESCAPED_UNICODE);
             }
             break;

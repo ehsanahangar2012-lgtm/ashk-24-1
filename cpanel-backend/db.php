@@ -2568,8 +2568,8 @@ class Ashk24Db {
                         'action' => 'receive_otp',
                         'status' => 'completed',
                         'input' => ['otpCode' => $otpCode],
-                        'output' => ['otpAccepted' => true],
-                        'durationMs' => 120,
+                        'output' => ['received' => true, 'verifiedByPlatform' => false],
+                        'durationMs' => 85,
                         'attempt' => 1,
                         'timestamp' => $now
                     ];
