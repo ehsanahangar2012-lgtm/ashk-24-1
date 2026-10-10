@@ -3,21 +3,28 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 const pkgPath = path.join(__dirname, '../package.json');
-let version = '5.8.25';
+let version = '5.9.40';
 try {
   const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-  const parts = (pkg.version || '5.8.24').split('.');
-  if (parts.length === 3) {
-    parts[2] = String(parseInt(parts[2], 10) + 1);
-    version = parts.join('.');
+  // فقط در صورت درخواست صریح با فلگ --bump یا متغیر BUMP_VERSION نسخه پچ ارتقا می‌یابد
+  const shouldBump = process.argv.includes('--bump') || process.env.BUMP_VERSION === 'true';
+  if (shouldBump) {
+    const parts = (pkg.version || '5.9.40').split('.');
+    if (parts.length === 3) {
+      parts[2] = String(parseInt(parts[2], 10) + 1);
+      version = parts.join('.');
+    } else {
+      version = pkg.version;
+    }
+    pkg.version = version;
+    fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
+    console.log(`🚀 [Version Bump] Version incremented to v${version}`);
   } else {
-    version = pkg.version;
+    version = pkg.version || '5.9.40';
+    console.log(`📌 [Version Policy] Single Source of Truth version from package.json: v${version}`);
   }
-  pkg.version = version;
-  fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
-  console.log(`🚀 [Version Bump] Version incremented to v${version}`);
 } catch (err) {
-  console.warn('⚠️ Version bump warning:', err.message);
+  console.warn('⚠️ Version sync warning:', err.message);
 }
 
 function getBuildInfo() {

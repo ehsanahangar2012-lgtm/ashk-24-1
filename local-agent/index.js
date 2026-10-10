@@ -848,8 +848,14 @@ async function executeWorkerTask(task, providedPage = null) {
   return result;
 }
 
-// نگاشت مشترک جهت اطمینان از دسترس‌پذیری executeTask
-const executeTask = executeWorkerTask;
+/**
+ * تابع اجرایی مشترک جهت پشتیبانی از فراخوانی مستقیم executeTask در تمام اسکریپت‌ها و ورکرها
+ * @param {object} task - شیء وظیفه
+ * @param {object|null} page - شیء اختیاری مرورگر
+ */
+async function executeTask(task, page = null) {
+  return executeWorkerTask(task, page);
+}
 
 function startLocalTaskServer() {
   if (process.env.CI || IS_ONCE) return;
@@ -1663,7 +1669,7 @@ async function main() {
 
     let taskResult = null;
     try {
-      taskResult = await executeWorkerTask(directTask);
+      taskResult = await executeTask(directTask);
       console.log(`📊 [Direct Task Result]:`, JSON.stringify(taskResult, null, 2));
     } finally {
       if (activeLocalBrowser) {
