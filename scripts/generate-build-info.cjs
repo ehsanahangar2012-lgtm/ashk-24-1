@@ -69,5 +69,25 @@ if (fs.existsSync(verificationServicePath)) {
   fs.writeFileSync(verificationServicePath, content);
 }
 
-console.log(`✅ Generated build-info, version.ts & unifiedVerificationService.js: Version="v${version}", Timestamp="${buildInfo.timestamp}", Hash="${buildInfo.commitHash}"`);
+// 4. Synchronize local-agent/package.json
+const localAgentPkgPath = path.join(__dirname, '../local-agent/package.json');
+if (fs.existsSync(localAgentPkgPath)) {
+  try {
+    const laPkg = JSON.parse(fs.readFileSync(localAgentPkgPath, 'utf8'));
+    laPkg.version = version;
+    fs.writeFileSync(localAgentPkgPath, JSON.stringify(laPkg, null, 2) + '\n');
+  } catch (_) {}
+}
+
+// 5. Synchronize public/extension/manifest.json
+const extManifestPath = path.join(__dirname, '../public/extension/manifest.json');
+if (fs.existsSync(extManifestPath)) {
+  try {
+    const extManifest = JSON.parse(fs.readFileSync(extManifestPath, 'utf8'));
+    extManifest.version = version;
+    fs.writeFileSync(extManifestPath, JSON.stringify(extManifest, null, 2) + '\n');
+  } catch (_) {}
+}
+
+console.log(`✅ Generated build-info, version.ts, local-agent, manifest & unifiedVerificationService.js: Version="v${version}", Timestamp="${buildInfo.timestamp}", Hash="${buildInfo.commitHash}"`);
 

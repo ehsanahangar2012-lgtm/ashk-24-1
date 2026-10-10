@@ -4,7 +4,6 @@
  * Supports both Cloud Headless (GitHub Actions / Linux VPS) and Local Headed mode.
  */
 
-import { chromium } from 'playwright';
 import fs from 'fs';
 import path from 'path';
 import http from 'http';
@@ -39,6 +38,12 @@ try {
   TASK_INPUT = null;
 }
 const LOCAL_AGENT_PORT = parseInt(process.env.LOCAL_AGENT_PORT || '3824', 10);
+
+let AGENT_VERSION = '5.9.38';
+try {
+  const rootPkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../package.json'), 'utf8'));
+  AGENT_VERSION = rootPkg.version || AGENT_VERSION;
+} catch (_) {}
 
 const EVIDENCE_DIR = path.resolve(__dirname, 'evidence');
 if (!fs.existsSync(EVIDENCE_DIR)) {
@@ -123,7 +128,7 @@ function stopQuickTunnel() {
 }
 
 console.log(`=======================================================`);
-console.log(`🤖 Ashk24 Worker Engine v4.0.11-e2e Starting...`);
+console.log(`🤖 Ashk24 Worker Engine v${AGENT_VERSION} Starting...`);
 console.log(`🆔 Agent ID: ${AGENT_ID}`);
 console.log(`🌐 Orchestrator: ${CPANEL_URL}`);
 console.log(`🎯 Target Job ID: ${TARGET_JOB_ID || 'None (Auto-Claim Any Pending)'}`);
@@ -134,7 +139,7 @@ console.log(`=======================================================`);
 
 let agentToken = null;
 
-async function handshake() {
+async function handshake(options = {}) {
   try {
     const initRes = await fetch(`${CPANEL_URL}?route=bridge/handshake/init`, {
       method: 'POST',
@@ -160,6 +165,12 @@ async function handshake() {
   } catch (err) {
     console.error(`❌ [Handshake Error]: ${err.message}`, err.cause ? `| Cause: ${JSON.stringify(err.cause)}` : '');
     
+    // در حالت اجرای مستقیم تسک (TASK_ACTION)، عدم دسترسی به cPanel نباید مانع اجرای خود تسک شود
+    if (options.isDirectTask || TASK_ACTION) {
+      console.warn(`⚠️ [Handshake Notice] ارتباط با cPanel برقرار نشد (${err.message}). اجرای مستقیم تسک ادامه می‌یابد...`);
+      return false;
+    }
+
     if (CPANEL_URL.includes('secret.ashkghalam.ir') || err.code === 'ENOTFOUND' || (err.cause && err.cause.code === 'ENOTFOUND')) {
       console.error(`\n=======================================================`);
       console.error(`⚠️ [خطای عدم یافتن آدرس سرور سی‌پنل / DNS Error]`);
@@ -327,11 +338,24 @@ async function reportWorkflowActionToBackend(payload) {
   }
 }
 
+let cachedChromium = null;
+async function getChromium() {
+  if (cachedChromium) return cachedChromium;
+  try {
+    const pw = await import('playwright');
+    cachedChromium = pw.chromium;
+    return cachedChromium;
+  } catch (err) {
+    throw new Error(`پکیج Playwright در دسترس نیست (${err.message}). لطفاً در پوشه local-agent پکیج‌ها را نصب فرمایید.`);
+  }
+}
+
 let activeLocalBrowser = null;
 let activeLocalPage = null;
 
 async function getOrInitLocalPage() {
   if (!activeLocalBrowser) {
+    const chromium = await getChromium();
     activeLocalBrowser = await chromium.launch({
       headless: IS_HEADLESS,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
@@ -342,6 +366,484 @@ async function getOrInitLocalPage() {
     activeLocalPage = await context.newPage();
   }
   return activeLocalPage;
+}
+
+const SUPPORTED_WORKER_ACTIONS = [
+  'open_target_url',
+  'check_login_state',
+  'inspect_auth_form',
+  'authenticate_user',
+  'discover_dom_fields',
+  'inject_field_values',
+  'click_submit_button',
+  'inject_and_verify_otp',
+  'check_otp_acceptance',
+  'verify_publication_url'
+];
+
+/**
+ * تابع مشترک و مستقل اجرای وظایف Worker (قابل استفاده توسط Local Server و GitHub Direct Run)
+ * @param {object} task - شیء حاوی اطلاعات کامل وظیفه (action, actionId, input, workflowId, executionId, jobId)
+ * @param {object|null} providedPage - شیء اختیاری صفحه مرورگر Playwright
+ * @returns {Promise<object>} نتیجه استاندارد اجرای تسک
+ */
+async function executeWorkerTask(task, providedPage = null) {
+  const startTime = Date.now();
+  const action = task?.action;
+  const workflowId = task?.workflowId || null;
+  const executionId = task?.executionId || null;
+  const jobId = task?.jobId || null;
+  const actionId = task?.actionId || null;
+  const input = task?.input || {};
+  const state = task?.state || 'AUTO';
+
+  console.log(`🤖 [Worker Task Execution] Action: ${action || 'None'} | ActionID: ${actionId || 'auto'} | Workflow: ${workflowId || 'none'} | State: ${state}`);
+
+  if (!action || !SUPPORTED_WORKER_ACTIONS.includes(action)) {
+    const durationMs = Date.now() - startTime;
+    const errorMsg = `UNSUPPORTED_ACTION: فرمان '${action || 'null'}' در این Worker پشتیبانی نمی‌شود.`;
+    console.warn(`⚠️ [Unsupported Worker Action]: ${errorMsg}`);
+    return {
+      success: false,
+      action: action || 'UNKNOWN',
+      workerId: AGENT_ID,
+      workerRole: process.env.CI ? 'cloud_worker' : 'local',
+      workflowId,
+      executionId,
+      jobId,
+      actionId,
+      input,
+      output: {
+        error: errorMsg,
+        status: 'UNSUPPORTED_ACTION',
+        supportedActions: SUPPORTED_WORKER_ACTIONS
+      },
+      error: errorMsg,
+      durationMs
+    };
+  }
+
+  let taskOutput = {};
+  let taskSuccess = true;
+  let taskError = null;
+
+  try {
+    let page = providedPage;
+    if (!page && action !== 'verify_publication_url') {
+      page = await getOrInitLocalPage();
+      if (!page) {
+        throw new Error('مرورگر Playwright در دسترس نیست.');
+      }
+    }
+
+    if (action === 'open_target_url') {
+      const targetUrl = input?.targetUrl || (task.platformDomain ? `https://${task.platformDomain}` : 'https://agahi24.com');
+      await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
+      taskSuccess = true;
+      taskOutput = {
+        openedUrl: page.url(),
+        title: await page.title(),
+        tabDispatched: true
+      };
+    } else if (action === 'check_login_state') {
+      const content = await page.content();
+      const currentUrl = page.url();
+
+      const hasLogoutBtn = await page.$('a[href*="logout"], button[id*="logout"], a:has-text("خروج"), button:has-text("خروج")');
+      const hasUserProfile = await page.$('.user-profile, .user-menu, .dashboard, [aria-label*="پروفایل"], a[href*="profile"], a[href*="panel"]');
+      const isLoggedIn = Boolean(hasLogoutBtn || hasUserProfile || content.includes('خروج از حساب') || content.includes('پنل کاربری') || content.includes('ناحیه کاربری'));
+
+      const isRegistrationPage = currentUrl.includes('register') || currentUrl.includes('signup') || content.includes('ثبت‌نام') || content.includes('ایجاد حساب');
+      const hasLoginForm = Boolean(await page.$('form[action*="login"], form[id*="login"], input[name*="user"], input[name*="pass"], input[name*="mobile"]'));
+
+      const hasAdFields = Boolean(await page.$('input[name*="title" i], textarea[name*="desc" i], input[name*="price" i], select[name*="cat" i]'));
+      const detectedFormType = hasAdFields ? 'ad' : (hasLoginForm || isRegistrationPage ? 'auth' : 'unknown');
+
+      taskSuccess = true;
+      taskOutput = {
+        sessionActive: isLoggedIn,
+        isLoggedIn,
+        loginRequired: !isLoggedIn,
+        registrationRequired: !isLoggedIn && isRegistrationPage,
+        detectedFormType,
+        currentUrl
+      };
+    } else if (action === 'inspect_auth_form' || action === 'authenticate_user') {
+      const content = await page.content();
+      const currentUrl = page.url();
+
+      const hasCaptcha = Boolean(await page.$('.g-recaptcha, iframe[src*="captcha"], #captcha, input[name*="captcha" i]'));
+      if (hasCaptcha) {
+        taskSuccess = false;
+        taskError = 'چالش کپچا یا اعتبارسنجی امنیتی نیازمند اقدام دستی کاربر است.';
+        taskOutput = {
+          needsHumanIntervention: true,
+          pageState: 'WAITING_FOR_HUMAN',
+          reason: 'captcha_detected',
+          currentUrl
+        };
+      } else {
+        const phoneInput = await page.$('input[name*="mobile" i], input[name*="phone" i], input[type="tel"], input[id*="mobile" i]');
+        const phoneVal = input?.phoneNumber || input?.phone || '';
+        if (phoneInput && phoneVal) {
+          await phoneInput.fill(String(phoneVal));
+          const loginSubmit = await page.$('button[type="submit"], button:has-text("ورود"), button:has-text("ادامه"), button:has-text("ارسال کد")');
+          if (loginSubmit) {
+            await loginSubmit.click({ force: true });
+            await page.waitForTimeout(2500);
+          }
+        }
+
+        const postPageText = await page.content();
+        const postUrl = page.url();
+        const otpInput = await page.$('input[name*="otp" i], input[name*="code" i], input[id*="code" i]');
+        const isOtpRequired = Boolean(otpInput || postPageText.includes('کد تایید') || postPageText.includes('رمز یکبار مصرف'));
+        const isNowLoggedIn = postPageText.includes('خروج') || postPageText.includes('پنل کاربری') || postUrl.includes('panel') || postUrl.includes('dashboard');
+
+        if (isNowLoggedIn) {
+          taskSuccess = true;
+          taskOutput = {
+            loginVerified: true,
+            sessionActive: true,
+            isLoggedIn: true,
+            pageState: 'LOGGED_IN',
+            currentUrl: postUrl
+          };
+        } else if (isOtpRequired) {
+          taskSuccess = true;
+          taskOutput = {
+            otpRequired: true,
+            otpGateDetected: true,
+            pageState: 'OTP_REQUIRED',
+            currentUrl: postUrl
+          };
+        } else {
+          taskSuccess = false;
+          taskError = 'ورود به سامانه تکمیل نشد یا نیازمند اقدام انسانی است.';
+          taskOutput = {
+            loginVerified: false,
+            needsHumanIntervention: true,
+            pageState: 'WAITING_FOR_HUMAN',
+            currentUrl: postUrl
+          };
+        }
+      }
+    } else if (action === 'discover_dom_fields') {
+      const inputs = await page.$$eval('input, textarea, select', els => els.map(el => {
+        let labelText = '';
+        if (el.labels && el.labels.length > 0) {
+          labelText = el.labels[0].innerText || '';
+        } else if (el.id) {
+          const lbl = document.querySelector(`label[for="${el.id}"]`);
+          if (lbl) labelText = lbl.innerText || '';
+        }
+        if (!labelText) {
+          const parentLabel = el.closest('label');
+          if (parentLabel) labelText = parentLabel.innerText || '';
+        }
+
+        return {
+          name: el.getAttribute('name') || '',
+          id: el.getAttribute('id') || '',
+          type: el.getAttribute('type') || el.tagName.toLowerCase(),
+          placeholder: el.getAttribute('placeholder') || '',
+          ariaLabel: el.getAttribute('aria-label') || '',
+          labelText: labelText.trim(),
+          required: el.hasAttribute('required'),
+          tagName: el.tagName.toLowerCase()
+        };
+      }));
+
+      const hasOtp = inputs.some(i =>
+        i.name.includes('otp') || i.name.includes('code') || i.id.includes('code') || i.labelText.includes('کد تایید')
+      );
+
+      taskSuccess = true;
+      taskOutput = {
+        fields: inputs,
+        fieldsFound: inputs.length,
+        hasOtpGate: hasOtp,
+        formType: inputs.some(i => i.name.includes('title') || i.labelText.includes('عنوان')) ? 'ad_creation' : 'auth'
+      };
+    } else if (action === 'inject_field_values') {
+      const mappings = input?.mappings || {};
+      const requiredKeys = ['title', 'description', 'phone'];
+
+      const allInputs = await page.$$('input, textarea, select');
+      const fieldsFound = allInputs.length;
+
+      let filledCount = 0;
+      const missingRequired = [];
+      const validationErrors = [];
+
+      for (const [key, val] of Object.entries(mappings)) {
+        if (!val || String(val).trim() === '') {
+          if (requiredKeys.includes(key)) {
+            missingRequired.push(key);
+          }
+          continue;
+        }
+
+        const selectorList = [
+          `input[name*="${key}" i]`,
+          `textarea[name*="${key}" i]`,
+          `input[id*="${key}" i]`,
+          `textarea[id*="${key}" i]`,
+          `input[placeholder*="${key}" i]`,
+          `textarea[placeholder*="${key}" i]`,
+          `[aria-label*="${key}" i]`
+        ];
+
+        if (key === 'title') {
+          selectorList.push('input[name*="عنوان" i]', 'input[id*="عنوان" i]', 'input[placeholder*="عنوان" i]');
+        } else if (key === 'description') {
+          selectorList.push('textarea[name*="توضیح" i]', 'textarea[id*="توضیح" i]', 'textarea[placeholder*="توضیح" i]');
+        } else if (key === 'phone') {
+          selectorList.push('input[name*="موبایل" i]', 'input[name*="تلفن" i]', 'input[type="tel"]');
+        }
+
+        let field = null;
+        for (const sel of selectorList) {
+          field = await page.$(sel);
+          if (field) break;
+        }
+
+        if (field) {
+          try {
+            await field.fill(String(val));
+            filledCount++;
+          } catch (fillErr) {
+            validationErrors.push(`خطا در درج فیلد ${key}: ${fillErr.message}`);
+          }
+        } else if (requiredKeys.includes(key)) {
+          missingRequired.push(key);
+        }
+      }
+
+      const canSubmit = filledCount > 0 && missingRequired.length === 0 && validationErrors.length === 0;
+      taskSuccess = canSubmit;
+      if (!taskSuccess) {
+        taskError = missingRequired.length > 0
+          ? `فیلدهای اجباری آگهی در فرم پر نشدند: [${missingRequired.join('، ')}]`
+          : (filledCount === 0 ? 'هیچ فیلدی در فرم تطبیق نیافت یا پر نشد.' : `خطای اعتبارسنجی: [${validationErrors.join('، ')}]`);
+      }
+
+      taskOutput = {
+        fieldsFound,
+        mappedFields: Object.keys(mappings).length,
+        filledFields: filledCount,
+        missingRequiredFields: missingRequired,
+        validationErrors,
+        canSubmit
+      };
+    } else if (action === 'click_submit_button') {
+      const submitBtn = await page.$('button[type="submit"], input[type="submit"], button:has-text("ثبت"), button:has-text("ارسال"), button:has-text("انتشار")');
+      if (!submitBtn) {
+        taskSuccess = false;
+        taskError = 'دکمه ارسال فرم در ساختار صفحه یافت نشد.';
+        taskOutput = {
+          clicked: false,
+          submitted: false,
+          pageState: 'FORM_ERROR',
+          formError: 'دکمه ارسال فرم در ساختار صفحه موجود نیست.'
+        };
+      } else {
+        try {
+          await submitBtn.click({ force: true });
+          await page.waitForTimeout(3000);
+
+          const postUrl = page.url();
+          const pageText = await page.content();
+
+          const hasFormError = pageText.includes('خطا در ثبت') ||
+                               pageText.includes('الزامی است') ||
+                               pageText.includes('نامعتبر است') ||
+                               Boolean(await page.$('.error, .alert-danger, [aria-invalid="true"]'));
+
+          const otpGateDetected = pageText.includes('کد تایید') ||
+                                  pageText.includes('کد پیامک') ||
+                                  postUrl.includes('verify') ||
+                                  postUrl.includes('otp') ||
+                                  Boolean(await page.$('input[name*="otp" i], input[name*="code" i], input[id*="otp" i]'));
+
+          const isSubmitted = pageText.includes('با موفقیت ثبت شد') ||
+                              pageText.includes('در صف انتشار') ||
+                              pageText.includes('در انتظار تایید') ||
+                              postUrl.includes('success') ||
+                              postUrl.includes('manage');
+
+          let detectedState = 'UNKNOWN';
+          if (hasFormError) {
+            detectedState = 'FORM_ERROR';
+            taskSuccess = false;
+            taskError = 'خطای اعتبارسنجی در صفحه پس از ارسال فرم مشاهده شد.';
+          } else if (otpGateDetected) {
+            detectedState = 'OTP_REQUIRED';
+            taskSuccess = true;
+          } else if (isSubmitted) {
+            detectedState = 'SUBMITTED';
+            taskSuccess = true;
+          } else {
+            detectedState = 'UNKNOWN';
+            taskSuccess = false;
+            taskError = 'پس از کلیک دکمه ارسال، وضعیت صفحه نامشخص است (پاسخ قطعی دریافت نشد).';
+          }
+
+          taskOutput = {
+            clicked: true,
+            submitted: detectedState === 'SUBMITTED' || detectedState === 'OTP_REQUIRED',
+            pageState: detectedState,
+            otpGateDetected: detectedState === 'OTP_REQUIRED',
+            hasFormError: detectedState === 'FORM_ERROR',
+            currentUrl: postUrl
+          };
+        } catch (clickErr) {
+          taskSuccess = false;
+          taskError = `خطا در کلیک دکمه ارسال: ${clickErr.message}`;
+          taskOutput = {
+            clicked: false,
+            submitted: false,
+            pageState: 'FORM_ERROR',
+            formError: clickErr.message
+          };
+        }
+      }
+    } else if (action === 'inject_and_verify_otp') {
+      const otpCode = input?.otpCode;
+      if (!otpCode) {
+        taskSuccess = false;
+        taskError = 'کد تایید OTP برای درج در صفحه فراهم نشده است.';
+        taskOutput = { otpInjected: false, verifiedByPlatform: false };
+      } else {
+        const otpInput = await page.$('input[name*="otp" i], input[name*="code" i], input[id*="otp" i], input[id*="code" i], input[type="tel"], input[type="number"], input.otp-input');
+        if (!otpInput) {
+          taskSuccess = false;
+          taskError = 'فیلد ورود کد تایید OTP در صفحه مرورگر یافت نشد.';
+          taskOutput = { otpInjected: false, verifiedByPlatform: false };
+        } else {
+          try {
+            await otpInput.fill(String(otpCode));
+            const confirmBtn = await page.$('button:has-text("تایید"), button:has-text("ثبت"), button:has-text("ارسال"), button[type="submit"]');
+            if (confirmBtn) {
+              await confirmBtn.click({ force: true });
+              await page.waitForTimeout(2000);
+            }
+            taskSuccess = true;
+            taskOutput = {
+              otpInjected: true,
+              verifiedByPlatform: false,
+              otpCodeSubmitted: true
+            };
+          } catch (injectErr) {
+            taskSuccess = false;
+            taskError = `خطا در درج یا ارسال کد OTP: ${injectErr.message}`;
+            taskOutput = { otpInjected: false, verifiedByPlatform: false };
+          }
+        }
+      }
+    } else if (action === 'check_otp_acceptance') {
+      const pageText = await page.content();
+      const postUrl = page.url();
+
+      const isInvalid = pageText.includes('کد نادرست') || pageText.includes('کد منقضی') || pageText.includes('اشتباه است');
+      const isAccepted = pageText.includes('با موفقیت تایید شد') ||
+                         pageText.includes('تایید شماره انجام شد') ||
+                         pageText.includes('در صف انتشار') ||
+                         pageText.includes('آگهی شما ثبت شد');
+
+      if (isInvalid) {
+        taskSuccess = false;
+        taskError = 'کد تایید واردشده توسط سامانه مقصد رد شد.';
+        taskOutput = {
+          rejected: true,
+          invalidCode: true,
+          otpVerified: false
+        };
+      } else if (isAccepted) {
+        taskSuccess = true;
+        taskOutput = {
+          accepted: true,
+          verifiedByPlatform: true,
+          otpVerified: true,
+          adUrl: (postUrl.includes('manage') || postUrl.includes('post') || postUrl.includes('view')) ? postUrl : null
+        };
+      } else {
+        taskSuccess = false;
+        taskError = 'شواهد قطعی مبنی بر پذیرش کد توسط سامانه مقصد یافت نشد (وجود ریدایرکت به‌تنهایی کافی نیست).';
+        taskOutput = {
+          accepted: false,
+          verifiedByPlatform: false,
+          otpVerified: false,
+          redirectUrl: postUrl
+        };
+      }
+    } else if (action === 'verify_publication_url') {
+      const targetUrl = input?.url || page.url();
+      const expectedTitle = input?.expectedTitle || '';
+      const expectedJobId = input?.expectedJobId || jobId || '';
+
+      const verifyResult = await verifyPublicationEvidence({
+        url: targetUrl,
+        expectedTitle,
+        expectedJobId
+      });
+
+      taskSuccess = verifyResult.verified;
+      taskError = verifyResult.error;
+      taskOutput = {
+        verified: verifyResult.verified,
+        httpStatus: verifyResult.httpStatus,
+        matchedTitle: verifyResult.matchedTitle,
+        matchedId: verifyResult.matchedId,
+        matchedKeywords: verifyResult.matchedKeywords,
+        publicUrl: verifyResult.url
+      };
+    }
+  } catch (execErr) {
+    console.error(`❌ [Worker Task Execution Failure]: ${execErr.message}`);
+    taskSuccess = false;
+    taskError = execErr.message;
+    taskOutput = {
+      error: execErr.message,
+      status: 'FAILED'
+    };
+  }
+
+  const durationMs = Date.now() - startTime;
+  const result = {
+    success: taskSuccess,
+    action,
+    workerId: AGENT_ID,
+    workerRole: process.env.CI ? 'cloud_worker' : 'local',
+    workflowId,
+    executionId,
+    jobId,
+    actionId,
+    input,
+    output: taskOutput,
+    error: taskError,
+    durationMs
+  };
+
+  if (workflowId && executionId) {
+    try {
+      await reportWorkflowActionToBackend({
+        workflowId,
+        executionId,
+        jobId,
+        state,
+        action,
+        status: taskSuccess ? 'completed' : 'failed',
+        input,
+        output: taskOutput,
+        durationMs
+      });
+    } catch (repErr) {
+      console.warn(`⚠️ [Workflow Action Report Warning]: ${repErr.message}`);
+    }
+  }
+
+  return result;
 }
 
 function startLocalTaskServer() {
@@ -365,7 +867,7 @@ function startLocalTaskServer() {
         agentId: AGENT_ID,
         role: 'local',
         headless: IS_HEADLESS,
-        version: '4.1.0-stable'
+        version: AGENT_VERSION
       }));
       return;
     }
@@ -374,436 +876,19 @@ function startLocalTaskServer() {
       let bodyStr = '';
       req.on('data', chunk => { bodyStr += chunk; });
       req.on('end', async () => {
-        const startTime = Date.now();
         try {
           const task = JSON.parse(bodyStr || '{}');
-          console.log(`🤖 [Local Task Received] Action: ${task.action} | Workflow: ${task.workflowId} | State: ${task.state}`);
-
-          let taskOutput = {};
-          let taskSuccess = true;
-          let taskError = null;
-
-          // اجرای واقعی فرمان از طریق مرورگر Playwright محلی
-          try {
-            const page = await getOrInitLocalPage();
-
-            if (task.action === 'open_target_url') {
-              const targetUrl = task.input?.targetUrl || `https://${task.platformDomain}`;
-              await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
-              taskOutput = {
-                openedUrl: page.url(),
-                title: await page.title(),
-                tabDispatched: true
-              };
-            } else if (task.action === 'check_login_state') {
-              const content = await page.content();
-              const currentUrl = page.url();
-              const lowerContent = content.toLowerCase();
-
-              // بررسی نشانه‌های قطعی ورود به حساب
-              const hasLogoutBtn = await page.$('a[href*="logout"], button[id*="logout"], a:has-text("خروج"), button:has-text("خروج")');
-              const hasUserProfile = await page.$('.user-profile, .user-menu, .dashboard, [aria-label*="پروفایل"], a[href*="profile"], a[href*="panel"]');
-              const isLoggedIn = Boolean(hasLogoutBtn || hasUserProfile || content.includes('خروج از حساب') || content.includes('پنل کاربری') || content.includes('ناحیه کاربری'));
-
-              // بررسی نیاز به ثبت‌نام یا ورود
-              const isRegistrationPage = currentUrl.includes('register') || currentUrl.includes('signup') || content.includes('ثبت‌نام') || content.includes('ایجاد حساب');
-              const hasLoginForm = Boolean(await page.$('form[action*="login"], form[id*="login"], input[name*="user"], input[name*="pass"], input[name*="mobile"]'));
-
-              // تفکیک نوع فرم: فرم احراز هویت در برابر فرم ثبت آگهی
-              const hasAdFields = Boolean(await page.$('input[name*="title" i], textarea[name*="desc" i], input[name*="price" i], select[name*="cat" i]'));
-              const detectedFormType = hasAdFields ? 'ad' : (hasLoginForm || isRegistrationPage ? 'auth' : 'unknown');
-
-              taskOutput = {
-                sessionActive: isLoggedIn,
-                isLoggedIn,
-                loginRequired: !isLoggedIn,
-                registrationRequired: !isLoggedIn && isRegistrationPage,
-                detectedFormType,
-                currentUrl
-              };
-            } else if (task.action === 'inspect_auth_form' || task.action === 'authenticate_user') {
-              const content = await page.content();
-              const currentUrl = page.url();
-              const lowerContent = content.toLowerCase();
-
-              // بررسی آیا چالش کپچا یا اقدام انسانی وجود دارد
-              const hasCaptcha = Boolean(await page.$('.g-recaptcha, iframe[src*="captcha"], #captcha, input[name*="captcha" i]'));
-              if (hasCaptcha) {
-                taskSuccess = false;
-                taskError = 'چالش کپچا یا اعتبارسنجی امنیتی نیازمند اقدام دستی کاربر است.';
-                taskOutput = {
-                  needsHumanIntervention: true,
-                  pageState: 'WAITING_FOR_HUMAN',
-                  reason: 'captcha_detected',
-                  currentUrl
-                };
-              } else {
-                // بررسی فیلدهای ورود
-                const phoneInput = await page.$('input[name*="mobile" i], input[name*="phone" i], input[type="tel"], input[id*="mobile" i]');
-                const phoneVal = task.input?.phoneNumber || task.input?.phone || '';
-                if (phoneInput && phoneVal) {
-                  await phoneInput.fill(String(phoneVal));
-                  const loginSubmit = await page.$('button[type="submit"], button:has-text("ورود"), button:has-text("ادامه"), button:has-text("ارسال کد")');
-                  if (loginSubmit) {
-                    await loginSubmit.click({ force: true });
-                    await page.waitForTimeout(2500);
-                  }
-                }
-
-                // ارزیابی مجدد صفحه پس از اقدام ورود
-                const postPageText = await page.content();
-                const postUrl = page.url();
-                const otpInput = await page.$('input[name*="otp" i], input[name*="code" i], input[id*="code" i]');
-                const isOtpRequired = Boolean(otpInput || postPageText.includes('کد تایید') || postPageText.includes('رمز یکبار مصرف'));
-                const isNowLoggedIn = postPageText.includes('خروج') || postPageText.includes('پنل کاربری') || postUrl.includes('panel') || postUrl.includes('dashboard');
-
-                if (isNowLoggedIn) {
-                  taskSuccess = true;
-                  taskOutput = {
-                    loginVerified: true,
-                    sessionActive: true,
-                    isLoggedIn: true,
-                    pageState: 'LOGGED_IN',
-                    currentUrl: postUrl
-                  };
-                } else if (isOtpRequired) {
-                  taskSuccess = true;
-                  taskOutput = {
-                    otpRequired: true,
-                    otpGateDetected: true,
-                    pageState: 'OTP_REQUIRED',
-                    currentUrl: postUrl
-                  };
-                } else {
-                  taskSuccess = false;
-                  taskError = 'ورود به سامانه تکمیل نشد یا نیازمند اقدام انسانی است.';
-                  taskOutput = {
-                    loginVerified: false,
-                    needsHumanIntervention: true,
-                    pageState: 'WAITING_FOR_HUMAN',
-                    currentUrl: postUrl
-                  };
-                }
-              }
-            } else if (task.action === 'discover_dom_fields') {
-              // استخراج جامع ویژگی‌های فیلدهای فرم صفحه از DOM واقعی
-              const inputs = await page.$$eval('input, textarea, select', els => els.map(el => {
-                let labelText = '';
-                if (el.labels && el.labels.length > 0) {
-                  labelText = el.labels[0].innerText || '';
-                } else if (el.id) {
-                  const lbl = document.querySelector(`label[for="${el.id}"]`);
-                  if (lbl) labelText = lbl.innerText || '';
-                }
-                if (!labelText) {
-                  const parentLabel = el.closest('label');
-                  if (parentLabel) labelText = parentLabel.innerText || '';
-                }
-
-                return {
-                  name: el.getAttribute('name') || '',
-                  id: el.getAttribute('id') || '',
-                  type: el.getAttribute('type') || el.tagName.toLowerCase(),
-                  placeholder: el.getAttribute('placeholder') || '',
-                  ariaLabel: el.getAttribute('aria-label') || '',
-                  labelText: labelText.trim(),
-                  required: el.hasAttribute('required'),
-                  tagName: el.tagName.toLowerCase()
-                };
-              }));
-
-              const hasOtp = inputs.some(i =>
-                i.name.includes('otp') || i.name.includes('code') || i.id.includes('code') || i.labelText.includes('کد تایید')
-              );
-
-              taskOutput = {
-                fields: inputs,
-                fieldsFound: inputs.length,
-                hasOtpGate: hasOtp,
-                formType: inputs.some(i => i.name.includes('title') || i.labelText.includes('عنوان')) ? 'ad_creation' : 'auth'
-              };
-            } else if (task.action === 'inject_field_values') {
-              const mappings = task.input?.mappings || {};
-              const requiredKeys = ['title', 'description', 'phone'];
-
-              // استخراج فیلدهای واقعی DOM
-              const allInputs = await page.$$('input, textarea, select');
-              const fieldsFound = allInputs.length;
-
-              let filledCount = 0;
-              const missingRequired = [];
-              const validationErrors = [];
-
-              for (const [key, val] of Object.entries(mappings)) {
-                if (!val || String(val).trim() === '') {
-                  if (requiredKeys.includes(key)) {
-                    missingRequired.push(key);
-                  }
-                  continue;
-                }
-
-                // انتخابگرهای هوشمند بر مبنای name، id، placeholder و برچسب label
-                const selectorList = [
-                  `input[name*="${key}" i]`,
-                  `textarea[name*="${key}" i]`,
-                  `input[id*="${key}" i]`,
-                  `textarea[id*="${key}" i]`,
-                  `input[placeholder*="${key}" i]`,
-                  `textarea[placeholder*="${key}" i]`,
-                  `[aria-label*="${key}" i]`
-                ];
-
-                // تطبیق با کلمات فارسی کلیدی
-                if (key === 'title') {
-                  selectorList.push('input[name*="عنوان" i]', 'input[id*="عنوان" i]', 'input[placeholder*="عنوان" i]');
-                } else if (key === 'description') {
-                  selectorList.push('textarea[name*="توضیح" i]', 'textarea[id*="توضیح" i]', 'textarea[placeholder*="توضیح" i]');
-                } else if (key === 'phone') {
-                  selectorList.push('input[name*="موبایل" i]', 'input[name*="تلفن" i]', 'input[type="tel"]');
-                }
-
-                let field = null;
-                for (const sel of selectorList) {
-                  field = await page.$(sel);
-                  if (field) break;
-                }
-
-                if (field) {
-                  try {
-                    await field.fill(String(val));
-                    filledCount++;
-                  } catch (fillErr) {
-                    validationErrors.push(`خطا در درج فیلد ${key}: ${fillErr.message}`);
-                  }
-                } else if (requiredKeys.includes(key)) {
-                  missingRequired.push(key);
-                }
-              }
-
-              const canSubmit = filledCount > 0 && missingRequired.length === 0 && validationErrors.length === 0;
-              taskSuccess = canSubmit;
-              if (!taskSuccess) {
-                taskError = missingRequired.length > 0
-                  ? `فیلدهای اجباری آگهی در فرم پر نشدند: [${missingRequired.join('، ')}]`
-                  : (filledCount === 0 ? 'هیچ فیلدی در فرم تطبیق نیافت یا پر نشد.' : `خطای اعتبارسنجی: [${validationErrors.join('، ')}]`);
-              }
-
-              taskOutput = {
-                fieldsFound,
-                mappedFields: Object.keys(mappings).length,
-                filledFields: filledCount,
-                missingRequiredFields: missingRequired,
-                validationErrors,
-                canSubmit
-              };
-            } else if (task.action === 'click_submit_button') {
-              const submitBtn = await page.$('button[type="submit"], input[type="submit"], button:has-text("ثبت"), button:has-text("ارسال"), button:has-text("انتشار")');
-              if (!submitBtn) {
-                taskSuccess = false;
-                taskError = 'دکمه ارسال فرم در ساختار صفحه یافت نشد.';
-                taskOutput = {
-                  clicked: false,
-                  submitted: false,
-                  pageState: 'FORM_ERROR',
-                  formError: 'دکمه ارسال فرم در ساختار صفحه موجود نیست.'
-                };
-              } else {
-                try {
-                  await submitBtn.click({ force: true });
-                  await page.waitForTimeout(3000);
-
-                  const postUrl = page.url();
-                  const pageText = await page.content();
-
-                  // بررسی خطای اعتبارسنجی فرم پس از کلیک
-                  const hasFormError = pageText.includes('خطا در ثبت') ||
-                                       pageText.includes('الزامی است') ||
-                                       pageText.includes('نامعتبر است') ||
-                                       Boolean(await page.$('.error, .alert-danger, [aria-invalid="true"]'));
-
-                  // بررسی چالش OTP
-                  const otpGateDetected = pageText.includes('کد تایید') ||
-                                          pageText.includes('کد پیامک') ||
-                                          postUrl.includes('verify') ||
-                                          postUrl.includes('otp') ||
-                                          Boolean(await page.$('input[name*="otp" i], input[name*="code" i], input[id*="otp" i]'));
-
-                  // بررسی ثبت موفق یا انتقال به صف انتشار
-                  const isSubmitted = pageText.includes('با موفقیت ثبت شد') ||
-                                      pageText.includes('در صف انتشار') ||
-                                      pageText.includes('در انتظار تایید') ||
-                                      postUrl.includes('success') ||
-                                      postUrl.includes('manage');
-
-                  let detectedState = 'UNKNOWN';
-                  if (hasFormError) {
-                    detectedState = 'FORM_ERROR';
-                    taskSuccess = false;
-                    taskError = 'خطای اعتبارسنجی در صفحه پس از ارسال فرم مشاهده شد.';
-                  } else if (otpGateDetected) {
-                    detectedState = 'OTP_REQUIRED';
-                    taskSuccess = true;
-                  } else if (isSubmitted) {
-                    detectedState = 'SUBMITTED';
-                    taskSuccess = true;
-                  } else {
-                    detectedState = 'UNKNOWN';
-                    taskSuccess = false;
-                    taskError = 'پس از کلیک دکمه ارسال، وضعیت صفحه نامشخص است (پاسخ قطعی دریافت نشد).';
-                  }
-
-                  taskOutput = {
-                    clicked: true,
-                    submitted: detectedState === 'SUBMITTED' || detectedState === 'OTP_REQUIRED',
-                    pageState: detectedState,
-                    otpGateDetected: detectedState === 'OTP_REQUIRED',
-                    hasFormError: detectedState === 'FORM_ERROR',
-                    currentUrl: postUrl
-                  };
-                } catch (clickErr) {
-                  taskSuccess = false;
-                  taskError = `خطا در کلیک دکمه ارسال: ${clickErr.message}`;
-                  taskOutput = {
-                    clicked: false,
-                    submitted: false,
-                    pageState: 'FORM_ERROR',
-                    formError: clickErr.message
-                  };
-                }
-              }
-            } else if (task.action === 'inject_and_verify_otp') {
-              const otpCode = task.input?.otpCode;
-              if (!otpCode) {
-                taskSuccess = false;
-                taskError = 'کد تایید OTP برای درج در صفحه فراهم نشده است.';
-                taskOutput = { otpInjected: false, verifiedByPlatform: false };
-              } else {
-                const otpInput = await page.$('input[name*="otp" i], input[name*="code" i], input[id*="otp" i], input[id*="code" i], input[type="tel"], input[type="number"], input.otp-input');
-                if (!otpInput) {
-                  taskSuccess = false;
-                  taskError = 'فیلد ورود کد تایید OTP در صفحه مرورگر یافت نشد.';
-                  taskOutput = { otpInjected: false, verifiedByPlatform: false };
-                } else {
-                  try {
-                    await otpInput.fill(String(otpCode));
-                    const confirmBtn = await page.$('button:has-text("تایید"), button:has-text("ثبت"), button:has-text("ارسال"), button[type="submit"]');
-                    if (confirmBtn) {
-                      await confirmBtn.click({ force: true });
-                      await page.waitForTimeout(2000);
-                    }
-                    taskSuccess = true;
-                    taskOutput = {
-                      otpInjected: true,
-                      verifiedByPlatform: false, // ارسال کد هرگز خودکار تایید سایت محسوب نمی‌شود
-                      otpCodeSubmitted: true
-                    };
-                  } catch (injectErr) {
-                    taskSuccess = false;
-                    taskError = `خطا در درج یا ارسال کد OTP: ${injectErr.message}`;
-                    taskOutput = { otpInjected: false, verifiedByPlatform: false };
-                  }
-                }
-              }
-            } else if (task.action === 'check_otp_acceptance') {
-              const pageText = await page.content();
-              const postUrl = page.url();
-
-              const isInvalid = pageText.includes('کد نادرست') || pageText.includes('کد منقضی') || pageText.includes('اشتباه است');
-              const isAccepted = pageText.includes('با موفقیت تایید شد') ||
-                                 pageText.includes('تایید شماره انجام شد') ||
-                                 pageText.includes('در صف انتشار') ||
-                                 pageText.includes('آگهی شما ثبت شد');
-
-              if (isInvalid) {
-                taskSuccess = false;
-                taskError = 'کد تایید واردشده توسط سامانه مقصد رد شد.';
-                taskOutput = {
-                  rejected: true,
-                  invalidCode: true,
-                  otpVerified: false
-                };
-              } else if (isAccepted) {
-                taskSuccess = true;
-                taskOutput = {
-                  accepted: true,
-                  verifiedByPlatform: true,
-                  otpVerified: true,
-                  adUrl: (postUrl.includes('manage') || postUrl.includes('post') || postUrl.includes('view')) ? postUrl : null
-                };
-              } else {
-                taskSuccess = false;
-                taskError = 'شواهد قطعی مبنی بر پذیرش کد توسط سامانه مقصد یافت نشد (وجود ریدایرکت به‌تنهایی کافی نیست).';
-                taskOutput = {
-                  accepted: false,
-                  verifiedByPlatform: false,
-                  otpVerified: false,
-                  redirectUrl: postUrl
-                };
-              }
-            } else if (task.action === 'verify_publication_url') {
-              const targetUrl = task.input?.url || page.url();
-              const expectedTitle = task.input?.expectedTitle || '';
-              const expectedJobId = task.input?.expectedJobId || task.jobId || '';
-
-              const verifyResult = await verifyPublicationEvidence({
-                url: targetUrl,
-                expectedTitle,
-                expectedJobId
-              });
-
-              taskSuccess = verifyResult.verified;
-              taskError = verifyResult.error;
-              taskOutput = {
-                verified: verifyResult.verified,
-                httpStatus: verifyResult.httpStatus,
-                matchedTitle: verifyResult.matchedTitle,
-                matchedId: verifyResult.matchedId,
-                matchedKeywords: verifyResult.matchedKeywords,
-                publicUrl: verifyResult.url
-              };
-            } else {
-              taskOutput = {
-                handledAction: task.action,
-                executedLocally: true,
-                timestamp: new Date().toISOString()
-              };
-            }
-          } catch (execErr) {
-            console.error(`❌ [Local Task Execution Failure]: ${execErr.message}`);
-            taskSuccess = false;
-            taskError = execErr.message;
-          }
-
-          const durationMs = Date.now() - startTime;
-          const result = {
-            success: taskSuccess,
-            action: task.action,
-            workerId: AGENT_ID,
-            workerRole: 'local',
-            durationMs,
-            output: taskOutput,
-            error: taskError
-          };
-
-          if (task.workflowId && task.executionId) {
-            await reportWorkflowActionToBackend({
-              workflowId: task.workflowId,
-              executionId: task.executionId,
-              jobId: task.jobId,
-              state: task.state,
-              action: task.action,
-              status: taskSuccess ? 'completed' : 'failed',
-              input: task.input,
-              output: taskOutput,
-              durationMs
-            });
-          }
-
-          res.writeHead(200, { 'Content-Type': 'application/json' });
+          const result = await executeWorkerTask(task);
+          res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify(result));
         } catch (err) {
           res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: err.message, durationMs: Date.now() - startTime }));
+          res.end(JSON.stringify({
+            success: false,
+            action: 'PARSE_ERROR',
+            error: err.message,
+            durationMs: 0
+          }));
         }
       });
       return;
@@ -895,6 +980,7 @@ async function executeJob(job, claimData) {
       launchOptions.proxy = { server: proxyUrl };
     }
 
+    const chromium = await getChromium();
     browser = await chromium.launch(launchOptions);
 
     const contextOptions = {
@@ -1540,33 +1626,63 @@ async function executeJob(job, claimData) {
 }
 
 async function main() {
-  await handshake();
-  startLocalTaskServer();
-
   if (TASK_ACTION) {
     console.log(`🎯 [Direct Task Execution Mode] Action: ${TASK_ACTION}, ActionID: ${ACTION_ID || 'auto'}, State: ${TASK_STATE || 'AUTO'}`);
+    
+    // تلاش برای Handshake با cPanel در صورت در دسترس بودن سرور (بدون سد کردن اجرای مستقیم در صورت عدم دسترسی)
+    try {
+      await handshake({ isDirectTask: true });
+    } catch (_) {}
+
+    let parsedInput = {};
+    if (typeof TASK_INPUT === 'string') {
+      try {
+        parsedInput = JSON.parse(TASK_INPUT);
+      } catch (_) {
+        parsedInput = { raw: TASK_INPUT };
+      }
+    } else if (TASK_INPUT && typeof TASK_INPUT === 'object') {
+      parsedInput = TASK_INPUT;
+    }
+
     const directTask = {
       action: TASK_ACTION,
       actionId: ACTION_ID || `act_${Date.now()}`,
-      state: TASK_STATE,
-      workflowId: WORKFLOW_ID,
-      executionId: EXECUTION_ID,
-      jobId: TARGET_JOB_ID,
+      state: TASK_STATE || 'AUTO',
+      workflowId: WORKFLOW_ID || null,
+      executionId: EXECUTION_ID || null,
+      jobId: TARGET_JOB_ID || null,
       platform: PLATFORM_TARGET,
-      input: TASK_INPUT || {}
+      input: parsedInput
     };
 
-    const taskResult = await executeTask(directTask);
-    console.log(`📊 [Direct Task Result]:`, JSON.stringify(taskResult, null, 2));
+    let taskResult = null;
+    try {
+      taskResult = await executeWorkerTask(directTask);
+      console.log(`📊 [Direct Task Result]:`, JSON.stringify(taskResult, null, 2));
+    } finally {
+      if (activeLocalBrowser) {
+        try {
+          console.log('🛑 [Browser] Terminating active Chromium instance (Scale-to-Zero).');
+          await activeLocalBrowser.close();
+          activeLocalBrowser = null;
+          activeLocalPage = null;
+        } catch (_) {}
+      }
+    }
 
-    if (!taskResult.success) {
-      console.error(`❌ [Direct Task Failed]: ${taskResult.error || 'Execution did not complete successfully.'}`);
+    if (!taskResult || !taskResult.success) {
+      console.error(`❌ [Direct Task Failed]: ${taskResult?.error || 'Execution did not complete successfully.'}`);
       process.exit(1);
     } else {
       console.log(`✅ [Direct Task Completed Successfully]`);
       process.exit(0);
     }
+    return;
   }
+
+  await handshake();
+  startLocalTaskServer();
 
   if (IS_ONCE) {
     console.log(`🔍 [Single Execution Mode] Checking for balanced pending jobs via Orchestrator...`);
@@ -1616,4 +1732,7 @@ main().catch((err) => {
   console.error(`❌ [Fatal Worker Exception]: ${err.message}`);
   process.exit(1);
 });
+
+export { executeWorkerTask, SUPPORTED_WORKER_ACTIONS };
+
 

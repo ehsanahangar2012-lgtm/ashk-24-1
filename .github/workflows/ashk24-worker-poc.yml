@@ -23,6 +23,22 @@ on:
         description: 'cPanel API URL (e.g. https://your-domain.com/cpanel-backend/api/index.php)'
         required: false
         default: ''
+      task_action:
+        description: 'Direct task action (e.g. open_target_url, verify_publication_url)'
+        required: false
+        default: ''
+      action_id:
+        description: 'Action ID for direct task tracking'
+        required: false
+        default: ''
+      task_state:
+        description: 'Workflow state machine state'
+        required: false
+        default: ''
+      task_input:
+        description: 'JSON serialized input payload'
+        required: false
+        default: ''
   repository_dispatch:
     types: [ashk24-worker-task]
   # Autonomous periodic run: uncomment after cPanel deployment
@@ -94,25 +110,74 @@ jobs:
           cd local-agent
           npx playwright install --with-deps chromium
 
-      - name: Run Interactive Cloud Browser Worker (Zero-Fake Safe Execution)
+      - name: Intake and Accept Task Dispatch
+        id: dispatch_intake
         shell: bash
         env:
-          CPANEL_URL: ${{ inputs.cpanel_url || secrets.CPANEL_URL || 'https://secret.ashkghalam.ir/cpanel-backend/api/index.php' }}
+          EVENT_NAME: ${{ github.event_name }}
+          CPANEL_URL_INPUT: ${{ inputs.cpanel_url || secrets.CPANEL_URL || 'https://secret.ashkghalam.ir/cpanel-backend/api/index.php' }}
           CPANEL_AGENT_TOKEN: ${{ secrets.CPANEL_AGENT_TOKEN || 'secret_9153108763' }}
-          TARGET_JOB_ID: ${{ inputs.job_id || github.event.inputs.job_id || github.event.client_payload.job_id || '' }}
-          WORKFLOW_ID: ${{ inputs.workflow_id || github.event.inputs.workflow_id || github.event.client_payload.workflow_id || '' }}
-          EXECUTION_ID: ${{ inputs.execution_id || github.event.inputs.execution_id || github.event.client_payload.execution_id || '' }}
-          ACTION_ID: ${{ github.event.client_payload.action_id || '' }}
-          TASK_ACTION: ${{ github.event.client_payload.action || '' }}
-          TASK_STATE: ${{ github.event.client_payload.state || '' }}
-          TASK_INPUT: ${{ toJson(github.event.client_payload.input) }}
-          GITHUB_RUN_ID: ${{ github.run_id }}
-          GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
-          PLATFORM_TARGET: ${{ inputs.platform_target || github.event.inputs.platform_target || github.event.client_payload.platform_target || 'payamsara' }}
+          WF_ID: ${{ inputs.workflow_id || github.event.inputs.workflow_id || github.event.client_payload.workflow_id || '' }}
+          EXEC_ID: ${{ inputs.execution_id || github.event.inputs.execution_id || github.event.client_payload.execution_id || '' }}
+          JOB_ID: ${{ inputs.job_id || github.event.inputs.job_id || github.event.client_payload.job_id || '' }}
+          ACT_ID: ${{ inputs.action_id || github.event.inputs.action_id || github.event.client_payload.action_id || '' }}
+          ACTION: ${{ inputs.task_action || github.event.inputs.task_action || github.event.client_payload.action || '' }}
+          STATE: ${{ inputs.task_state || github.event.inputs.task_state || github.event.client_payload.state || '' }}
+          INPUT_WF: ${{ inputs.task_input || github.event.inputs.task_input || '' }}
+          INPUT_REPO: ${{ toJson(github.event.client_payload.input) }}
+          PLATFORM: ${{ inputs.platform_target || github.event.inputs.platform_target || github.event.client_payload.platform || github.event.client_payload.platform_target || 'payamsara' }}
+        run: |
+          set -euo pipefail
+          echo "======================================================="
+          echo "📥 [Task Dispatch Intake] Event Type: $EVENT_NAME"
+          echo "🏷️ Workflow ID : ${WF_ID:-none}"
+          echo "⚡ Execution ID: ${EXEC_ID:-none}"
+          echo "🆔 Job ID       : ${JOB_ID:-none}"
+          echo "🎯 Action ID    : ${ACT_ID:-auto}"
+          echo "⚡ Task Action  : ${ACTION:-None (Claim Mode)}"
+          echo "⚡ Task State   : ${STATE:-None}"
+          echo "🏷️ Platform     : ${PLATFORM}"
+          echo "======================================================="
+
+          FINAL_INPUT="{}"
+          if [ -n "$INPUT_WF" ]; then
+            FINAL_INPUT="$INPUT_WF"
+          elif [ "$INPUT_REPO" != "null" ] && [ -n "$INPUT_REPO" ]; then
+            FINAL_INPUT="$INPUT_REPO"
+          fi
+
+          echo "WORKFLOW_ID=$WF_ID" >> $GITHUB_ENV
+          echo "EXECUTION_ID=$EXEC_ID" >> $GITHUB_ENV
+          echo "TARGET_JOB_ID=$JOB_ID" >> $GITHUB_ENV
+          echo "ACTION_ID=$ACT_ID" >> $GITHUB_ENV
+          echo "TASK_ACTION=$ACTION" >> $GITHUB_ENV
+          echo "TASK_STATE=$STATE" >> $GITHUB_ENV
+          echo "TASK_INPUT=$FINAL_INPUT" >> $GITHUB_ENV
+          echo "PLATFORM_TARGET=$PLATFORM" >> $GITHUB_ENV
+          echo "CPANEL_URL=$CPANEL_URL_INPUT" >> $GITHUB_ENV
+          echo "TASK_INTAKE_ACCEPTED=true" >> $GITHUB_ENV
+
+          # ثبت پذیرش تسک در ارکستریتور در صورت وجود شناسه‌ها
+          if [ -n "$WF_ID" ] && [ -n "$EXEC_ID" ] && [ -n "$CPANEL_URL_INPUT" ]; then
+            echo "📡 Reporting dispatch intake to cPanel Orchestrator..."
+            curl -s -X POST "$CPANEL_URL_INPUT?route=workflows/action" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $CPANEL_AGENT_TOKEN" \
+              -d "{\"workflowId\":\"$WF_ID\",\"executionId\":\"$EXEC_ID\",\"jobId\":\"$JOB_ID\",\"workerId\":\"gh_actions_${GITHUB_RUN_ID}\",\"worker\":\"github\",\"state\":\"${STATE:-DISPATCH_ACCEPTED}\",\"action\":\"dispatch_intake\",\"status\":\"running\",\"input\":$FINAL_INPUT}" || true
+          fi
+          echo "✅ Task Dispatch Accepted."
+
+      - name: Execute Browser Worker Task
+        id: execute_worker_task
+        shell: bash
+        env:
+          CPANEL_AGENT_TOKEN: ${{ secrets.CPANEL_AGENT_TOKEN || 'secret_9153108763' }}
           IRAN_PROXY_URL: ${{ secrets.IRAN_PROXY_URL }}
           VNC_PASSWORD: ${{ secrets.VNC_PASSWORD || 'Ashk24SecureSession' }}
           HEADLESS: 'false'
           CI: 'true'
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
         run: |
           set -euo pipefail
 
@@ -179,7 +244,6 @@ jobs:
             exit 1
           fi
 
-          # Trap background daemons for robust shutdown while preserving script exit code
           cleanup() {
             local exit_code=$?
             echo "🛑 [Cleanup] Shutting down virtual display and network daemons..."
@@ -188,7 +252,6 @@ jobs:
           }
           trap cleanup EXIT INT TERM
 
-          # Execute real worker without masking failures
           echo "======================================================="
           echo "🚀 Launching Ashk24 Cloud Worker Engine..."
           echo "🌿 Branch            : ${{ github.ref_name }}"
@@ -197,8 +260,43 @@ jobs:
           echo "🤖 Worker Version      : $(grep '"version"' local-agent/package.json | head -n 1 | cut -d'"' -f4)"
           echo "🎯 Target Job ID       : ${TARGET_JOB_ID:-None (Auto-Claim)}"
           echo "🏷️ Platform Target     : ${PLATFORM_TARGET:-payamsara}"
+          echo "⚡ Task Action         : ${TASK_ACTION:-None (Job Claim Mode)}"
+          echo "⚡ Action ID           : ${ACTION_ID:-None}"
+          echo "⚡ Task State          : ${TASK_STATE:-None}"
           echo "======================================================="
+
           node local-agent/index.js --once --cloud-mode
+
+      - name: Complete Task Execution and Report Outcome
+        if: always()
+        shell: bash
+        env:
+          EXECUTION_OUTCOME: ${{ steps.execute_worker_task.outcome }}
+          CPANEL_AGENT_TOKEN: ${{ secrets.CPANEL_AGENT_TOKEN || 'secret_9153108763' }}
+        run: |
+          set -euo pipefail
+          echo "======================================================="
+          echo "📊 [Task Completion Evaluation]"
+          echo "Outcome     : $EXECUTION_OUTCOME"
+          echo "Workflow ID : ${WORKFLOW_ID:-none}"
+          echo "Execution ID: ${EXECUTION_ID:-none}"
+          echo "Task Action : ${TASK_ACTION:-none}"
+          echo "======================================================="
+
+          if [ "$EXECUTION_OUTCOME" != "success" ]; then
+            echo "❌ Execution step failed or returned non-zero exit code."
+            if [ -n "${WORKFLOW_ID:-}" ] && [ -n "${EXECUTION_ID:-}" ] && [ -n "${CPANEL_URL:-}" ]; then
+              echo "📡 Reporting failure to Workflow Orchestrator..."
+              curl -s -X POST "$CPANEL_URL?route=workflows/action" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $CPANEL_AGENT_TOKEN" \
+                -d "{\"workflowId\":\"$WORKFLOW_ID\",\"executionId\":\"$EXECUTION_ID\",\"jobId\":\"${TARGET_JOB_ID:-}\",\"workerId\":\"gh_actions_${GITHUB_RUN_ID}\",\"worker\":\"github\",\"state\":\"${TASK_STATE:-FAILED}\",\"action\":\"${TASK_ACTION:-worker_execution}\",\"status\":\"failed\",\"error\":\"GitHub Worker execution failed or returned invalid result.\"}" || true
+            fi
+            echo "🚨 Exiting with non-zero exit code to fail GitHub Actions workflow..."
+            exit 1
+          else
+            echo "✅ GitHub Worker Task Completed Successfully."
+          fi
 
       - name: Upload Execution Evidence (Screenshots / Traces)
         if: always()
@@ -207,3 +305,4 @@ jobs:
           name: ashk24-worker-evidence-${{ github.run_id }}
           path: local-agent/evidence/
           retention-days: 7
+

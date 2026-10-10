@@ -16,7 +16,7 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
-let activeVersion = '5.9.37';
+let activeVersion = '5.9.39';
 try {
   const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'), 'utf8'));
   activeVersion = pkg.version || activeVersion;
