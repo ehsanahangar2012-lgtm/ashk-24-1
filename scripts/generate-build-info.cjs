@@ -89,5 +89,34 @@ if (fs.existsSync(extManifestPath)) {
   } catch (_) {}
 }
 
-console.log(`✅ Generated build-info, version.ts, local-agent, manifest & unifiedVerificationService.js: Version="v${version}", Timestamp="${buildInfo.timestamp}", Hash="${buildInfo.commitHash}"`);
+// 6. Synchronize local-agent/index.js
+const localAgentIndexPath = path.join(__dirname, '../local-agent/index.js');
+if (fs.existsSync(localAgentIndexPath)) {
+  try {
+    let agentIndexContent = fs.readFileSync(localAgentIndexPath, 'utf8');
+    agentIndexContent = agentIndexContent.replace(/let AGENT_VERSION = '.*?';/, `let AGENT_VERSION = '${version}';`);
+    fs.writeFileSync(localAgentIndexPath, agentIndexContent);
+  } catch (_) {}
+}
+
+// 7. Synchronize test scripts
+const acceptanceScriptPath = path.join(__dirname, 'test-acceptance-scenarios.cjs');
+if (fs.existsSync(acceptanceScriptPath)) {
+  try {
+    let acceptContent = fs.readFileSync(acceptanceScriptPath, 'utf8');
+    acceptContent = acceptContent.replace(/let activeVersion = '.*?';/, `let activeVersion = '${version}';`);
+    fs.writeFileSync(acceptanceScriptPath, acceptContent);
+  } catch (_) {}
+}
+
+const e2eScriptPath = path.join(__dirname, 'test-e2e-workflow.cjs');
+if (fs.existsSync(e2eScriptPath)) {
+  try {
+    let e2eContent = fs.readFileSync(e2eScriptPath, 'utf8');
+    e2eContent = e2eContent.replace(/let activeVersion = '.*?';/, `let activeVersion = '${version}';`);
+    fs.writeFileSync(e2eScriptPath, e2eContent);
+  } catch (_) {}
+}
+
+console.log(`✅ Synchronized all components from single source of truth: Version="v${version}", Timestamp="${buildInfo.timestamp}", Hash="${buildInfo.commitHash}"`);
 

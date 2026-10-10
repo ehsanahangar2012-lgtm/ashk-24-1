@@ -39,7 +39,7 @@ try {
 }
 const LOCAL_AGENT_PORT = parseInt(process.env.LOCAL_AGENT_PORT || '3824', 10);
 
-let AGENT_VERSION = '5.9.38';
+let AGENT_VERSION = '5.9.40';
 try {
   const rootPkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../package.json'), 'utf8'));
   AGENT_VERSION = rootPkg.version || AGENT_VERSION;
@@ -389,13 +389,13 @@ const SUPPORTED_WORKER_ACTIONS = [
  */
 async function executeWorkerTask(task, providedPage = null) {
   const startTime = Date.now();
-  const action = task?.action;
+  const action = task?.action || null;
   const workflowId = task?.workflowId || null;
   const executionId = task?.executionId || null;
   const jobId = task?.jobId || null;
   const actionId = task?.actionId || null;
-  const input = task?.input || {};
   const state = task?.state || 'AUTO';
+  const input = task?.input !== undefined ? task.input : {};
 
   console.log(`🤖 [Worker Task Execution] Action: ${action || 'None'} | ActionID: ${actionId || 'auto'} | Workflow: ${workflowId || 'none'} | State: ${state}`);
 
@@ -406,6 +406,7 @@ async function executeWorkerTask(task, providedPage = null) {
     return {
       success: false,
       action: action || 'UNKNOWN',
+      state,
       workerId: AGENT_ID,
       workerRole: process.env.CI ? 'cloud_worker' : 'local',
       workflowId,
@@ -812,7 +813,8 @@ async function executeWorkerTask(task, providedPage = null) {
   const durationMs = Date.now() - startTime;
   const result = {
     success: taskSuccess,
-    action,
+    action: action || 'UNKNOWN',
+    state,
     workerId: AGENT_ID,
     workerRole: process.env.CI ? 'cloud_worker' : 'local',
     workflowId,
@@ -832,7 +834,7 @@ async function executeWorkerTask(task, providedPage = null) {
         executionId,
         jobId,
         state,
-        action,
+        action: action || 'UNKNOWN',
         status: taskSuccess ? 'completed' : 'failed',
         input,
         output: taskOutput,
@@ -845,6 +847,9 @@ async function executeWorkerTask(task, providedPage = null) {
 
   return result;
 }
+
+// نگاشت مشترک جهت اطمینان از دسترس‌پذیری executeTask
+const executeTask = executeWorkerTask;
 
 function startLocalTaskServer() {
   if (process.env.CI || IS_ONCE) return;
@@ -1733,6 +1738,6 @@ main().catch((err) => {
   process.exit(1);
 });
 
-export { executeWorkerTask, SUPPORTED_WORKER_ACTIONS };
+export { executeWorkerTask, executeTask, SUPPORTED_WORKER_ACTIONS };
 
 

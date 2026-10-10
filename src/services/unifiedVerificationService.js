@@ -3,7 +3,7 @@
  * Shared engine for Backend (Node/cPanel), Browser Client & Local Agent
  */
 
-export const VERIFICATION_ENGINE_VERSION = '5.9.39';
+export const VERIFICATION_ENGINE_VERSION = '5.9.40';
 
 // کلمات عمومی که به تنهایی برای اثبات انتشار آگهی معتبر نیستند
 const GENERIC_EXCLUDED_TERMS = new Set([

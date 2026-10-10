@@ -157,15 +157,32 @@ jobs:
           echo "CPANEL_URL=$CPANEL_URL_INPUT" >> $GITHUB_ENV
           echo "TASK_INTAKE_ACCEPTED=true" >> $GITHUB_ENV
 
-          # ثبت پذیرش تسک در ارکستریتور در صورت وجود شناسه‌ها
+          # ۱. ثبت پذیرش تسک در ارکستریتور در صورت وجود شناسه‌ها (وضعیت جداگانه پذیرش)
           if [ -n "$WF_ID" ] && [ -n "$EXEC_ID" ] && [ -n "$CPANEL_URL_INPUT" ]; then
-            echo "📡 Reporting dispatch intake to cPanel Orchestrator..."
+            echo "📡 Reporting dispatch intake acceptance to cPanel Orchestrator..."
             curl -s -X POST "$CPANEL_URL_INPUT?route=workflows/action" \
               -H "Content-Type: application/json" \
               -H "Authorization: Bearer $CPANEL_AGENT_TOKEN" \
-              -d "{\"workflowId\":\"$WF_ID\",\"executionId\":\"$EXEC_ID\",\"jobId\":\"$JOB_ID\",\"workerId\":\"gh_actions_${GITHUB_RUN_ID}\",\"worker\":\"github\",\"state\":\"${STATE:-DISPATCH_ACCEPTED}\",\"action\":\"dispatch_intake\",\"status\":\"running\",\"input\":$FINAL_INPUT}" || true
+              -d "{\"workflowId\":\"$WF_ID\",\"executionId\":\"$EXEC_ID\",\"jobId\":\"$JOB_ID\",\"actionId\":\"$ACT_ID\",\"workerId\":\"gh_actions_${GITHUB_RUN_ID}\",\"worker\":\"github\",\"state\":\"DISPATCH_ACCEPTED\",\"action\":\"task_dispatch_accepted\",\"status\":\"accepted\",\"input\":$FINAL_INPUT}" || true
           fi
           echo "✅ Task Dispatch Accepted."
+
+      - name: Signal Task Execution Started
+        id: signal_execution_start
+        shell: bash
+        env:
+          CPANEL_AGENT_TOKEN: ${{ secrets.CPANEL_AGENT_TOKEN || 'secret_9153108763' }}
+        run: |
+          set -euo pipefail
+          # ۲. ثبت آغاز اجرا در ارکستریتور (وضعیت جداگانه شروع اجرا)
+          if [ -n "${WORKFLOW_ID:-}" ] && [ -n "${EXECUTION_ID:-}" ] && [ -n "${CPANEL_URL:-}" ]; then
+            echo "📡 Reporting task execution start to cPanel Orchestrator..."
+            curl -s -X POST "$CPANEL_URL?route=workflows/action" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $CPANEL_AGENT_TOKEN" \
+              -d "{\"workflowId\":\"$WORKFLOW_ID\",\"executionId\":\"$EXECUTION_ID\",\"jobId\":\"${TARGET_JOB_ID:-}\",\"actionId\":\"${ACTION_ID:-}\",\"workerId\":\"gh_actions_${GITHUB_RUN_ID}\",\"worker\":\"github\",\"state\":\"${TASK_STATE:-RUNNING}\",\"action\":\"${TASK_ACTION:-task_execution_started}\",\"status\":\"running\",\"input\":${TASK_INPUT:-{}}}" || true
+          fi
+          echo "🚀 Task Execution Started Signal Sent."
 
       - name: Execute Browser Worker Task
         id: execute_worker_task
@@ -280,9 +297,13 @@ jobs:
           echo "Outcome     : $EXECUTION_OUTCOME"
           echo "Workflow ID : ${WORKFLOW_ID:-none}"
           echo "Execution ID: ${EXECUTION_ID:-none}"
+          echo "Job ID      : ${TARGET_JOB_ID:-none}"
+          echo "Action ID   : ${ACTION_ID:-none}"
           echo "Task Action : ${TASK_ACTION:-none}"
+          echo "Task State  : ${TASK_STATE:-none}"
           echo "======================================================="
 
+          # ۳. ثبت تکمیل Task با شناسه‌های مشترک (وضعیت جداگانه تکمیل / شکست)
           if [ "$EXECUTION_OUTCOME" != "success" ]; then
             echo "❌ Execution step failed or returned non-zero exit code."
             if [ -n "${WORKFLOW_ID:-}" ] && [ -n "${EXECUTION_ID:-}" ] && [ -n "${CPANEL_URL:-}" ]; then
@@ -290,12 +311,19 @@ jobs:
               curl -s -X POST "$CPANEL_URL?route=workflows/action" \
                 -H "Content-Type: application/json" \
                 -H "Authorization: Bearer $CPANEL_AGENT_TOKEN" \
-                -d "{\"workflowId\":\"$WORKFLOW_ID\",\"executionId\":\"$EXECUTION_ID\",\"jobId\":\"${TARGET_JOB_ID:-}\",\"workerId\":\"gh_actions_${GITHUB_RUN_ID}\",\"worker\":\"github\",\"state\":\"${TASK_STATE:-FAILED}\",\"action\":\"${TASK_ACTION:-worker_execution}\",\"status\":\"failed\",\"error\":\"GitHub Worker execution failed or returned invalid result.\"}" || true
+                -d "{\"workflowId\":\"$WORKFLOW_ID\",\"executionId\":\"$EXECUTION_ID\",\"jobId\":\"${TARGET_JOB_ID:-}\",\"actionId\":\"${ACTION_ID:-}\",\"workerId\":\"gh_actions_${GITHUB_RUN_ID}\",\"worker\":\"github\",\"state\":\"${TASK_STATE:-FAILED}\",\"action\":\"${TASK_ACTION:-worker_execution}\",\"status\":\"failed\",\"error\":\"GitHub Worker execution failed or returned invalid result.\",\"input\":${TASK_INPUT:-{}}}" || true
             fi
             echo "🚨 Exiting with non-zero exit code to fail GitHub Actions workflow..."
             exit 1
           else
             echo "✅ GitHub Worker Task Completed Successfully."
+            if [ -n "${WORKFLOW_ID:-}" ] && [ -n "${EXECUTION_ID:-}" ] && [ -n "${CPANEL_URL:-}" ]; then
+              echo "📡 Reporting task completion to Workflow Orchestrator..."
+              curl -s -X POST "$CPANEL_URL?route=workflows/action" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $CPANEL_AGENT_TOKEN" \
+                -d "{\"workflowId\":\"$WORKFLOW_ID\",\"executionId\":\"$EXECUTION_ID\",\"jobId\":\"${TARGET_JOB_ID:-}\",\"actionId\":\"${ACTION_ID:-}\",\"workerId\":\"gh_actions_${GITHUB_RUN_ID}\",\"worker\":\"github\",\"state\":\"${TASK_STATE:-COMPLETED}\",\"action\":\"${TASK_ACTION:-worker_execution}\",\"status\":\"completed\",\"input\":${TASK_INPUT:-{}}}" || true
+            fi
           fi
 
       - name: Upload Execution Evidence (Screenshots / Traces)
