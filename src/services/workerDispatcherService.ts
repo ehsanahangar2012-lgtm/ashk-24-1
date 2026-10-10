@@ -116,43 +116,31 @@ export class WorkerDispatcherService {
       ''
     ).trim();
 
-    // شهر و استان بر مبنای داده کمپین یا آدرس شرکت
+    // شهر و استان صرفاً بر مبنای داده واقعی کمپین یا آدرس شرکت (بدون هرگونه فال‌بک هاردکد شده)
     let city = (rawCampaign?.targetCity || rawCompany?.city || '').trim();
     let province = (rawCompany?.province || '').trim();
 
     if (!city && company?.address) {
-      if (company.address.includes('مشهد')) {
-        city = 'مشهد';
-        province = province || 'خراسان رضوی';
-      } else if (company.address.includes('تهران')) {
-        city = 'تهران';
-        province = province || 'تهران';
-      } else if (company.address.includes('اصفهان')) {
-        city = 'اصفهان';
-        province = province || 'اصفهان';
-      } else {
-        const addrPart = company.address.split('،')[0].split('-')[0].trim();
-        city = addrPart || 'مشهد';
-        province = province || 'خراسان رضوی';
+      const parts = company.address.split(/[،,-]/).map((s) => s.trim()).filter(Boolean);
+      if (parts.length > 0) {
+        city = parts[0];
       }
-    } else if (!city) {
-      city = 'مشهد';
-      province = province || 'خراسان رضوی';
     }
 
-    const category = (campaign?.sector || company?.sector || 'صنعت').trim();
-    const brand = (company?.brandName || company?.name || 'اشک قلم').trim();
+    const category = (campaign?.sector || company?.sector || '').trim();
+    const brand = (company?.brandName || company?.name || '').trim();
     const keywords = (campaign?.targetKeywords && campaign.targetKeywords.length > 0)
       ? campaign.targetKeywords
-      : (company?.keywords && company.keywords.length > 0 ? company.keywords : ['بسته بندی', 'کارتن']);
+      : (company?.keywords && company.keywords.length > 0 ? company.keywords : []);
     const priceToman = campaign?.priceToman || 0;
     const priceText = priceToman > 0 ? `${priceToman.toLocaleString()} تومان` : 'توافقی';
 
     const missingFields: string[] = [];
+    if (!campaign) missingFields.push('کمپین معتبر انتخاب‌شده');
     if (!title || title.length < 5) missingFields.push('عنوان آگهی (حداقل ۵ کاراکتر)');
     if (!description || description.length < 15) missingFields.push('شرح و متن آگهی (حداقل ۱۵ کاراکتر)');
     if (!phone || phone.length < 10) missingFields.push('تلفن تماس معتبر (حداقل ۱۰ رقم)');
-    if (!city) missingFields.push('شهر هدف آگهی');
+    if (!city) missingFields.push('شهر هدف آگهی (در کمپین یا پروفایل سازمانی یافت نشد)');
 
     return {
       valid: missingFields.length === 0,

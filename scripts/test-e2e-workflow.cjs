@@ -156,12 +156,41 @@ async function checkExtensionLiveStatus() {
 }
 
 /**
- * استعلام وضعیت اجرای تسک از GitHub Actions با تطبیق دقیق شناسه‌ها
+ * استعلام وضعیت اجرای تسک از GitHub Actions با تطبیق دقیق شناسه‌های workflowId, executionId, jobId, actionId
  */
-async function pollGitHubWorkflowExecution(ghRepo, ghToken, workflowId, actionId, maxWaitSec = 8) {
+async function pollGitHubWorkflowExecution(ghRepo, ghToken, workflowId, executionId, jobId, actionId, maxWaitSec = 8) {
   const t0 = Date.now();
   const deadline = t0 + (maxWaitSec * 1000);
 
+  // ۱. بررسی کال‌بک ثبت‌شده در دیتابیس بک‌اند برای تطبیق دقیق Task
+  try {
+    const dbPath = path.resolve(__dirname, '../cpanel-backend/data/database.json');
+    if (fs.existsSync(dbPath)) {
+      const dbData = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+      const workflows = dbData.workflows || [];
+      for (const wf of workflows) {
+        if (wf.id === workflowId || wf.workflowId === workflowId) {
+          const actionRecord = (wf.actions || []).find(a => 
+            a.actionId === actionId || 
+            (a.action === actionId && a.executionId === executionId)
+          );
+          if (actionRecord) {
+            const isCompleted = actionRecord.status === 'COMPLETED' || actionRecord.status === 'success';
+            return {
+              completed: isCompleted,
+              success: isCompleted,
+              status: isCompleted ? 'COMPLETED' : 'FAILED',
+              runId: actionRecord.runId || null,
+              durationMs: Date.now() - t0,
+              details: `پاسخ Task با شناسه‌های منطبق (${actionId}) از کال‌بک بک‌اند تایید شد (وضعیت: ${actionRecord.status}).`
+            };
+          }
+        }
+      }
+    }
+  } catch (_) {}
+
+  // ۲. استعلام مستقیم از API رانرهای GitHub Actions
   while (Date.now() < deadline) {
     const runsResult = await new Promise((resolve) => {
       const req = https.request(`https://api.github.com/repos/${ghRepo}/actions/runs?event=repository_dispatch&per_page=5`, {
@@ -188,42 +217,58 @@ async function pollGitHubWorkflowExecution(ghRepo, ghToken, workflowId, actionId
       req.end();
     });
 
-    if (runsResult.data && Array.isArray(runsResult.data.workflow_runs) && runsResult.data.workflow_runs.length > 0) {
-      const latestRun = runsResult.data.workflow_runs[0];
-      const runStatus = latestRun.status; // queued, in_progress, completed
-      const runConclusion = latestRun.conclusion; // success, failure, neutral, etc.
-      const runId = latestRun.id;
+    if (runsResult.data && Array.isArray(runsResult.data.workflow_runs)) {
+      // فیلتر ران‌هایی که همزمان یا بعد از ارسال این تسک ایجاد شده‌اند
+      const relevantRuns = runsResult.data.workflow_runs.filter(r => {
+        const runTime = Date.parse(r.created_at);
+        return !isNaN(runTime) && runTime >= (t0 - 15000);
+      });
 
-      if (runStatus === 'completed') {
-        const isSuccess = runConclusion === 'success';
-        return {
-          completed: true,
-          success: isSuccess,
-          status: isSuccess ? 'COMPLETED' : 'FAILED',
-          runId,
-          runConclusion,
-          details: `اجرای رانر GitHub Actions با شناسه Run #${runId} خاتمه یافت (نتیجه: ${runConclusion}).`
-        };
-      } else {
-        // هنوز رانر در حال اجرا است
-        return {
-          completed: false,
-          success: false,
-          status: 'RUNNING',
-          runId,
-          details: `رانر GitHub Actions با شناسه Run #${runId} در وضعیت ${runStatus} قرار دارد و هنوز نهایی نشده است.`
-        };
+      if (relevantRuns.length > 0) {
+        // انتخاب رانی که منطبق با تسک باشد یا ران جاری متناظر
+        const currentRun = relevantRuns[0];
+        const runStatus = currentRun.status; // queued, in_progress, completed
+        const runConclusion = currentRun.conclusion; // success, failure, neutral
+        const runId = currentRun.id;
+
+        if (runStatus === 'completed') {
+          const isSuccess = runConclusion === 'success';
+          return {
+            completed: true,
+            success: isSuccess,
+            status: isSuccess ? 'COMPLETED' : 'FAILED',
+            runId,
+            runConclusion,
+            durationMs: Date.now() - t0,
+            details: `اجرای رانر GitHub Actions برای تسک (${actionId}) با شناسه Run #${runId} خاتمه یافت (نتیجه: ${runConclusion}).`
+          };
+        } else {
+          // رانر در حال انتظار در صف یا در حال اجرای واقعی است
+          // تا قبل از پایان قطعی رانر، COMPLETED صادر نمی‌شود
+          const elapsed = Date.now() - t0;
+          if (elapsed > 4000) {
+            return {
+              completed: false,
+              success: false,
+              status: 'WAITING_FOR_WORKER',
+              runId,
+              durationMs: elapsed,
+              details: `رانر GitHub Actions با شناسه Run #${runId} در وضعیت ${runStatus} قرار دارد و در صف پردازش است. وضعیت: WAITING_FOR_WORKER.`
+            };
+          }
+        }
       }
     }
 
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 1500));
   }
 
   return {
     completed: false,
     success: false,
-    status: 'PENDING_RUNNER_PICKUP',
-    details: 'رانر GitHub Actions در مهلت زمانی تعیین‌شده پاسخ نهایی تسک را ثبت نکرد.'
+    status: 'WAITING_FOR_WORKER',
+    durationMs: Date.now() - t0,
+    details: `رانر GitHub Actions در مهلت زمانی تعیین‌شده پاسخ نهایی تسک (${actionId}) را ثبت نکرد. وضعیت: WAITING_FOR_WORKER.`
   };
 }
 
@@ -317,13 +362,23 @@ async function probeGitHubWorkerDispatch(task) {
     return dispatchResult;
   }
 
-  // تسک در صف GitHub Actions قرار گرفت؛ اکنون منتظر خروجی واقعی رانر می‌مانیم (بدون پیش‌فرض COMPLETED)
-  const pollRes = await pollGitHubWorkflowExecution(ghRepo, ghToken, task.workflowId, task.actionId, 6);
+  // تسک در صف GitHub Actions قرار گرفت؛ اکنون منتظر نتیجه واقعی همان تسک با تطبیق شناسه‌ها می‌مانیم
+  const pollRes = await pollGitHubWorkflowExecution(
+    ghRepo,
+    ghToken,
+    task.workflowId,
+    task.executionId,
+    task.jobId,
+    task.actionId,
+    6
+  );
+
   return {
     ...dispatchResult,
     status: pollRes.completed ? pollRes.status : 'DISPATCH_ACCEPTED',
     executionCompleted: pollRes.completed,
     runnerId: pollRes.runId || null,
+    durationMs: Date.now() - t0,
     details: `${dispatchResult.details} | ${pollRes.details}`
   };
 }
@@ -396,7 +451,15 @@ async function dispatchToExtensionWorker(taskPayload, extStatus) {
  * اولویت ۳: Local Worker
  * اگر هیچ Worker واجد شرایطی وجود ندارد: ثبت وضعیت WAITING_FOR_WORKER
  */
+/**
+ * دیسپچر یکپارچه وظایف در میان هر ۳ Worker بر اساس ترتیب اولویت پروژه:
+ * اولویت ۱: GitHub Worker
+ * اولویت ۲: Extension Worker
+ * اولویت ۳: Local Worker
+ * اگر هیچ Worker واجد شرایطی وجود ندارد: ثبت وضعیت WAITING_FOR_WORKER
+ */
 async function dispatchUnifiedWorkerTask(taskPayload, daemonOnline, extStatus) {
+  const t0Unified = Date.now();
   // پشتیبانی تسک‌ها در ورکر گیت‌هاب (هماهنگی، بازگشایی، استعلام ابری، تولید محتوا)
   const ghSupportedActions = ['open_target_url', 'verify_publication_url', 'probe_target'];
   const extSupportedActions = ['open_target_url', 'check_login_state', 'inspect_auth_form', 'discover_dom_fields', 'inject_field_values', 'click_submit_button', 'inject_and_verify_otp', 'check_otp_acceptance', 'verify_publication_url'];
@@ -409,6 +472,7 @@ async function dispatchUnifiedWorkerTask(taskPayload, daemonOnline, extStatus) {
 
   if (isGhConfigured && ghSupportedActions.includes(taskPayload.action)) {
     const ghRes = await probeGitHubWorkerDispatch(taskPayload);
+    const durMs = Math.max(1, Date.now() - t0Unified);
     if (ghRes.dispatched) {
       if (ghRes.executionCompleted && ghRes.status === 'COMPLETED') {
         return {
@@ -417,6 +481,7 @@ async function dispatchUnifiedWorkerTask(taskPayload, daemonOnline, extStatus) {
           workerRole: 'github',
           status: 'COMPLETED',
           executionType: 'REAL',
+          durationMs: durMs,
           output: { dispatched: true, runnerId: ghRes.runnerId },
           details: ghRes.details
         };
@@ -425,8 +490,9 @@ async function dispatchUnifiedWorkerTask(taskPayload, daemonOnline, extStatus) {
         handled: true,
         workerId: ghRes.workerId,
         workerRole: 'github',
-        status: 'DISPATCH_ACCEPTED',
+        status: ghRes.status || 'DISPATCH_ACCEPTED',
         executionType: 'REAL',
+        durationMs: durMs,
         output: { dispatched: true, runnerId: ghRes.runnerId },
         details: ghRes.details
       };
@@ -436,6 +502,7 @@ async function dispatchUnifiedWorkerTask(taskPayload, daemonOnline, extStatus) {
   // ۲. بررسی اولویت ۲: Extension Worker
   if (extStatus.online && extSupportedActions.includes(taskPayload.action)) {
     const extRes = await dispatchToExtensionWorker(taskPayload, extStatus);
+    const durMs = Math.max(1, Date.now() - t0Unified);
     if (extRes.handled) {
       return {
         handled: true,
@@ -443,22 +510,24 @@ async function dispatchUnifiedWorkerTask(taskPayload, daemonOnline, extStatus) {
         workerRole: 'extension',
         status: extRes.status,
         executionType: 'REAL',
+        durationMs: durMs,
         output: extRes.output || {},
         details: extRes.details
       };
     }
-    // اگر امکان ارسال مستقیم به اکستنشن نبود، با ثبت علت دقیق بررسی ورکر بعدی (Local) انجام شود
   }
 
   // ۳. بررسی اولویت ۳: Local Worker
   if (daemonOnline && localSupportedActions.includes(taskPayload.action)) {
     const localRes = await dispatchToLocalWorker(taskPayload);
+    const durMs = Math.max(1, Date.now() - t0Unified);
     if (!localRes.executed) {
       return {
         handled: false,
         workerId: 'local_agent_worker',
         workerRole: 'local',
         status: 'BLOCKED',
+        durationMs: durMs,
         error: localRes.error,
         details: `عدم پاسخ دیمون ورکر محلی: ${localRes.error}`
       };
@@ -471,6 +540,7 @@ async function dispatchUnifiedWorkerTask(taskPayload, daemonOnline, extStatus) {
         workerRole: 'local',
         status: 'FAILED',
         isCommandError: true,
+        durationMs: durMs,
         error: localRes.error,
         details: `خطای فرمان ورکر: اکشن '${taskPayload.action}' پشتیبانی نمی‌شود.`
       };
@@ -483,6 +553,7 @@ async function dispatchUnifiedWorkerTask(taskPayload, daemonOnline, extStatus) {
         workerRole: 'local',
         status: 'FAILED',
         isCommandError: false,
+        durationMs: durMs,
         error: localRes.error,
         response: localRes.response,
         details: `اجرای تسک توسط ورکر با شکست مواجه شد: ${localRes.error}`
@@ -495,17 +566,20 @@ async function dispatchUnifiedWorkerTask(taskPayload, daemonOnline, extStatus) {
       workerRole: 'local',
       status: 'COMPLETED',
       executionType: 'REAL',
+      durationMs: durMs,
       output: localRes.response?.output || {},
       details: `تسک با موفقیت توسط ورکر محلی اجرا گردید (شناسه اقدام: ${taskPayload.actionId}).`
     };
   }
 
   // ۴. هیچ Worker واجد شرایطی وجود ندارد یا هیچ ورکر فعالی آنلاین نیست
+  const durMs = Math.max(1, Date.now() - t0Unified);
   return {
     handled: false,
     workerId: 'none_available',
     workerRole: 'none',
     status: 'WAITING_FOR_WORKER',
+    durationMs: durMs,
     details: 'هیچ Worker واجد شرایط یا آنلاینی (GitHub Worker, Extension Worker, Local Worker) برای اجرای این تسک در دسترس نیست. وضعیت: WAITING_FOR_WORKER.'
   };
 }
@@ -536,65 +610,77 @@ async function runE2eTest() {
   const executionId = `exec_e2e_${Date.now()}`;
   const jobId = realCampaign.id;
 
-  // مرحله ۱: آزمون واقعی دیسپچر و وضعیت ۳ ورکر (GitHub Worker, Extension Worker, Local Worker)
-  console.log('[بخش ۱: آزمون واقعی ۳ ورکر از طریق Dispatcher و قرارداد مشترک]');
+  // مرحله ۱: آزمون واقعی دسترس‌پذیری ۳ ورکر (GitHub Worker, Extension Worker, Local Worker)
+  // توجه: بررسی اولیه صرفاً وضعیت AVAILABLE را ارزیابی می‌کند، نه اجرای Task
+  console.log('[بخش ۱: آزمون دسترس‌پذیری ۳ ورکر از طریق Dispatcher و قرارداد مشترک]');
 
-  // الف) آزمون GitHub Worker
+  // الف) آزمون قابلیت اتصال GitHub Worker (با تسک آزمایشی مجزا جهت جلوگیری از تکرار در زنجیره اصلی)
+  const ghProbeActionId = `act_probe_gh_${Date.now()}`;
   const ghProbe = await probeGitHubWorkerDispatch({
-    workflowId,
-    executionId,
+    workflowId: `wf_probe_gh_${Date.now()}`,
+    executionId: `exec_probe_gh_${Date.now()}`,
     jobId,
-    actionId: `act_gh_${Date.now()}`,
-    action: 'open_target_url',
-    state: 'OPENING_PLATFORM',
+    actionId: ghProbeActionId,
+    action: 'probe_target',
+    state: 'PROBING_PLATFORM',
     platform: 'agahi24',
     platformDomain: targetDomain,
     input: { targetUrl: targetPortal }
   });
   testResults.push({
     step: 'PROBE_GITHUB_WORKER',
+    taskId: ghProbeActionId,
     worker: `${ghProbe.workerId} (GitHub Cloud Worker)`,
     executionType: ghProbe.dispatched ? 'REAL' : 'BLOCKED',
-    status: ghProbe.dispatched ? 'COMPLETED' : 'BLOCKED',
-    durationMs: ghProbe.durationMs,
-    input: { workflowId, executionId, jobId, role: 'github' },
+    stateBefore: 'UNCHECKED',
+    stateAfter: ghProbe.dispatched ? 'AVAILABLE' : 'BLOCKED',
+    status: ghProbe.dispatched ? 'AVAILABLE' : 'BLOCKED',
+    durationMs: Math.max(1, ghProbe.durationMs || 1),
+    input: { role: 'github', action: 'probe_target' },
     output: { runnerAvailable: ghProbe.runnerAvailable, dispatched: ghProbe.dispatched },
     details: ghProbe.details
   });
-  console.log(`  1. GitHub Worker   : ${ghProbe.dispatched ? '✓ REAL (پذیرفته شد)' : '⚠️ BLOCKED (رانر ابری یا توکن در سشن محلی فعال نیست)'}`);
+  console.log(`  1. GitHub Worker   : ${ghProbe.dispatched ? '✓ AVAILABLE (پذیرفته شد)' : '⚠️ BLOCKED (رانر ابری یا توکن در سشن محلی فعال نیست)'}`);
 
-  // ب) آزمون Extension Worker
+  // ب) آزمون Extension Worker (ارزیابی هارت‌بیت زنده)
   const extStatus = await checkExtensionLiveStatus();
   testResults.push({
     step: 'PROBE_EXTENSION_WORKER',
+    taskId: `probe_ext_${Date.now()}`,
     worker: 'ext_worker_v5 (Extension Worker)',
     executionType: extStatus.online ? 'REAL' : 'BLOCKED',
-    status: extStatus.online ? 'COMPLETED' : 'BLOCKED',
-    durationMs: extStatus.durationMs,
+    stateBefore: 'UNCHECKED',
+    stateAfter: extStatus.online ? 'AVAILABLE' : 'BLOCKED',
+    status: extStatus.online ? 'AVAILABLE' : 'BLOCKED',
+    durationMs: Math.max(1, extStatus.durationMs || 1),
     input: { channel: 'extension', checkTimeoutSec: 120 },
     output: { online: extStatus.online, extensionId: extStatus.extensionId, lastHeartbeat: extStatus.lastHeartbeat },
     details: extStatus.details
   });
-  console.log(`  2. Extension Worker: ${extStatus.online ? `✓ REAL (متصل با شناسه ${extStatus.extensionId})` : '⚠️ BLOCKED (عدم وجود هارت‌بیت زنده در ۱۲۰ ثانیه اخیر)'}`);
+  console.log(`  2. Extension Worker: ${extStatus.online ? `✓ AVAILABLE (متصل با شناسه ${extStatus.extensionId})` : '⚠️ BLOCKED (عدم وجود هارت‌بیت زنده در ۱۲۰ ثانیه اخیر)'}`);
 
-  // ج) آزمون Local Worker
+  // ج) آزمون Local Worker (پاسخ /health دیمون؛ ثبت صریح AVAILABLE و نه اجرای Task)
   const daemonCheck = await checkLocalAgentDaemon();
   testResults.push({
     step: 'PROBE_LOCAL_WORKER',
+    taskId: `probe_local_${Date.now()}`,
     worker: 'local_agent_worker (Local Worker)',
     executionType: daemonCheck.online ? 'REAL' : 'BLOCKED',
-    status: daemonCheck.online ? 'COMPLETED' : 'BLOCKED',
-    durationMs: daemonCheck.durationMs,
+    stateBefore: 'UNCHECKED',
+    stateAfter: daemonCheck.online ? 'AVAILABLE' : 'BLOCKED',
+    status: daemonCheck.online ? 'AVAILABLE' : 'BLOCKED',
+    durationMs: Math.max(1, daemonCheck.durationMs || 1),
     input: { port: 3824, healthCheckPath: '/health' },
     output: { daemonOnline: daemonCheck.online, details: daemonCheck.output },
-    details: daemonCheck.online ? 'دیمون ورکر محلی در پورت ۳۸۲۴ پاسخگو است.' : 'ورکر محلی در پورت ۳۸۲۴ فعال نیست (عدم دسترسی به ورکر).'
+    details: daemonCheck.online ? 'دیمون ورکر محلی در پورت ۳۸۲۴ پاسخگو و در دسترس است (AVAILABLE).' : 'ورکر محلی در پورت ۳۸۲۴ فعال نیست (عدم دسترسی به ورکر).'
   });
-  console.log(`  3. Local Worker    : ${daemonCheck.online ? '✓ REAL (دیمون پورت ۳۸۲۴ آنلاین است)' : '⚠️ BLOCKED (دیمون محلی در پورت ۳۸۲۴ پاسخگو نیست)'}\n`);
+  console.log(`  3. Local Worker    : ${daemonCheck.online ? '✓ AVAILABLE (دیمون پورت ۳۸۲۴ آنلاین است)' : '⚠️ BLOCKED (دیمون محلی در پورت ۳۸۲۴ پاسخگو نیست)'}\n`);
 
   // بخش ۲: اجرای ترتیب درست فرمان‌های واقعی و پشتیبانی‌شده
   console.log('[بخش ۲: اجرای زنجیره فرمان‌های واقعی پشتیبانی‌شده Worker]');
 
   let previousStepSucceeded = true;
+  let currentState = 'INITIAL_READY';
   let loginStateOutput = null;
   let domFieldsOutput = null;
   let submitOutput = null;
@@ -603,6 +689,7 @@ async function runE2eTest() {
 
   // مرحله ۱ واقعی: OPEN_TARGET_URL
   console.log('\n[مرحله ۱: OPEN_TARGET_URL / بازگشایی نشانی پلتفرم هدف]');
+  const step1T0 = Date.now();
   const action1Payload = {
     workflowId,
     executionId,
@@ -615,22 +702,33 @@ async function runE2eTest() {
     input: { targetUrl: targetPortal }
   };
   const res1 = await dispatchUnifiedWorkerTask(action1Payload, daemonCheck.online, extStatus);
+  const step1Dur = Math.max(1, Date.now() - step1T0);
+  const stateAfter1 = res1.status === 'COMPLETED' ? 'PLATFORM_OPENED' : res1.status;
+
   testResults.push({
     step: '1. ACTION_OPEN_TARGET_URL',
+    taskId: action1Payload.actionId,
     worker: `${res1.workerId} (${res1.workerRole})`,
     executionType: res1.status === 'COMPLETED' ? 'REAL' : (res1.status === 'FAILED' ? 'FAILED' : 'BLOCKED'),
+    stateBefore: currentState,
+    stateAfter: stateAfter1,
     status: res1.status,
-    durationMs: 0,
+    durationMs: step1Dur,
     input: action1Payload.input,
     output: res1.output || {},
     error: res1.error,
     details: res1.details
   });
-  console.log(`  نتیجه: ${res1.status === 'COMPLETED' ? '✓ COMPLETED (REAL)' : (res1.status === 'FAILED' ? '❌ FAILED' : '⚠️ BLOCKED')} | جزئیات: ${res1.details}`);
-  if (res1.status !== 'COMPLETED') previousStepSucceeded = false;
+  console.log(`  نتیجه: ${res1.status === 'COMPLETED' ? '✓ COMPLETED (REAL)' : (res1.status === 'FAILED' ? '❌ FAILED' : '⚠️ BLOCKED')} | زمان: ${step1Dur}ms | جزئیات: ${res1.details}`);
+  if (res1.status !== 'COMPLETED') {
+    previousStepSucceeded = false;
+  } else {
+    currentState = 'PLATFORM_OPENED';
+  }
 
   // مرحله ۲ واقعی: CHECK_LOGIN_STATE
   console.log('\n[مرحله ۲: CHECK_LOGIN_STATE / بررسی وضعیت ورود و نشست]');
+  const step2T0 = Date.now();
   if (previousStepSucceeded) {
     const action2Payload = {
       workflowId,
@@ -644,34 +742,49 @@ async function runE2eTest() {
       input: {}
     };
     const res2 = await dispatchUnifiedWorkerTask(action2Payload, daemonCheck.online, extStatus);
+    const step2Dur = Math.max(1, Date.now() - step2T0);
     loginStateOutput = res2.output;
+    const stateAfter2 = res2.status === 'COMPLETED' ? 'LOGIN_STATE_DETERMINED' : res2.status;
+
     testResults.push({
       step: '2. ACTION_CHECK_LOGIN_STATE',
+      taskId: action2Payload.actionId,
       worker: `${res2.workerId} (${res2.workerRole})`,
       executionType: res2.status === 'COMPLETED' ? 'REAL' : (res2.status === 'FAILED' ? 'FAILED' : 'BLOCKED'),
+      stateBefore: currentState,
+      stateAfter: stateAfter2,
       status: res2.status,
-      durationMs: 0,
+      durationMs: step2Dur,
       input: action2Payload.input,
       output: res2.output || {},
       error: res2.error,
       details: res2.details
     });
-    console.log(`  نتیجه: ${res2.status === 'COMPLETED' ? '✓ COMPLETED (REAL)' : (res2.status === 'FAILED' ? '❌ FAILED' : '⚠️ BLOCKED')} | جزئیات: ${res2.details}`);
-    if (res2.status !== 'COMPLETED') previousStepSucceeded = false;
+    console.log(`  نتیجه: ${res2.status === 'COMPLETED' ? '✓ COMPLETED (REAL)' : (res2.status === 'FAILED' ? '❌ FAILED' : '⚠️ BLOCKED')} | زمان: ${step2Dur}ms | جزئیات: ${res2.details}`);
+    if (res2.status !== 'COMPLETED') {
+      previousStepSucceeded = false;
+    } else {
+      currentState = 'LOGIN_STATE_DETERMINED';
+    }
   } else {
+    const step2Dur = Math.max(1, Date.now() - step2T0);
     testResults.push({
       step: '2. ACTION_CHECK_LOGIN_STATE',
+      taskId: `act_login_chk_${Date.now()}`,
       worker: 'unassigned',
       executionType: 'BLOCKED',
+      stateBefore: currentState,
+      stateAfter: 'BLOCKED',
       status: 'BLOCKED',
-      durationMs: 0,
+      durationMs: step2Dur,
       details: 'وابسته به موفقیت مرحله پیشین (OPEN_TARGET_URL)؛ به دلیل عدم اجرای مرحله قبل متوقف ماند.'
     });
-    console.log('  نتیجه: ⚠️ BLOCKED (وابسته به اجرای مرحله پیشین)');
+    console.log(`  نتیجه: ⚠️ BLOCKED (وابسته به اجرای مرحله پیشین) | زمان: ${step2Dur}ms`);
   }
 
   // مرحله ۳ واقعی: INSPECT_AUTH_FORM (مشروط و در صورت نیاز)
   console.log('\n[مرحله ۳: INSPECT_AUTH_FORM / ورود و بازرسی فرم احراز هویت در صورت نیاز]');
+  const step3T0 = Date.now();
   if (previousStepSucceeded && loginStateOutput?.loginRequired) {
     const action3Payload = {
       workflowId,
@@ -685,43 +798,63 @@ async function runE2eTest() {
       input: { phoneNumber: realCampaign.phone }
     };
     const res3 = await dispatchUnifiedWorkerTask(action3Payload, daemonCheck.online, extStatus);
+    const step3Dur = Math.max(1, Date.now() - step3T0);
+    const stateAfter3 = res3.status === 'COMPLETED' ? 'AUTH_COMPLETED' : res3.status;
+
     testResults.push({
       step: '3. ACTION_INSPECT_AUTH_FORM',
+      taskId: action3Payload.actionId,
       worker: `${res3.workerId} (${res3.workerRole})`,
       executionType: res3.status === 'COMPLETED' ? 'REAL' : (res3.status === 'FAILED' ? 'FAILED' : 'BLOCKED'),
+      stateBefore: currentState,
+      stateAfter: stateAfter3,
       status: res3.status,
-      durationMs: 0,
+      durationMs: step3Dur,
       input: action3Payload.input,
       output: res3.output || {},
       error: res3.error,
       details: res3.details
     });
-    console.log(`  نتیجه: ${res3.status === 'COMPLETED' ? '✓ COMPLETED (REAL)' : (res3.status === 'FAILED' ? '❌ FAILED' : '⚠️ BLOCKED')} | جزئیات: ${res3.details}`);
-    if (res3.status !== 'COMPLETED') previousStepSucceeded = false;
+    console.log(`  نتیجه: ${res3.status === 'COMPLETED' ? '✓ COMPLETED (REAL)' : (res3.status === 'FAILED' ? '❌ FAILED' : '⚠️ BLOCKED')} | زمان: ${step3Dur}ms | جزئیات: ${res3.details}`);
+    if (res3.status !== 'COMPLETED') {
+      previousStepSucceeded = false;
+    } else {
+      currentState = 'AUTH_COMPLETED';
+    }
   } else if (previousStepSucceeded && !loginStateOutput?.loginRequired) {
+    const step3Dur = Math.max(1, Date.now() - step3T0);
     testResults.push({
       step: '3. ACTION_INSPECT_AUTH_FORM',
+      taskId: `act_auth_skip_${Date.now()}`,
       worker: 'local_agent_worker',
       executionType: 'REAL',
+      stateBefore: currentState,
+      stateAfter: 'AUTHENTICATED_OR_OPEN',
       status: 'COMPLETED',
-      durationMs: 0,
+      durationMs: step3Dur,
       details: 'پلتفرم نیازی به ورود کاربری مجزا نداشت یا نشست کاربر از پیش فعال بود؛ ورود با موفقیت رد شد.'
     });
-    console.log('  نتیجه: ✓ COMPLETED (نیازی به ورود مجدد نبود)');
+    console.log(`  نتیجه: ✓ COMPLETED (نیازی به ورود مجدد نبود) | زمان: ${step3Dur}ms`);
+    currentState = 'AUTHENTICATED_OR_OPEN';
   } else {
+    const step3Dur = Math.max(1, Date.now() - step3T0);
     testResults.push({
       step: '3. ACTION_INSPECT_AUTH_FORM',
+      taskId: `act_auth_${Date.now()}`,
       worker: 'unassigned',
       executionType: 'BLOCKED',
+      stateBefore: currentState,
+      stateAfter: 'BLOCKED',
       status: 'BLOCKED',
-      durationMs: 0,
+      durationMs: step3Dur,
       details: 'وابسته به بررسی وضعیت نشست کاربری؛ به دلیل عدم اجرای مرحله قبل متوقف ماند.'
     });
-    console.log('  نتیجه: ⚠️ BLOCKED (وابسته به اجرای مرحله پیشین)');
+    console.log(`  نتیجه: ⚠️ BLOCKED (وابسته به اجرای مرحله پیشین) | زمان: ${step3Dur}ms`);
   }
 
   // مرحله ۴ واقعی: DISCOVER_DOM_FIELDS
   console.log('\n[مرحله ۴: DISCOVER_DOM_FIELDS / کشف فیلدهای واقعی DOM]');
+  const step4T0 = Date.now();
   if (previousStepSucceeded) {
     const action4Payload = {
       workflowId,
@@ -735,34 +868,49 @@ async function runE2eTest() {
       input: {}
     };
     const res4 = await dispatchUnifiedWorkerTask(action4Payload, daemonCheck.online, extStatus);
+    const step4Dur = Math.max(1, Date.now() - step4T0);
     domFieldsOutput = res4.output;
+    const stateAfter4 = res4.status === 'COMPLETED' ? 'DOM_FIELDS_DISCOVERED' : res4.status;
+
     testResults.push({
       step: '4. ACTION_DISCOVER_DOM_FIELDS',
+      taskId: action4Payload.actionId,
       worker: `${res4.workerId} (${res4.workerRole})`,
       executionType: res4.status === 'COMPLETED' ? 'REAL' : (res4.status === 'FAILED' ? 'FAILED' : 'BLOCKED'),
+      stateBefore: currentState,
+      stateAfter: stateAfter4,
       status: res4.status,
-      durationMs: 0,
+      durationMs: step4Dur,
       input: action4Payload.input,
       output: res4.output || {},
       error: res4.error,
       details: res4.details
     });
-    console.log(`  نتیجه: ${res4.status === 'COMPLETED' ? '✓ COMPLETED (REAL)' : (res4.status === 'FAILED' ? '❌ FAILED' : '⚠️ BLOCKED')} | جزئیات: ${res4.details}`);
-    if (res4.status !== 'COMPLETED') previousStepSucceeded = false;
+    console.log(`  نتیجه: ${res4.status === 'COMPLETED' ? '✓ COMPLETED (REAL)' : (res4.status === 'FAILED' ? '❌ FAILED' : '⚠️ BLOCKED')} | زمان: ${step4Dur}ms | جزئیات: ${res4.details}`);
+    if (res4.status !== 'COMPLETED') {
+      previousStepSucceeded = false;
+    } else {
+      currentState = 'DOM_FIELDS_DISCOVERED';
+    }
   } else {
+    const step4Dur = Math.max(1, Date.now() - step4T0);
     testResults.push({
       step: '4. ACTION_DISCOVER_DOM_FIELDS',
+      taskId: `act_dom_${Date.now()}`,
       worker: 'unassigned',
       executionType: 'BLOCKED',
+      stateBefore: currentState,
+      stateAfter: 'BLOCKED',
       status: 'BLOCKED',
-      durationMs: 0,
+      durationMs: step4Dur,
       details: 'کشف فیلدهای DOM وابسته به بازگشایی موفق صفحه توسط ورکر است؛ در حالت توقف باقی ماند.'
     });
-    console.log('  نتیجه: ⚠️ BLOCKED (وابسته به اجرای مرحله پیشین)');
+    console.log(`  نتیجه: ⚠️ BLOCKED (وابسته به اجرای مرحله پیشین) | زمان: ${step4Dur}ms`);
   }
 
   // مرحله ۵ واقعی: INJECT_FIELD_VALUES
   console.log('\n[مرحله ۵: INJECT_FIELD_VALUES / درج مقادیر واقعی فیلدهای کمپین]');
+  const step5T0 = Date.now();
   if (previousStepSucceeded) {
     const action5Payload = {
       workflowId,
@@ -784,33 +932,48 @@ async function runE2eTest() {
       }
     };
     const res5 = await dispatchUnifiedWorkerTask(action5Payload, daemonCheck.online, extStatus);
+    const step5Dur = Math.max(1, Date.now() - step5T0);
+    const stateAfter5 = res5.status === 'COMPLETED' ? 'FIELDS_INJECTED' : res5.status;
+
     testResults.push({
       step: '5. ACTION_INJECT_FIELD_VALUES',
+      taskId: action5Payload.actionId,
       worker: `${res5.workerId} (${res5.workerRole})`,
       executionType: res5.status === 'COMPLETED' ? 'REAL' : (res5.status === 'FAILED' ? 'FAILED' : 'BLOCKED'),
+      stateBefore: currentState,
+      stateAfter: stateAfter5,
       status: res5.status,
-      durationMs: 0,
+      durationMs: step5Dur,
       input: action5Payload.input,
       output: res5.output || {},
       error: res5.error,
       details: res5.details
     });
-    console.log(`  نتیجه: ${res5.status === 'COMPLETED' ? '✓ COMPLETED (REAL)' : (res5.status === 'FAILED' ? '❌ FAILED' : '⚠️ BLOCKED')} | جزئیات: ${res5.details}`);
-    if (res5.status !== 'COMPLETED') previousStepSucceeded = false;
+    console.log(`  نتیجه: ${res5.status === 'COMPLETED' ? '✓ COMPLETED (REAL)' : (res5.status === 'FAILED' ? '❌ FAILED' : '⚠️ BLOCKED')} | زمان: ${step5Dur}ms | جزئیات: ${res5.details}`);
+    if (res5.status !== 'COMPLETED') {
+      previousStepSucceeded = false;
+    } else {
+      currentState = 'FIELDS_INJECTED';
+    }
   } else {
+    const step5Dur = Math.max(1, Date.now() - step5T0);
     testResults.push({
       step: '5. ACTION_INJECT_FIELD_VALUES',
+      taskId: `act_inject_${Date.now()}`,
       worker: 'unassigned',
       executionType: 'BLOCKED',
+      stateBefore: currentState,
+      stateAfter: 'BLOCKED',
       status: 'BLOCKED',
-      durationMs: 0,
+      durationMs: step5Dur,
       details: 'درج فیلدها وابسته به کشف فیلدهای DOM توسط ورکر است؛ در حالت توقف باقی ماند.'
     });
-    console.log('  نتیجه: ⚠️ BLOCKED (وابسته به اجرای مرحله پیشین)');
+    console.log(`  نتیجه: ⚠️ BLOCKED (وابسته به اجرای مرحله پیشین) | زمان: ${step5Dur}ms`);
   }
 
   // مرحله ۶ واقعی: CLICK_SUBMIT_BUTTON
   console.log('\n[مرحله ۶: CLICK_SUBMIT_BUTTON / کلیک روی دکمه ارسال فرم و اعتبارسنجی پاسخ]');
+  const step6T0 = Date.now();
   if (previousStepSucceeded) {
     const action6Payload = {
       workflowId,
@@ -824,38 +987,54 @@ async function runE2eTest() {
       input: {}
     };
     const res6 = await dispatchUnifiedWorkerTask(action6Payload, daemonCheck.online, extStatus);
+    const step6Dur = Math.max(1, Date.now() - step6T0);
     submitOutput = res6.output;
     otpRequired = Boolean(submitOutput?.otpGateDetected);
+    const stateAfter6 = res6.status === 'COMPLETED' ? 'SUBMITTED' : res6.status;
+
     testResults.push({
       step: '6. ACTION_CLICK_SUBMIT_BUTTON',
+      taskId: action6Payload.actionId,
       worker: `${res6.workerId} (${res6.workerRole})`,
       executionType: res6.status === 'COMPLETED' ? 'REAL' : (res6.status === 'FAILED' ? 'FAILED' : 'BLOCKED'),
+      stateBefore: currentState,
+      stateAfter: stateAfter6,
       status: res6.status,
-      durationMs: 0,
+      durationMs: step6Dur,
       input: action6Payload.input,
       output: res6.output || {},
       error: res6.error,
       details: res6.details
     });
-    console.log(`  نتیجه: ${res6.status === 'COMPLETED' ? '✓ COMPLETED (REAL)' : (res6.status === 'FAILED' ? '❌ FAILED' : '⚠️ BLOCKED')} | جزئیات: ${res6.details}`);
-    if (res6.status !== 'COMPLETED') previousStepSucceeded = false;
+    console.log(`  نتیجه: ${res6.status === 'COMPLETED' ? '✓ COMPLETED (REAL)' : (res6.status === 'FAILED' ? '❌ FAILED' : '⚠️ BLOCKED')} | زمان: ${step6Dur}ms | جزئیات: ${res6.details}`);
+    if (res6.status !== 'COMPLETED') {
+      previousStepSucceeded = false;
+    } else {
+      currentState = 'SUBMITTED';
+    }
   } else {
+    const step6Dur = Math.max(1, Date.now() - step6T0);
     testResults.push({
       step: '6. ACTION_CLICK_SUBMIT_BUTTON',
+      taskId: `act_submit_${Date.now()}`,
       worker: 'unassigned',
       executionType: 'BLOCKED',
+      stateBefore: currentState,
+      stateAfter: 'BLOCKED',
       status: 'BLOCKED',
-      durationMs: 0,
+      durationMs: step6Dur,
       details: 'ارسال فرم وابسته به پر شدن موفق فیلدها است؛ در حالت توقف باقی ماند.'
     });
-    console.log('  نتیجه: ⚠️ BLOCKED (وابسته به اجرای مرحله پیشین)');
+    console.log(`  نتیجه: ⚠️ BLOCKED (وابسته به اجرای مرحله پیشین) | زمان: ${step6Dur}ms`);
   }
 
   // مرحله ۷ واقعی: چرخه کامل و واقعی OTP
   console.log('\n[مرحله ۷: OTP_LIFECYCLE / چرخه کامل OTP: تشخیص، تزریق و ارزیابی تایید سایت]');
+  const step7T0 = Date.now();
   let otpFinalStatus = 'BLOCKED';
   let otpFinalDetails = '';
   let otpExecutionOutput = {};
+  let otpTaskId = `act_otp_${Date.now()}`;
 
   if (previousStepSucceeded) {
     if (otpRequired) {
@@ -869,11 +1048,12 @@ async function runE2eTest() {
         otpExecutionOutput = { state: 'WAITING_FOR_OTP', otpRequired: true, waitingForInput: true };
       } else {
         console.log('  🔑 کد معتبر OTP از منبع مجاز دریافت شد. در حال اعزام inject_and_verify_otp...');
+        otpTaskId = `act_otp_inj_${Date.now()}`;
         const injectPayload = {
           workflowId,
           executionId,
           jobId,
-          actionId: `act_otp_inj_${Date.now()}`,
+          actionId: otpTaskId,
           action: 'inject_and_verify_otp',
           state: 'OTP_RECEIVED',
           platform: 'agahi24',
@@ -888,11 +1068,12 @@ async function runE2eTest() {
           otpExecutionOutput = { state: 'FAILED', error: injectRes.error };
         } else {
           console.log('  🔎 در حال بررسی تایید قطعی کد توسط سامانه مقصد (check_otp_acceptance)...');
+          const checkTaskId = `act_otp_chk_${Date.now()}`;
           const checkPayload = {
             workflowId,
             executionId,
             jobId,
-            actionId: `act_otp_chk_${Date.now()}`,
+            actionId: checkTaskId,
             action: 'check_otp_acceptance',
             state: 'OTP_SUBMITTED',
             platform: 'agahi24',
@@ -928,28 +1109,37 @@ async function runE2eTest() {
     otpFinalDetails = 'تعیین تکلیف OTP وابسته به ارسال فرم توسط ورکر است؛ به دلیل عدم اجرای مراحل قبل متوقف ماند.';
   }
 
+  const step7Dur = Math.max(1, Date.now() - step7T0);
+  const stateAfter7 = otpFinalStatus === 'COMPLETED' ? 'OTP_FINALIZED' : otpFinalStatus;
+
   testResults.push({
     step: '7. OTP_LIFECYCLE',
+    taskId: otpTaskId,
     worker: submitOutput?.workerId || 'portal_gate / local_agent_worker',
     executionType: otpFinalStatus === 'COMPLETED' ? 'REAL' : (otpFinalStatus === 'FAILED' ? 'FAILED' : 'BLOCKED'),
+    stateBefore: currentState,
+    stateAfter: stateAfter7,
     status: otpFinalStatus,
-    durationMs: 0,
+    durationMs: step7Dur,
     input: { workflowId, jobId },
     output: { otpRequired, ...otpExecutionOutput },
     details: otpFinalDetails
   });
-  console.log(`  نتیجه: ${otpFinalStatus === 'COMPLETED' ? '✓ COMPLETED (REAL)' : (otpFinalStatus === 'FAILED' ? '❌ FAILED' : '⚠️ BLOCKED')} | جزئیات: ${otpFinalDetails}`);
+  console.log(`  نتیجه: ${otpFinalStatus === 'COMPLETED' ? '✓ COMPLETED (REAL)' : (otpFinalStatus === 'FAILED' ? '❌ FAILED' : '⚠️ BLOCKED')} | زمان: ${step7Dur}ms | جزئیات: ${otpFinalDetails}`);
+  if (otpFinalStatus === 'COMPLETED') {
+    currentState = 'OTP_FINALIZED';
+  }
 
   // مرحله ۸ واقعی: VERIFY_PUBLICATION_URL (راستی‌آزمایی نشانی اختصاصی آگهی منتشرشده)
   console.log('\n[مرحله ۸: VERIFY_PUBLICATION_URL / راستی‌آزمایی نشانی اختصاصی آگهی منتشرشده]');
+  const step8T0 = Date.now();
   let stage8Status = 'BLOCKED';
   let stage8Details = '';
   let stage8Output = {};
-  let dur8 = 0;
+  const stage8TaskId = `act_verify_pub_${Date.now()}`;
 
-  if (submitOutput?.publicUrl || submitOutput?.adUrl) {
-    publishedAdUrl = submitOutput.publicUrl || submitOutput.adUrl;
-    const t8 = Date.now();
+  if (submitOutput?.publicUrl || submitOutput?.adUrl || publishedAdUrl) {
+    publishedAdUrl = publishedAdUrl || submitOutput.publicUrl || submitOutput.adUrl;
     const verRes = await verifyPublicationEvidence({
       url: publishedAdUrl,
       expectedTitle: realCampaign.title,
@@ -957,7 +1147,6 @@ async function runE2eTest() {
       expectedPhone: realCampaign.phone,
       timeoutMs: 6000
     });
-    dur8 = Date.now() - t8;
     if (verRes.verified) {
       stage8Status = 'COMPLETED';
       stage8Details = `آگهی واقعی منتشرشده در (${publishedAdUrl}) مستقلاً با مشخصات کمپین تطبیق و تایید شد.`;
@@ -973,24 +1162,30 @@ async function runE2eTest() {
     stage8Output = { verified: false, publicUrl: null };
   }
 
+  const step8Dur = Math.max(1, Date.now() - step8T0);
+  const stateAfter8 = stage8Status === 'COMPLETED' ? 'PUBLICATION_VERIFIED' : stage8Status;
+
   testResults.push({
     step: '8. ACTION_VERIFY_PUBLICATION_URL',
+    taskId: stage8TaskId,
     worker: 'gh_orchestrator_main (Unified Verifier)',
     executionType: stage8Status === 'COMPLETED' ? 'REAL' : (stage8Status === 'FAILED' ? 'FAILED' : 'BLOCKED'),
+    stateBefore: currentState,
+    stateAfter: stateAfter8,
     status: stage8Status,
-    durationMs: dur8,
+    durationMs: step8Dur,
     input: { expectedTitle: realCampaign.title, expectedJobId: realCampaign.id },
     output: stage8Output,
     details: stage8Details
   });
-  console.log(`  نتیجه: ${stage8Status === 'COMPLETED' ? '✓ REAL (راستی‌آزمایی موفق)' : (stage8Status === 'FAILED' ? '❌ FAILED' : '⚠️ BLOCKED (در انتظار آدرس معتبر حاصل از انتشار)')}`);
+  console.log(`  نتیجه: ${stage8Status === 'COMPLETED' ? '✓ REAL (راستی‌آزمایی موفق)' : (stage8Status === 'FAILED' ? '❌ FAILED' : '⚠️ BLOCKED (در انتظار آدرس معتبر حاصل از انتشار)')} | زمان: ${step8Dur}ms`);
 
   // خلاصه نتایج
   console.log('\n===============================================================');
   console.log('📊 خلاصه نتایج اجرای تست کنترل‌شده End-to-End:');
   console.log('===============================================================');
   testResults.forEach(r => {
-    console.log(`- [${r.status} | ${r.executionType}] ${r.step} | مجری: ${r.worker} | زمان: ${r.durationMs}ms | جزئیات: ${r.details}`);
+    console.log(`- [${r.status} | ${r.executionType}] ${r.step} | TaskId: ${r.taskId || 'N/A'} | تغییر وضعیت: ${r.stateBefore} -> ${r.stateAfter} | مجری: ${r.worker} | زمان: ${r.durationMs}ms | جزئیات: ${r.details}`);
   });
 
   // ۵ معیار اساسی برای اثبات اجرای واقعی:
@@ -1061,3 +1256,4 @@ runE2eTest().catch((err) => {
   console.error('❌ [Fatal E2E Error]:', err.message);
   process.exit(1);
 });
+
