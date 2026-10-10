@@ -1739,10 +1739,18 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error(`❌ [Fatal Worker Exception]: ${err.message}`);
-  process.exit(1);
-});
+const isDirectExecution = process.argv[1] && (
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url) ||
+  process.argv[1].endsWith('local-agent/index.js') ||
+  process.argv[1].endsWith('local-agent\\index.js')
+);
+
+if (isDirectExecution) {
+  main().catch((err) => {
+    console.error(`❌ [Fatal Worker Exception]: ${err.message}`);
+    process.exit(1);
+  });
+}
 
 export { executeWorkerTask, executeTask, SUPPORTED_WORKER_ACTIONS };
 
