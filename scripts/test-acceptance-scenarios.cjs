@@ -284,19 +284,36 @@ async function testScenario5_UrlDoesNotMatchCampaign() {
 
   const keywords = extractSpecificKeywords(expectedTitle);
 
+  // آزمون شبکه: راستی‌آزمایی نشانی پورتال عمومی فاقد محتوای کمپین با verifyPublicationEvidence
+  const { verifyPublicationEvidence } = await import('../src/services/unifiedVerificationService.js');
+  let networkRejected = true;
+  try {
+    const netRes = await verifyPublicationEvidence({
+      url: 'https://agahi24.com',
+      expectedTitle,
+      expectedJobId: 'job_carton_981',
+      timeoutMs: 5000
+    });
+    networkRejected = netRes.verified === false;
+  } catch (_) {
+    networkRejected = true;
+  }
+
   // شروط پذیرش سناریو ۵:
   // الف) با وجود کلمه منفرد "کارتن" یا "اسباب"، چون تطبیق چندکلمه‌ای اختصاصی احراز نشده، matched باید false باشد
-  // ب) وضعیت نباید به PUBLISHED برود
+  // ب) استعلام زنده از پورتال عمومی بدون محتوای کمپین باید صریحاً رد شود (verified === false)
+  // ج) وضعیت نباید به PUBLISHED برود
   const passed = evalRes.matched === false &&
                  keywords.length >= 3 &&
+                 networkRejected === true &&
                  evalRes.reason !== undefined;
 
   recordTest(
     5,
-    'URL باز می‌شود اما متعلق به آگهی موردنظر نیست (رد کلمات عمومی منفرد)',
+    'URL باز می‌شود اما متعلق به آگهی موردنظر نیست (رد کلمات عمومی منفرد و رد URL نامرتبط در شبکه)',
     passed,
     passed
-      ? 'موتور راستی‌آزمایی مستقل تطبیق یک کلمه تصادفی را رد کرد و از اعلام موفقیت کاذب (PUBLISHED) ممانعت ورزید.'
+      ? 'موتور راستی‌آزمایی مستقل تطبیق کلمات تصادفی و نشانی‌های عمومی فاقد محتوای کمپین را در شبکه رد کرد و از اعلام موفقیت کاذب (PUBLISHED) ممانعت ورزید.'
       : 'شکست در شناسایی محتوای غیرمرتبط'
   );
 }

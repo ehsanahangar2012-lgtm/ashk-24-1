@@ -81,17 +81,127 @@ async function checkLocalAgentDaemon() {
   });
 }
 
+// استعلام اتصال واقعی افزونه بر اساس heartbeat، شناسه افزونه و زمان آخرین پاسخ
 async function checkExtensionLiveStatus() {
+  const t0 = Date.now();
+  // الف) بررسی هارت‌بیت و وضعیت ثبت‌شده در دیتابیس cPanel
   try {
-    const sessionPath = path.resolve(__dirname, '../data/session_vault.json');
-    if (fs.existsSync(sessionPath)) {
-      const vault = JSON.parse(fs.readFileSync(sessionPath, 'utf8'));
-      if (vault.extensionConnected === true || (vault.extensionTokens && Object.keys(vault.extensionTokens).length > 0)) {
-        return true;
+    const dbPath = path.resolve(__dirname, '../cpanel-backend/data/database.json');
+    if (fs.existsSync(dbPath)) {
+      const db = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+      const extChannel = db?.orchestrator?.channels?.extension;
+      if (extChannel && extChannel.agentId && extChannel.lastHeartbeat) {
+        const nowSec = Math.floor(Date.now() / 1000);
+        const ageSec = nowSec - extChannel.lastHeartbeat;
+        if (ageSec <= 120) {
+          return {
+            online: true,
+            extensionId: extChannel.agentId,
+            lastHeartbeat: new Date(extChannel.lastHeartbeat * 1000).toISOString(),
+            durationMs: Date.now() - t0,
+            details: `افزونه با شناسه ${extChannel.agentId} آنلاین است (آخرین هارت‌بیت: ${ageSec} ثانیه قبل)`
+          };
+        }
       }
     }
   } catch (_) {}
-  return false;
+
+  // ب) استعلام وضعیت زنده از دیمون محلی
+  try {
+    const localStatus = await new Promise((resolve) => {
+      const req = http.get('http://127.0.0.1:3824/extension-status', { timeout: 1200 }, (res) => {
+        let b = '';
+        res.on('data', chunk => { b += chunk; });
+        res.on('end', () => {
+          try {
+            const j = JSON.parse(b);
+            resolve(j && j.connected === true ? j : null);
+          } catch (_) { resolve(null); }
+        });
+      });
+      req.on('error', () => resolve(null));
+      req.on('timeout', () => { req.destroy(); resolve(null); });
+    });
+
+    if (localStatus && localStatus.extensionId) {
+      return {
+        online: true,
+        extensionId: localStatus.extensionId,
+        lastHeartbeat: new Date().toISOString(),
+        durationMs: Date.now() - t0,
+        details: `افزونه از طریق پورت محلی متصل است (${localStatus.extensionId})`
+      };
+    }
+  } catch (_) {}
+
+  return {
+    online: false,
+    extensionId: null,
+    lastHeartbeat: null,
+    durationMs: Date.now() - t0,
+    details: 'افزونه متصل نیست؛ هیچ هارت‌بیت یا هندشیک زنده‌ای در ۱۲۰ ثانیه اخیر یافت نشد. توکن یا سابقه قبلی به تنهایی نشانه آنلاین بودن نیست.'
+  };
+}
+
+// ارسال تسک واقعی به ورکر با تمام شناسه‌های مشترک و ردیابی پاسخ واقعی
+async function dispatchTaskToWorker(taskPayload) {
+  const t0 = Date.now();
+  return new Promise((resolve) => {
+    const payloadStr = JSON.stringify(taskPayload);
+    const req = http.request('http://127.0.0.1:3824/execute-task', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payloadStr)
+      },
+      timeout: 10000
+    }, (res) => {
+      let body = '';
+      res.on('data', chunk => { body += chunk; });
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(body);
+          resolve({
+            executed: true,
+            success: json.success === true,
+            statusCode: res.statusCode,
+            response: json,
+            durationMs: Date.now() - t0
+          });
+        } catch (_) {
+          resolve({
+            executed: false,
+            success: false,
+            statusCode: res.statusCode,
+            error: 'پاسخ ورکر به صورت JSON معتبر دریافت نشد',
+            durationMs: Date.now() - t0
+          });
+        }
+      });
+    });
+
+    req.on('error', (err) => {
+      resolve({
+        executed: false,
+        success: false,
+        error: `عدم امکان برقراری ارتباط مستقیم با ورکر: ${err.message}`,
+        durationMs: Date.now() - t0
+      });
+    });
+
+    req.on('timeout', () => {
+      req.destroy();
+      resolve({
+        executed: false,
+        success: false,
+        error: 'پاسخی از ورکر دریافت نشد (Timeout)',
+        durationMs: Date.now() - t0
+      });
+    });
+
+    req.write(payloadStr);
+    req.end();
+  });
 }
 
 async function probeDestinationPortal(url) {
@@ -122,30 +232,25 @@ async function probeDestinationPortal(url) {
 
 async function runE2eTest() {
   const testResults = [];
-  const realCampaign = loadRealCampaign();
   const targetPortal = 'https://agahi24.com';
 
+  // ۱. بررسی فوری و توقف قطعی در نبود کمپین معتبر (بدون تولید هیچ مرحله، شناسه یا داده جایگزین)
+  const realCampaign = loadRealCampaign();
   if (!realCampaign) {
     console.error('❌ [خطا] هیچ کمپین معتبری در دیتابیس پروژه یافت نشد.');
-    console.error('   طبق الزامات کیفی، داده جایگزین ثابت (Fallback) حذف شده و تست در وضعیت BLOCKED متوقف گردید.');
-    testResults.push({
-      step: '0. CAMPAIGN_VALIDATION',
-      worker: 'database_loader',
-      executionType: 'BLOCKED',
-      status: 'BLOCKED',
-      durationMs: 0,
-      input: {},
-      output: { campaignLoaded: false },
-      error: 'کمپین معتبر در دیتابیس یافت نشد؛ داده ساختگی حذف شده و آزمون متوقف شد.',
-      details: 'نبود کمپین معتبر آزمون را در وضعیت BLOCKED متوقف کرد.'
-    });
-  } else {
-    console.log(`📌 کمپین انتخاب‌شده: «${realCampaign.title}»`);
-    console.log(`🏢 شرکت: اشک قلم | تلفن: ${realCampaign.phone} | شهر: ${realCampaign.city}`);
-    console.log(`🎯 پلتفرم مقصد: ${targetPortal}\n`);
+    console.error('   طبق الزامات کیفی، داده جایگزین ثابت (Fallback) حذف شده و آزمون فوراً متوقف گردید.');
+    console.error('   هیچ مرحله دیگری اجرا نخواهد شد و هیچ داده یا شناسه ساختگی تولید نگردید.\n');
+    console.log('===============================================================');
+    console.log('⚠️ نتیجه نهایی تست End-to-End: وضعیت [BLOCKED] (نبود کمپین معتبر)');
+    console.log('===============================================================');
+    process.exit(2);
   }
 
-  // مرحله ۱: DISCOVERY & REACHABILITY (اجرای واقعی با شبکه)
+  console.log(`📌 کمپین انتخاب‌شده: «${realCampaign.title}»`);
+  console.log(`🏢 شرکت: اشک قلم | تلفن: ${realCampaign.phone} | شهر: ${realCampaign.city}`);
+  console.log(`🎯 پلتفرم مقصد: ${targetPortal}\n`);
+
+  // مرحله ۱: DISCOVERY & REACHABILITY (ارتباط زنده با پلتفرم مقصد)
   console.log(`[مرحله ۱: DISCOVERY / تست ارتباط زنده با پلتفرم مقصد (${targetPortal})]`);
   const probe = await probeDestinationPortal(targetPortal);
   const stage1Success = probe.ok;
@@ -164,12 +269,12 @@ async function runE2eTest() {
   });
   console.log(`  نتیجه: ${stage1Success ? '✓ REAL (موفق)' : '❌ BLOCKED'} | زمان: ${probe.durationMs}ms`);
 
-  // مرحله ۲: AD_GENERATION & PAYLOAD INTEGRITY (اجرای واقعی با داده‌های کمپین)
+  // مرحله ۲: AD_GENERATING & MAPPING (ساخت و اعتبارسنجی فیلدهای واقعی کمپین)
   console.log('\n[مرحله ۲: AD_GENERATING & MAPPING / ساخت و اعتبارسنجی فیلدهای واقعی]');
   const t2 = Date.now();
-  const hasValidTitle = Boolean(realCampaign && realCampaign.title && realCampaign.title.length >= 5);
-  const hasValidPhone = Boolean(realCampaign && realCampaign.phone && realCampaign.phone.startsWith('09'));
-  const hasValidContent = Boolean(realCampaign && realCampaign.description && realCampaign.description.length >= 10);
+  const hasValidTitle = Boolean(realCampaign.title && realCampaign.title.length >= 5);
+  const hasValidPhone = Boolean(realCampaign.phone && realCampaign.phone.startsWith('09'));
+  const hasValidContent = Boolean(realCampaign.description && realCampaign.description.length >= 10);
   const stage2Valid = Boolean(hasValidTitle && hasValidPhone && hasValidContent);
   const dur2 = Date.now() - t2;
 
@@ -179,104 +284,182 @@ async function runE2eTest() {
     executionType: stage2Valid ? 'REAL' : 'BLOCKED',
     status: stage2Valid ? 'COMPLETED' : 'BLOCKED',
     durationMs: dur2,
-    input: { campaignId: realCampaign ? realCampaign.id : null },
-    output: realCampaign ? {
+    input: { campaignId: realCampaign.id },
+    output: {
       title: realCampaign.title,
       phone: realCampaign.phone,
       city: realCampaign.city,
       keywordsCount: realCampaign.keywords.length
-    } : { campaignLoaded: false },
+    },
     details: stage2Valid
       ? `داده‌های واقعی کمپین با موفقیت اعتبارسنجی شدند: [عنوان=${realCampaign.title}، تلفن=${realCampaign.phone}]`
-      : 'نقص یا عدم وجود داده‌های کمپین واقعی؛ توقف اجرا.'
+      : 'نقص در داده‌های کمپین واقعی؛ توقف اجرا.'
   });
   console.log(`  نتیجه: ${stage2Valid ? '✓ REAL (موفق)' : '❌ BLOCKED'} | زمان: ${dur2}ms`);
 
-  // مرحله ۳: LOCAL AGENT DAEMON CHECK (استعلام وضعیت واقعی دیمون، بدون داده ساختگی)
-  console.log('\n[مرحله ۳: LOCAL WORKER STATUS & QUEUE DISPATCH]');
+  // مرحله ۳: REAL WORKER TASK EXECUTION (ارسال تسک واقعی با شناسه‌های یکتا و ردیابی اجرای واقعی)
+  console.log('\n[مرحله ۳: REAL WORKER TASK EXECUTION / ارسال تسک واقعی به Worker مناسب]');
+  const workflowId = `wf_e2e_${Date.now()}`;
+  const executionId = `exec_e2e_${Date.now()}`;
+  const jobId = realCampaign.id;
+  const actionId = `act_publish_${Date.now()}`;
+
+  const taskPayload = {
+    workflowId,
+    executionId,
+    jobId,
+    actionId,
+    action: 'publish_ad',
+    state: 'PENDING_EXECUTION',
+    input: {
+      url: targetPortal,
+      title: realCampaign.title,
+      description: realCampaign.description,
+      phone: realCampaign.phone,
+      city: realCampaign.city,
+      province: realCampaign.province,
+      keywords: realCampaign.keywords
+    }
+  };
+
+  // بررسی وضعیت دیمون و اقدام به اجرای تسک واقعی
   const daemonCheck = await checkLocalAgentDaemon();
-  const localDaemonOnline = daemonCheck.online;
-  const stage3Status = localDaemonOnline ? 'COMPLETED' : 'WAITING_FOR_WORKER';
+  let workerDispatchRes = null;
+  let workerExecuted = false;
+
+  if (daemonCheck.online) {
+    console.log(`  دیمون محلی در پورت ۳۸۲۴ پاسخگو است. ارسال فرمان با شناسه‌های [${workflowId}, ${jobId}]...`);
+    workerDispatchRes = await dispatchTaskToWorker(taskPayload);
+    workerExecuted = workerDispatchRes.executed && workerDispatchRes.success;
+  }
+
+  const stage3Real = workerExecuted;
   testResults.push({
-    step: '3. LOCAL_AGENT_DISPATCH_OR_QUEUE',
-    worker: 'local_agent_worker (Local Worker)',
-    executionType: localDaemonOnline ? 'REAL' : 'BLOCKED',
-    status: stage3Status,
-    durationMs: daemonCheck.durationMs,
-    input: { daemonPort: 3824 },
-    output: { daemonOnline: localDaemonOnline, status: stage3Status, response: daemonCheck.output },
-    details: localDaemonOnline
-      ? 'دیمون محلی آنلاین است و تسک آماده پردازش مستقیم توسط Playwright است.'
-      : 'دیمون محلی آفلاین است؛ طبق ضوابط، تسک در صف متوقف شده و به اشتباه به Extension منتقل نشد.'
-  });
-  console.log(`  نتیجه: ${localDaemonOnline ? '✓ REAL (آنلاین)' : '⚠️ BLOCKED (WAITING_FOR_WORKER - عدم داده ساختگی)'} | زمان: ${daemonCheck.durationMs}ms`);
-
-  // مرحله ۴: EXTENSION WORKER & REAL DOM CHECK (استعلام وضعیت واقعی افزونه، بدون mockDomResponse)
-  console.log('\n[مرحله ۴: EXTENSION WORKER & LIVE DOM INSPECTION]');
-  const t4 = Date.now();
-  const extensionActive = await checkExtensionLiveStatus();
-  const dur4 = Date.now() - t4;
-  testResults.push({
-    step: '4. LIVE_DOM_INSPECTION_AND_FILLING',
-    worker: 'ext_worker_v5 (Extension Worker)',
-    executionType: extensionActive ? 'REAL' : 'BLOCKED',
-    status: extensionActive ? 'COMPLETED' : 'BLOCKED',
-    durationMs: dur4,
-    input: { platform: 'agahi24', domain: 'agahi24.com' },
-    output: { extensionActive },
-    error: extensionActive ? undefined : 'افزونه مرورگر در این محیط آزمایشی متصل نیست. طبق استاندارد، بدون DOM واقعی داده ساختگی تولید نشد.',
-    details: extensionActive ? 'افزونه مرورگر متصل و آماده دریافت فرمان است.' : 'افزونه مرورگر متصل نیست. تولید mockDomResponse متوقف شد و مرحله BLOCKED ثبت گردید.'
-  });
-  console.log(`  نتیجه: ${extensionActive ? '✓ REAL (متصل)' : '⚠️ BLOCKED (توقف به دلیل عدم دسترسی به افزونه، رد داده ساختگی)'}`);
-
-  // مرحله ۵: THREE-EVENT OTP LIFECYCLE (عدم تایید بدون پاسخ قطعی سایت مقصد)
-  console.log('\n[مرحله ۵: THREE-EVENT OTP LIFECYCLE]');
-  testResults.push({
-    step: '5. OTP_ACCEPTANCE_VERIFICATION',
-    worker: 'portal_gate / extension',
-    executionType: 'BLOCKED',
-    status: 'BLOCKED',
-    durationMs: 10,
-    input: { otpTriggered: true },
-    output: { otpReceived: false, otpSubmitted: false, platformAccepted: false },
-    error: 'پاسخ تایید قطعی از سایت دریافت نشد. وضعیت در حالت انتظار کد باقی ماند.',
-    details: 'صرف وجود redirectUrl به عنوان تایید پذیرفته نشد؛ مرحله با وضعیت BLOCKED در انتظار انسان متوقف گردید.'
-  });
-  console.log(`  نتیجه: ⚠️ BLOCKED (تفکیک دقیق رویدادهای OTP و جلوگیری از تایید خودکار)`);
-
-  // مرحله ۶: UNIFIED PUBLICATION URL VERIFICATION (اجرای واقعی موتور راستی‌آزمایی مستقل)
-  console.log('\n[مرحله ۶: UNIFIED PUBLICATION URL VERIFICATION]');
-  const t6 = Date.now();
-  // الف: استعلام آدرس بدون محتوای کمپین (باید UNKNOWN شود)
-  const probeIrrelevantUrl = 'https://agahi24.com';
-  const verifyIrrelevant = await verifyPublicationEvidence({
-    url: probeIrrelevantUrl,
-    expectedTitle: realCampaign ? realCampaign.title : 'خدمات چاپ و بسته‌بندی اشک قلم',
-    expectedJobId: realCampaign ? realCampaign.id : 'job_real_01',
-    expectedPhone: realCampaign ? realCampaign.phone : '09153108763',
-    timeoutMs: 6000
-  });
-
-  const dur6 = Date.now() - t6;
-  const correctlyRejected = verifyIrrelevant.verified === false;
-
-  testResults.push({
-    step: '6. VERIFY_PUBLICATION_CONTENT_MATCH',
-    worker: 'gh_orchestrator_main (Unified Verifier)',
-    executionType: 'REAL',
-    status: correctlyRejected ? 'COMPLETED' : 'FAILED',
-    durationMs: dur6,
-    input: { url: probeIrrelevantUrl, expectedTitle: realCampaign ? realCampaign.title : '' },
+    step: '3. REAL_WORKER_TASK_EXECUTION',
+    worker: daemonCheck.online ? 'local_agent_worker (Local Worker)' : 'none_available',
+    executionType: stage3Real ? 'REAL' : 'BLOCKED',
+    status: stage3Real ? 'COMPLETED' : 'BLOCKED',
+    durationMs: daemonCheck.durationMs + (workerDispatchRes ? workerDispatchRes.durationMs : 0),
+    input: { workflowId, executionId, jobId, actionId, action: taskPayload.action },
     output: {
-      verified: verifyIrrelevant.verified,
-      matchedKeywords: verifyIrrelevant.matchedKeywords,
-      httpStatus: verifyIrrelevant.httpStatus
+      daemonOnline: daemonCheck.online,
+      taskDispatched: Boolean(workerDispatchRes),
+      executionResult: workerDispatchRes ? workerDispatchRes.response : null
     },
-    details: correctlyRejected
-      ? `موتور واحد راستی‌آزمایی به درستی صفحه فاقد محتوای اختصاصی کمپین را رد کرد و از اعلام PUBLISHED کاذب ممانعت نمود.`
-      : 'خطا: صفحه فاقد محتوا تایید شد!'
+    error: stage3Real ? undefined : (workerDispatchRes?.error || 'هیچ ورکر فعالی برای اجرای تسک در این محیط آزمایشی در دسترس نیست.'),
+    details: stage3Real
+      ? `تسک واقعی با موفقیت توسط ورکر اجرا گردید (شناسه اقدام: ${actionId}).`
+      : `تسک واقعی با شناسه‌های [${workflowId}, ${actionId}] تولید شد، اما ورکر پاسخگو در دسترس نبود. صرف health check یا قرارگیری در صف به عنوان اجرای واقعی پذیرفته نشد و مرحله BLOCKED گردید.`
   });
-  console.log(`  نتیجه: ✓ REAL (موفق: رد صفحات فاقد محتوای کمپین و جلوگیری از وضعیت کاذب) | زمان: ${dur6}ms`);
+  console.log(`  نتیجه: ${stage3Real ? '✓ REAL (اجرای واقعی موفق)' : '⚠️ BLOCKED (ورکر آنلاین نیست؛ رد داده ساختگی)'}`);
+
+  // مرحله ۴: EXTENSION WORKER LIVE STATUS (بررسی هارت‌بیت، شناسه افزونه و زمان آخرین پاسخ)
+  console.log('\n[مرحله ۴: EXTENSION WORKER LIVE STATUS / استعلام اتصال زنده افزونه]');
+  const extStatus = await checkExtensionLiveStatus();
+  testResults.push({
+    step: '4. EXTENSION_LIVE_STATUS',
+    worker: 'ext_worker_v5 (Extension Worker)',
+    executionType: extStatus.online ? 'REAL' : 'BLOCKED',
+    status: extStatus.online ? 'COMPLETED' : 'BLOCKED',
+    durationMs: extStatus.durationMs,
+    input: { channel: 'extension', checkTimeoutSec: 120 },
+    output: { online: extStatus.online, extensionId: extStatus.extensionId, lastHeartbeat: extStatus.lastHeartbeat },
+    error: extStatus.online ? undefined : extStatus.details,
+    details: extStatus.details
+  });
+  console.log(`  نتیجه: ${extStatus.online ? `✓ REAL (متصل با شناسه ${extStatus.extensionId})` : '⚠️ BLOCKED (عدم وجود هارت‌بیت زنده یا افزونه فعال)'}`);
+
+  // مرحله ۵: OTP LIFECYCLE & RESOLUTION (تعیین تکلیف بر اساس وضعیت واقعی صفحه، نه BLOCKED ثابت)
+  console.log('\n[مرحله ۵: OTP LIFECYCLE & RESOLUTION]');
+  let otpStatus = 'BLOCKED';
+  let otpDetails = '';
+  let otpOutput = {};
+
+  if (workerExecuted && workerDispatchRes?.response) {
+    const pageOutput = workerDispatchRes.response.output || {};
+    if (pageOutput.otpRequired === true) {
+      if (pageOutput.otpVerified === true) {
+        otpStatus = 'COMPLETED';
+        otpDetails = 'کد تایید OTP با موفقیت دریافت، تزریق و توسط سایت تایید شد.';
+        otpOutput = { otpRequired: true, otpVerified: true };
+      } else {
+        otpStatus = 'BLOCKED';
+        otpDetails = 'صفحه نیازمند کد OTP است و سیستم در انتظار دریافت کد پیامک معتبر متوقف گردید.';
+        otpOutput = { otpRequired: true, otpVerified: false, waitingForInput: true };
+      }
+    } else {
+      otpStatus = 'COMPLETED';
+      otpDetails = 'وضعیت صفحه بررسی شد؛ این سناریو نیازی به ورود OTP نداشت یا نشست از قبل فعال بود.';
+      otpOutput = { otpRequired: false, otpNotRequired: true };
+    }
+  } else {
+    // در صورت عدم اجرای مرحله قبل توسط ورکر، این مرحله وابسته است و نمی‌تواند به صورت فرضی اجرا شود
+    otpStatus = 'BLOCKED';
+    otpDetails = 'تعیین تکلیف OTP وابسته به تکمیل مرحله ارسال فرم توسط ورکر است؛ به دلیل عدم اجرای ورکر، این مرحله متوقف ماند.';
+    otpOutput = { otpRequired: null, dependencyBlocked: true };
+  }
+
+  testResults.push({
+    step: '5. OTP_LIFECYCLE_AND_RESOLUTION',
+    worker: 'portal_gate / extension',
+    executionType: otpStatus === 'COMPLETED' ? 'REAL' : 'BLOCKED',
+    status: otpStatus,
+    durationMs: 0,
+    input: { jobId, workflowId },
+    output: otpOutput,
+    error: otpStatus === 'COMPLETED' ? undefined : otpDetails,
+    details: otpDetails
+  });
+  console.log(`  نتیجه: ${otpStatus === 'COMPLETED' ? '✓ REAL (تعیین تکلیف معتبر)' : '⚠️ BLOCKED (وابسته به اجرای ورکر)'}`);
+
+  // مرحله ۶: PUBLIC AD URL VERIFICATION (راستی‌آزمایی URL واقعی آگهی پس از ارسال، نه URL نامرتبط)
+  console.log('\n[مرحله ۶: PUBLIC AD URL VERIFICATION]');
+  let publishedAdUrl = null;
+  if (workerExecuted && workerDispatchRes?.response?.output?.publicUrl) {
+    publishedAdUrl = workerDispatchRes.response.output.publicUrl;
+  }
+
+  let stage6Status = 'BLOCKED';
+  let stage6Details = '';
+  let stage6Output = {};
+  let dur6 = 0;
+
+  if (publishedAdUrl) {
+    const t6 = Date.now();
+    const verRes = await verifyPublicationEvidence({
+      url: publishedAdUrl,
+      expectedTitle: realCampaign.title,
+      expectedJobId: realCampaign.id,
+      expectedPhone: realCampaign.phone,
+      timeoutMs: 6000
+    });
+    dur6 = Date.now() - t6;
+    if (verRes.verified) {
+      stage6Status = 'COMPLETED';
+      stage6Details = `آگهی منتشرشده در نشانی (${publishedAdUrl}) مستقلاً با محتوای کمپین راستی‌آزمایی و تأیید شد.`;
+      stage6Output = { verified: true, publicUrl: publishedAdUrl, matchedKeywords: verRes.matchedKeywords };
+    } else {
+      stage6Status = 'FAILED';
+      stage6Details = `نشانی ادعاشده (${publishedAdUrl}) محتوای کمپین را دربر نداشت و راستی‌آزمایی رد شد.`;
+      stage6Output = { verified: false, publicUrl: publishedAdUrl };
+    }
+  } else {
+    stage6Status = 'BLOCKED';
+    stage6Details = 'آدرس عمومی معتبری از خروجی مرحله انتشار دریافت نشد؛ مرحله راستی‌آزمایی در انتظار انتشار واقعی باقی ماند.';
+    stage6Output = { verified: false, publicUrl: null };
+  }
+
+  testResults.push({
+    step: '6. PUBLIC_AD_URL_VERIFICATION',
+    worker: 'gh_orchestrator_main (Unified Verifier)',
+    executionType: stage6Status === 'COMPLETED' ? 'REAL' : 'BLOCKED',
+    status: stage6Status,
+    durationMs: dur6,
+    input: { expectedTitle: realCampaign.title, expectedJobId: realCampaign.id },
+    output: stage6Output,
+    details: stage6Details
+  });
+  console.log(`  نتیجه: ${stage6Status === 'COMPLETED' ? '✓ REAL (راستی‌آزمایی موفق)' : '⚠️ BLOCKED (در انتظار آدرس معتبر حاصل از انتشار)'}`);
 
   console.log('\n===============================================================');
   console.log('📊 خلاصه نتایج اجرای تست کنترل‌شده End-to-End:');
@@ -285,21 +468,26 @@ async function runE2eTest() {
     console.log(`- [${r.status} | ${r.executionType}] ${r.step} | مجری: ${r.worker} | زمان: ${r.durationMs}ms | جزئیات: ${r.details}`);
   });
 
-  // ضوابط ۵‌گانه موفقیت کامل E2E (حذف کامل پذیرش BLOCKED یا WAITING_FOR_WORKER به عنوان موفقیت)
+  // ۵ معیار اساسی برای اثبات اجرای واقعی:
+  // ۱. انتخاب کمپین واقعی معتبر
   const criterion1_CampaignSelected = Boolean(
     realCampaign && realCampaign.id && realCampaign.title && realCampaign.phone && realCampaign.description
   );
+  // ۲. اجرای Task واقعی توسط ورکر
   const criterion2_WorkerExecuted = testResults.some(
-    r => (r.step.includes('LOCAL_AGENT') || r.step.includes('WORKER')) && r.status === 'COMPLETED' && r.executionType === 'REAL'
+    r => r.step.includes('REAL_WORKER_TASK') && r.status === 'COMPLETED' && r.executionType === 'REAL'
   );
-  const criterion3_FormSubmitted = testResults.some(
-    r => (r.step.includes('DOM') || r.step.includes('FILLING')) && r.status === 'COMPLETED' && r.executionType === 'REAL' && r.output?.submitted === true
+  // ۳. ارسال فرم واقعی
+  const criterion3_FormSubmitted = Boolean(
+    workerExecuted && workerDispatchRes?.response?.output?.submitted === true
   );
+  // ۴. تعیین تکلیف رویداد OTP
   const criterion4_OtpDetermined = testResults.some(
     r => r.step.includes('OTP') && r.status === 'COMPLETED' && (r.output?.otpVerified === true || r.output?.otpNotRequired === true)
   );
+  // ۵. استخراج و راستی‌آزمایی مستقل URL عمومی واقعی آگهی
   const criterion5_PublicUrlVerified = testResults.some(
-    r => r.step.includes('VERIFY_PUBLICATION') && r.status === 'COMPLETED' && r.output?.verified === true && r.output?.publicUrl
+    r => r.step.includes('PUBLIC_AD_URL') && r.status === 'COMPLETED' && r.output?.verified === true && r.output?.publicUrl
   );
 
   const isFullE2eSuccess = Boolean(
@@ -310,16 +498,24 @@ async function runE2eTest() {
     criterion5_PublicUrlVerified
   );
 
+  const hasFailedStep = testResults.some(r => r.status === 'FAILED');
+
   if (isFullE2eSuccess) {
     console.log('\n===============================================================');
     console.log('🎉 گردش کار کامل End-to-End با موفقیت ۱۰۰٪ اجرا و انتشار واقعی آگهی مستقلاً تایید شد.');
     console.log('===============================================================');
+    process.exit(0);
+  } else if (hasFailedStep) {
+    console.log('\n===============================================================');
+    console.log('❌ نتیجه نهایی تست End-to-End: وضعیت [FAIL]');
+    console.log('===============================================================');
+    process.exit(1);
   } else {
     const blockedSteps = testResults.filter(r => r.status === 'BLOCKED' || r.status === 'WAITING_FOR_WORKER');
     console.log('\n===============================================================');
     console.log('⚠️ نتیجه نهایی تست End-to-End: وضعیت [BLOCKED]');
     console.log('===============================================================');
-    console.log('📌 وضعیت گردش کار انتشار: BLOCKED (محیط واقعی، افزونه یا سایت مقصد در دسترس نیست)');
+    console.log('📌 وضعیت گردش کار انتشار: BLOCKED (محیط مرورگر واقعی، ورکر آنلاین یا افزونه در دسترس نیست)');
     console.log('🚫 طبق ضوابط پروژه، هیچ پیام موفقیت انتشاری چاپ نشد و داده ساختگی تولید نگردید.');
     console.log('📋 وضعیت ۵ معیار اساسی E2E واقعی:');
     console.log(`  1. انتخاب کمپین واقعی: ${criterion1_CampaignSelected ? '✓ محقق شد' : '❌ ناموفق'}`);
@@ -332,6 +528,8 @@ async function runE2eTest() {
       console.log(`  - [${s.status}] ${s.step}: ${s.details}`);
     });
     console.log('===============================================================');
+    // خروج با کد غیرصفر (کد ۲) برای ممانعت قطعی از تلقی BLOCKED به عنوان اجرای موفق
+    process.exit(2);
   }
 }
 
