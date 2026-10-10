@@ -2,7 +2,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import fs from 'fs';
-import { defineConfig, Plugin } from 'vite';
+import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
 import { cpanelDevApiPlugin } from './src/server/cpanelDevMiddleware';
 
 /**
@@ -77,7 +77,7 @@ function cleanOldBuildsAndCachePlugin(): Plugin {
 
 export default defineConfig(() => {
   return {
-    plugins: [cleanOldBuildsAndCachePlugin(), react(), tailwindcss(), cpanelDevApiPlugin()],
+    plugins: [cleanOldBuildsAndCachePlugin(), react(), tailwindcss(), cpanelDevApiPlugin(), splitVendorChunkPlugin()],
     resolve: {
       dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime'],
       alias: {
@@ -98,7 +98,19 @@ export default defineConfig(() => {
       ],
     },
     build: {
-      chunkSizeWarningLimit: 2000,
+      chunkSizeWarningLimit: 1000,
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          passes: 2,
+          dead_code: true,
+          unused: true,
+          drop_debugger: true,
+        },
+        format: {
+          comments: false,
+        },
+      },
     },
     server: {
       port: 3000,
